@@ -1,0 +1,23 @@
+{
+  "graphName":"comprehensive",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node3",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"stream.core.test.base.TestActivity",
+      "successNode":"node2",
+      "failNode":"node3"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"stream.core.test.base.SuccessTestActivity",
+      "failNode":"node3"
+    },
+    {
+      "nodeName":"node3",
+      "activityClass":"stream.core.test.base.FailTestActivity"
+    }
+  ]
+}

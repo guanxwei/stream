@@ -1,0 +1,16 @@
+{
+  "graphName":"testname",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node2",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"stream.core.test.base.TestActivity"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"stream.core.test.base.TestActivity"
+    }
+  ]
+}
