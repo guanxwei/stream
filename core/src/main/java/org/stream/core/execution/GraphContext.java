@@ -65,7 +65,7 @@ public class GraphContext {
     }
 
     /**
-     * Re
+     * Return activity by activity reference.
      * @param activity
      */
     public void registerActivity(final Activity activity) {

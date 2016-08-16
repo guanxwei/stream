@@ -118,6 +118,9 @@ public class DefaultEngine implements Engine {
         } else {
             //Current there is one workfing workflow instance attached to the thread, just reuse it.
             workFlow = WorkFlowContext.provide();
+            if (workFlow.getStatus().equals(WorkFlowStatus.CLOSED)) {
+                throw new WorkFlowExecutionExeception("The workflow has been closed!");
+            }
             workFlow.visitGraph(graph);
             if (autoRecord) {
                 ExecutionRecord record = ExecutionRecord.builder()
@@ -184,6 +187,12 @@ public class DefaultEngine implements Engine {
         return resourceTank;
     }
 
+    /**
+     * Retreive the next node to be executed based on the reuslt the current node returned and the configuration for the current node.
+     * @param activityResult The result current node returned.
+     * @param startNode the current node reference.
+     * @return
+     */
     private Node traverse(final ActivityResult activityResult, final Node startNode) {
 
         if (activityResult == null) {
@@ -208,17 +217,21 @@ public class DefaultEngine implements Engine {
         });
     }
 
+    /**
+     * Set up an async task and submit it to executor, all the workflow instances share one async task executor, so it is expectable to
+     * take some time to complete the task, some times when the traffic is busy it may take more time to complete the task than normal.
+     * @param workFlow The async task belong to.
+     * @param node The node that need submite async tasks.
+     */
     private void setUpAsyncTask(final WorkFlow workFlow, final Node node) {
         node.getAsyncDependencies().forEach(async -> {
-            FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(new Callable<ActivityResult>() {
-                @Override
-                public ActivityResult call() throws Exception {
-                    AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
-                    String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
-                    asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
-                    return async.perform();
-                }
-            });
+            Callable<ActivityResult> job = () -> {
+                AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
+                String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
+                asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
+                return async.perform();
+            };
+            FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
             Resource taskWrapper = Resource.builder()
                     .value(task)
                     .resourceType(ResourceType.OBJECT)

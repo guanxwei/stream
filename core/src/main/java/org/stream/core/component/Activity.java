@@ -5,7 +5,7 @@ import org.stream.core.resource.ResourceType;
 import lombok.Setter;
 
 /**
- * Encapsulation of customer specific activity, which is performed in a specific {#link {@link Node}
+ * Encapsulation of customer specific activity, which is performed in a specific {@link Node}.
  */
 public abstract class Activity {
 

@@ -3,6 +3,7 @@ package org.stream.core.execution;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 import org.stream.core.component.Graph;
 import org.stream.core.exception.WorkFlowExecutionExeception;
@@ -19,6 +20,9 @@ import lombok.Setter;
  * workflow instances.
  */
 public class WorkFlow {
+
+    @Getter @Setter
+    private String workFlowId;
 
     private List<ExecutionRecord> records = new LinkedList<ExecutionRecord>();
 
@@ -68,6 +72,7 @@ public class WorkFlow {
      * Default constructor.
      */
     public WorkFlow() {
+        this.workFlowId = UUID.randomUUID().toString();
         this.status = WorkFlowStatus.WAITING;
         this.graphs = new LinkedList<Graph>();
         resourceTank = new ResourceTank();

@@ -3,6 +3,7 @@ package org.stream.core.execution;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -15,10 +16,13 @@ import org.stream.core.resource.Resource;
 
 /**
  * Workflow helper class. Help to create a new workflow, provide existed workflow, reboot the workflow.
+ * Also provide helper method to retreive objects from the thread related workflow.
  */
 public final class WorkFlowContext {
 
-    private static final ThreadLocal<WorkFlow> current = new ThreadLocal<WorkFlow>();
+    private static final ThreadLocal<WorkFlow> CURRENT = new ThreadLocal<WorkFlow>();
+
+    private static final ConcurrentHashMap<String, WorkFlow> WORKFLOWS = new ConcurrentHashMap<>();
 
     private static final ExecutorService executorServiceForAsyncTasks = Executors.newFixedThreadPool(10);
 
@@ -27,20 +31,24 @@ public final class WorkFlowContext {
      * @return
      */
     public static boolean isThereWorkingWorkFlow() {
-        return current.get() != null;
+        return CURRENT.get() != null;
     }
 
     /**
      * Set up a new workflow instance for current thread. The new created workflow instance's status will be {@link WorkFlowStatus#WAITING}.
-     * Clients should manually start the workflow by invoking the method {@link WorkFlow#start()}, then the workflow will retrive the graph and
-     * execute the logic defined in the graph definition file.
-     * @return
+     * Clients should manually start the workflow by invoking the method {@link WorkFlow#start()}, the {@linkplain Engine} will help
+     * to invoke this method when create new workflow instance, then the workflow will retrive the graph and execute the logic defined in
+     * the graph definition file.
+     * 
+     * Users should not invoke this method in any event.
+     * @return The workflow reference.
      */
     public static WorkFlow setUpWorkFlow() {
         WorkFlow newWorkFlow = new WorkFlow();
         Date createTime = Calendar.getInstance().getTime();
         newWorkFlow.setCreateTime(createTime);
-        current.set(newWorkFlow);
+        WORKFLOWS.put(newWorkFlow.getWorkFlowId(), newWorkFlow);
+        CURRENT.set(newWorkFlow);
         return newWorkFlow;
     }
 
@@ -49,14 +57,14 @@ public final class WorkFlowContext {
      * @return
      */
     public static WorkFlow provide() {
-        return current.get();
+        return CURRENT.get();
     }
 
     /**
      * Reboot the workflow, it needs lubrication!
      */
     public static void reboot() {
-        current.set(null);
+        CURRENT.set(null);
     }
 
     /**
@@ -65,7 +73,7 @@ public final class WorkFlowContext {
      * @return
      */
     public static Resource getAsyncTaskWrapper(final String nodeName) {
-        return current.get().getAsyncTaskWrapper(nodeName);
+        return CURRENT.get().getAsyncTaskWrapper(nodeName);
     }
 
     /**
@@ -73,14 +81,14 @@ public final class WorkFlowContext {
      * @return
      */
     public static List<ExecutionRecord> getRecords() {
-        return current.get().getRecords();
+        return CURRENT.get().getRecords();
     }
 
     /**
      * Force the workflow status to {@linkplain WorkFlowStatus#CLOSED}.
      */
     public static void close() {
-        current.get().setStatus(WorkFlowStatus.CLOSED);
+        CURRENT.get().setStatus(WorkFlowStatus.CLOSED);
     }
 
     /**
@@ -88,7 +96,7 @@ public final class WorkFlowContext {
      * @param record
      */
     public static void keepRecord(ExecutionRecord record) {
-        current.get().keepRecord(record);
+        CURRENT.get().keepRecord(record);
     }
 
     /**
@@ -96,7 +104,7 @@ public final class WorkFlowContext {
      * @param resource
      */
     public static void attachResource(final Resource resource) {
-        current.get().attachResource(resource);
+        CURRENT.get().attachResource(resource);
     }
 
     /**
@@ -105,7 +113,7 @@ public final class WorkFlowContext {
      * @return
      */
     public static Resource resolveResource(final String resourceReference) {
-        return current.get().resolveResource(resourceReference);
+        return CURRENT.get().resolveResource(resourceReference);
     }
 
     /**
@@ -113,7 +121,7 @@ public final class WorkFlowContext {
      * @param graph
      */
     public static void visitGraph(Graph graph) {
-        current.get().visitGraph(graph);
+        CURRENT.get().visitGraph(graph);
     }
 
     /**
@@ -127,8 +135,8 @@ public final class WorkFlowContext {
             return;
         }
 
-        if (current.get().getPrimary() == null) {
-            current.get().setPrimaryResourceReference(resource.getResourceReference());
+        if (CURRENT.get().getPrimary() == null) {
+            CURRENT.get().setPrimaryResourceReference(resource.getResourceReference());
             attachResource(resource);
         } else {
             throw new WorkFlowExecutionExeception("Attempt to change primary resource!");
@@ -141,9 +149,13 @@ public final class WorkFlowContext {
      * @return
      */
     public static Resource getPrimary() {
-        return current.get().getPrimary();
+        return CURRENT.get().getPrimary();
     };
 
+    /**
+     * Submit an async task to the executor.
+     * @param task Async task.
+     */
     public static void submit(FutureTask<ActivityResult> task) {
         executorServiceForAsyncTasks.submit(task);
     }
