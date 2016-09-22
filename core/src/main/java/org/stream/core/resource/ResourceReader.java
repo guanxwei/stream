@@ -6,6 +6,10 @@ package org.stream.core.resource;
  * implements the interface to realize their own sprtial requirement. The framework does not care about the detail how customers
  * implements the readers.
  */
-public interface Reader {
+public interface ResourceReader {
+
+    Resource read(ResourceURL resourceURL);
+
+    ResourceAuthority resolve();
 
 }

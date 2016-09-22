@@ -11,6 +11,8 @@ public class Resource {
 
     private String resourceReference;
 
+    private ResourceURL resourceURL;
+
     public static ResourceBuilder builder() {
         return new ResourceBuilder();
     }
@@ -19,6 +21,7 @@ public class Resource {
         private Object value;
         private ResourceType resourceType;
         private String resourceReference;
+        private ResourceURL resourceURL;
 
         public ResourceBuilder value(Object value) {
             this.value = value;
@@ -35,11 +38,17 @@ public class Resource {
             return this;
         }
 
+        public ResourceBuilder resourceURL(ResourceURL resourceURL) {
+            this.resourceURL = resourceURL;
+            return this;
+        }
+
         public Resource build() {
             Resource resource = new Resource();
             resource.setResourceReference(this.resourceReference);
             resource.setResourceType(this.resourceType);
             resource.setValue(this.value);
+            resource.setResourceURL(this.resourceURL);
             return resource;
         }
     }
