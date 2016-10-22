@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.FutureTask;
 
 import org.stream.core.component.Graph;
 import org.stream.core.exception.WorkFlowExecutionExeception;
@@ -62,6 +63,12 @@ public class WorkFlow {
      */
     @Getter @Setter
     private WorkFlowStatus status;
+
+    /**
+     * Exception happened during execution.
+     */
+    @Getter
+    private Exception e;
 
     /**
      * The graph instances this workflow have been executing on. Every time cliens invoke the {@linkplain Engine} to execute a graph, the graph reference will be added to the workflow.
@@ -130,7 +137,7 @@ public class WorkFlow {
     }
 
     /**
-     * Appoint a primary source to the workflow, once appointed, the primary resource should never be changed.
+     * Attach a primary source to the workflow, once appointed, the primary resource should never be changed.
      * @param resource
      * @throws WorkFlowExecutionExeception 
      */
@@ -161,8 +168,23 @@ public class WorkFlow {
         }
     };
 
+    /**
+     * Get async task wrapper. Value contained in the wrapper is an instance of {@link FutureTask} which returns the execution result of acync activity.
+     * @param nodeName The node name of async activity node.
+     * @return async task wrapper instance.
+     */
     protected Resource getAsyncTaskWrapper(final String nodeName) {
         return resolveResource(nodeName + ResourceHelper.ASYNC_TASK_SUFFIX);
+    }
+
+    /**
+     * Mark the exception that cause the system ran into crash. Only used when the system itself can not tune to normal from the exception. Basically, this method should
+     * be used only once for every single execution plan. After the workflow engine handle over the control to the invoker, the invoker can check if the {{@link #e} is
+     * null, if not they can log the excetion message to the log by there own strategy.
+     * @param e exception that cause the workflow ran into crash.
+     */
+    protected void markException(Exception e) {
+        this.e = e;
     }
 
     public enum WorkFlowStatus {

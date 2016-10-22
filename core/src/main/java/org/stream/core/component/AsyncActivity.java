@@ -28,4 +28,5 @@ public abstract class AsyncActivity extends Activity {
         }
         return resources.get().resolve(primaryResourceReference.get());
     }
+
 }

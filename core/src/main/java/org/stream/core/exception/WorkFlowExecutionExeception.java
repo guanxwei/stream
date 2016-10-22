@@ -1,6 +1,6 @@
 package org.stream.core.exception;
 
-public class WorkFlowExecutionExeception extends StreamException {
+public class WorkFlowExecutionExeception extends RuntimeException {
 
     private static final long serialVersionUID = -9138588163767012469L;
 

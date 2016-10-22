@@ -25,10 +25,9 @@ public class DefaultEngine implements Engine {
     public ResourceTank execute(final GraphContext graphContext,
             final String graphName,
             final boolean autoRecord,
-            final ResourceType resourceType) throws WorkFlowExecutionExeception {
+            final ResourceType resourceType) {
 
         return start(graphContext, graphName, null, autoRecord, resourceType, false);
-
     }
 
     /**
@@ -39,10 +38,9 @@ public class DefaultEngine implements Engine {
             final String graphName,
             final Resource primaryResource,
             final boolean autoRecord,
-            final ResourceType resourceType) throws WorkFlowExecutionExeception {
+            final ResourceType resourceType) {
 
         return start(graphContext, graphName, primaryResource, autoRecord, resourceType, false);
-
     }
 
     /**
@@ -53,10 +51,9 @@ public class DefaultEngine implements Engine {
             final String graphName,
             final Resource primaryResource,
             final boolean autoRecord,
-            final ResourceType resourceType) throws WorkFlowExecutionExeception {
+            final ResourceType resourceType) {
 
-        return start(graphContext, graphName, null, autoRecord, resourceType, true);
-
+        return  start(graphContext, graphName, null, autoRecord, resourceType, true);
     }
 
     /**
@@ -66,10 +63,9 @@ public class DefaultEngine implements Engine {
     public ResourceTank executeOnce(final GraphContext graphContext, 
             final String graphName,
             final boolean autoRecord, 
-            final ResourceType resourceType) throws WorkFlowExecutionExeception {
+            final ResourceType resourceType) {
 
         return start(graphContext, graphName, null, autoRecord, resourceType, true);
-
     }
 
     /**
@@ -92,7 +88,7 @@ public class DefaultEngine implements Engine {
             final Resource resource,
             final boolean autoRecord,
             final ResourceType resourceType,
-            final boolean autoClean) throws WorkFlowExecutionExeception {
+            final boolean autoClean) {
 
         Graph graph = graphContext.getGraph(graphName);
         if (graph == null) {
@@ -146,9 +142,9 @@ public class DefaultEngine implements Engine {
                 workFlow.keepRecord(executionRecord);
             }
 
-            //Before executing the activity, we'd check if the node contains async dependency nodes, if yes, we should construct some async tasks turn back to the normal procedure.
+            //Before executing the activity, we'd check if the node contains async dependency nodes, if yes, we should construct some async tasks then turn back to the normal procedure.
             if (startNode.getAsyncDependencies() != null) {
-                setUpAsyncTask(workFlow, startNode);
+                setUpAsyncTasks(workFlow, startNode);
             }
 
             ActivityResult activityResult = startNode.perform();
@@ -163,24 +159,24 @@ public class DefaultEngine implements Engine {
                 Long interval = (Long) timeOut.getValue();
                 try {
                     Thread.sleep(interval.longValue());
-                } catch (InterruptedException e) {
+                } catch (InterruptedException interruptedException) {
                     ExecutionRecord record = ExecutionRecord.builder()
                             .time(Calendar.getInstance().getTime())
-                            .description(String.format("Thread was interupted due to [%s]", e.getMessage()))
+                            .description(String.format("Thread was interupted due to [%s]", interruptedException.getMessage()))
                             .build();
                     workFlow.keepRecord(record);
                 }
             }
         }
 
-        //Successful execute the logic in the current graph, remove the 
         ResourceTank resourceTank = workFlow.getResourceTank();
         if (autoClean && isWorkflowEntryGraph) {
             /**
-             * Clean up the workflow. Only workflow finishs executing the work defined the entry graph(the entry point who call the execute(*) series methods). Basicclly, internal
-             * graphs should call the non auto clean series methods, while the very beginning graph holder calls the auto clean series methods.
+             * Clean up the workflow. This method will be invoked when the customers want the workflow engine to help them clean up the workflow automatically after the
+             * workflow is executed successfully.
              */
-            workFlow.setStatus(WorkFlowStatus.CLOSED);
+            workFlow.close();
+            WorkFlowContext.reboot();
             workFlow = null;
         }
 
@@ -218,12 +214,12 @@ public class DefaultEngine implements Engine {
     }
 
     /**
-     * Set up an async task and submit it to executor, all the workflow instances share one async task executor, so it is expectable to
+     * Set up async tasks and submit them to executor, all the workflow instances share one async task executor, so it is expectable to
      * take some time to complete the task, some times when the traffic is busy it may take more time to complete the task than normal.
      * @param workFlow The async task belong to.
      * @param node The node that need submite async tasks.
      */
-    private void setUpAsyncTask(final WorkFlow workFlow, final Node node) {
+    private void setUpAsyncTasks(final WorkFlow workFlow, final Node node) {
         node.getAsyncDependencies().forEach(async -> {
             Callable<ActivityResult> job = () -> {
                 AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();

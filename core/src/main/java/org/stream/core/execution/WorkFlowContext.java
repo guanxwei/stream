@@ -160,4 +160,19 @@ public final class WorkFlowContext {
         executorServiceForAsyncTasks.submit(task);
     }
 
+    /**
+     * Mark that there are exceptions occur during execution.
+     * @param e
+     */
+    public static void markException(Exception e) {
+        CURRENT.get().markException(e);
+    }
+
+    /**
+     * Extract the root cause exception.
+     * @return
+     */
+    public static Exception extractException() {
+        return CURRENT.get().getE();
+    }
 }

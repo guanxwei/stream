@@ -49,6 +49,8 @@ public class GraphExecutionTest {
         paths.add(path);
         graphLoader.init();
         engine.execute(graphContext, "test", false, null);
+        Exception e = WorkFlowContext.extractException();
+        throw e;
     }
 
     @Test

@@ -2,7 +2,6 @@ package stream.core.test.base;
 
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
-import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRecord;
@@ -21,15 +20,12 @@ public class CascadeTestActivity extends Activity {
     public ActivityResult act() {
         String graphName = "comprehensive";
         Engine engine = new DefaultEngine();
-        try {
-            WorkFlowContext.keepRecord(ExecutionRecord.builder()
-                    .description("keep a cascade record")
-                    .time(null)
-                    .build());
-            engine.execute(graphContext, graphName, false, ResourceType.OBJECT);
-        } catch (WorkFlowExecutionExeception e) {
-            e.printStackTrace();
-        }
+        WorkFlowContext.keepRecord(ExecutionRecord.builder()
+                .description("keep a cascade record")
+                .time(null)
+                .build());
+        engine.execute(graphContext, graphName, false, ResourceType.OBJECT);
+
         return ActivityResult.SUCCESS;
     }
 
