@@ -36,7 +36,7 @@ public class GraphLoadTest {
     /**
      * Test that given a path not exists, expected exception will be thrown.
      */
-    @Test(expectedExceptions = {GraphLoadException.class}, expectedExceptionsMessageRegExp = "Graph definition file is not found, file name is \\[notExist\\.graph\\]")
+    @Test(expectedExceptions = {GraphLoadException.class})
     public void testGraphFileNotExist() throws Exception {
         String filePath = "notExist.graph";
         paths.add(filePath);

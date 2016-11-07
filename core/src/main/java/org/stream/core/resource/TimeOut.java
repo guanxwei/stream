@@ -1,7 +1,7 @@
 package org.stream.core.resource;
 
 /**
- * Util class used to specify time out interval resource reference.
+ * Utility class used to specify time out interval resource reference.
  */
 public class TimeOut {
 

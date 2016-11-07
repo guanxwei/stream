@@ -94,6 +94,9 @@ public class DefaultEngine implements Engine {
         if (graph == null) {
             throw new WorkFlowExecutionExeception("Graph is not present! Please double check the graph name you provide.");
         }
+        if (!graph.getResourceType().equals(resourceType)) {
+        	throw new WorkFlowExecutionExeception("The resourceType does not match the the specified one in the definition file");
+        }
 
         boolean isWorkflowEntryGraph = false;
 
@@ -184,7 +187,7 @@ public class DefaultEngine implements Engine {
     }
 
     /**
-     * Retreive the next node to be executed based on the reuslt the current node returned and the configuration for the current node.
+     * Retrieve the next node to be executed based on the result the current node returned and the configuration for the current node.
      * @param activityResult The result current node returned.
      * @param startNode the current node reference.
      * @return
@@ -214,10 +217,10 @@ public class DefaultEngine implements Engine {
     }
 
     /**
-     * Set up async tasks and submit them to executor, all the workflow instances share one async task executor, so it is expectable to
+     * Set up async tasks and submit them to executor, all the work-flow instances share one async task executor, so it is expectable to
      * take some time to complete the task, some times when the traffic is busy it may take more time to complete the task than normal.
      * @param workFlow The async task belong to.
-     * @param node The node that need submite async tasks.
+     * @param node The node that need submit async tasks.
      */
     private void setUpAsyncTasks(final WorkFlow workFlow, final Node node) {
         node.getAsyncDependencies().forEach(async -> {
@@ -230,7 +233,7 @@ public class DefaultEngine implements Engine {
             FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
             Resource taskWrapper = Resource.builder()
                     .value(task)
-                    .resourceType(ResourceType.OBJECT)
+                    .resourceType(node.getGraph().getResourceType())
                     .resourceReference(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX)
                     .build();
             workFlow.attachResource(taskWrapper);

@@ -24,7 +24,7 @@ public final class WorkFlowContext {
 
     private static final ConcurrentHashMap<String, WorkFlow> WORKFLOWS = new ConcurrentHashMap<>();
 
-    private static final ExecutorService executorServiceForAsyncTasks = Executors.newFixedThreadPool(10);
+    private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(10);
 
     /**
      * Check if there is working workflow in the current thread context. We'd make sure that each thread has only one working workflow instance.
@@ -157,7 +157,7 @@ public final class WorkFlowContext {
      * @param task Async task.
      */
     public static void submit(FutureTask<ActivityResult> task) {
-        executorServiceForAsyncTasks.submit(task);
+        EXECUTOR_SERVICE_FOR_ASYNC_TASKS.submit(task);
     }
 
     /**

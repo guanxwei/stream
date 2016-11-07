@@ -1,7 +1,6 @@
 package org.stream.core.helper;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -42,7 +41,11 @@ public final class GraphLoader {
 
     private GraphContext graphContext;
 
-    private static final String SYSTEM_PATH_SEPARATOR = File.separator;
+    /**
+     * Use absolute path to load the graph definition files, the graph folder should be put at the root directory of the projects.
+     * If the customer create a Maven project, then the graphs should be put at the folder "graph" in the resources.
+     */
+    private static final String SYSTEM_PATH_SEPARATOR = "/";
 
     private static final String DEFAULT_GRAPH_FILE_PATH_PREFIX = SYSTEM_PATH_SEPARATOR + "graph" + SYSTEM_PATH_SEPARATOR;
 
@@ -58,7 +61,7 @@ public final class GraphLoader {
         for (String path : graphFilePaths) {
             InputStream input = getClass().getResourceAsStream(DEFAULT_GRAPH_FILE_PATH_PREFIX + path);
             if (input == null) {
-                throw new GraphLoadException(String.format("Graph definition file is not found, file name is [%s]", path));
+                throw new GraphLoadException(String.format("Graph definition file is not found, file name is [%s]", DEFAULT_GRAPH_FILE_PATH_PREFIX + path));
             }
             Graph graph = loadGraphFromFile(input);
             graphContext.addGraph(graph);
@@ -76,7 +79,10 @@ public final class GraphLoader {
             GraphConfiguration graphConfiguration = gson.fromJson(compressedInputString, GraphConfiguration.class);
             checkGraphConfiguration(graphConfiguration);
             graph.setGraphName(graphConfiguration.getGraphName());
-            graph.setResourceType(graphConfiguration.getResourceType() == null ? ResourceType.UNSPECIFIED : ResourceType.valueOf(graphConfiguration.getResourceType()));
+            if (graphConfiguration.getResourceType() == null) {
+            	throw new GraphLoadException("ResourceType is not specified!");
+            }
+            graph.setResourceType(ResourceType.valueOf(graphConfiguration.getResourceType()));
             NodeConfiguration[] nodes = graphConfiguration.getNodes();
             List<Node> staticNodes = new ArrayList<Node>();
             for (NodeConfiguration nodeConfiguration : nodes) {

@@ -48,7 +48,7 @@ public class GraphExecutionTest {
         String path = "ComprehensiveCase.graph";
         paths.add(path);
         graphLoader.init();
-        engine.execute(graphContext, "test", false, null);
+        engine.execute(graphContext, "test", false, ResourceType.OBJECT);
         Exception e = WorkFlowContext.extractException();
         throw e;
     }
@@ -61,9 +61,9 @@ public class GraphExecutionTest {
         Resource primaryResource = Resource.builder()
                 .resourceReference("testprimary")
                 .value(null)
-                .resourceType(ResourceType.PRIMITIVE)
+                .resourceType(ResourceType.OBJECT)
                 .build();
-        engine.execute(graphContext, "comprehensive", primaryResource, false, null);
+        engine.execute(graphContext, "comprehensive", primaryResource, false, ResourceType.OBJECT);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertNotNull(records);
         Assert.assertEquals(records.size(), 2);
@@ -83,9 +83,9 @@ public class GraphExecutionTest {
         Resource primaryResource = Resource.builder()
                 .resourceReference("testprimary")
                 .value(null)
-                .resourceType(ResourceType.PRIMITIVE)
+                .resourceType(ResourceType.OBJECT)
                 .build();
-        engine.execute(graphContext, "comprehensive", primaryResource, true, null);
+        engine.execute(graphContext, "comprehensive", primaryResource, true, ResourceType.OBJECT);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertEquals(records.size(), 5);
     }
@@ -135,4 +135,11 @@ public class GraphExecutionTest {
         Assert.assertEquals(resource.getValue(), "asyncvalue");
     }
 
+    @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "The resourceType does not match the the specified one in the definition file")
+    public void testResourceTypeMissMatch() throws Exception {
+        String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
+        paths.add(asyncPath);
+        graphLoader.init();
+        engine.execute(graphContext, "comprehensive2", null, false, ResourceType.SESSION);
+    }
 }
