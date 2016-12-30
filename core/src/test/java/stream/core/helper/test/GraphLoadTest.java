@@ -44,7 +44,7 @@ public class GraphLoadTest {
     /**
      * Test that given a path exist but configuration is not correct, expected exception will be thrown.
      */
-    @Test(expectedExceptions = {GraphLoadException.class}, expectedExceptionsMessageRegExp = "There is something wrong in graph definition file, graph name should not be empty or missing!")
+    @Test(expectedExceptions = {GraphLoadException.class}, expectedExceptionsMessageRegExp = "There is something wrong in the graph definition file, graph name should not be empty or missing!")
     public void testGraphKeyConfigurationInfoMissing() throws Exception {
         String path = "NoName.graph";
         paths.add(path);
