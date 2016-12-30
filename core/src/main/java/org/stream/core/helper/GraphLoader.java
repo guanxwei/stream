@@ -30,7 +30,7 @@ import com.google.gson.Gson;
 
 /**
  * Graph helper who is responsible to load a graph from a input stream. Basically, graph definition information is stored in a file with suffix ".graph".
- * The file content should be stored as Json object stringfy style.
+ * The file content should be stored as Json object stringfied style.
  */
 @Data
 public final class GraphLoader {
@@ -43,14 +43,14 @@ public final class GraphLoader {
 
     /**
      * Use absolute path to load the graph definition files, the graph folder should be put at the root directory of the projects.
-     * If the customer create a Maven project, then the graphs should be put at the folder "graph" in the resources.
+     * If the customers use Maven to manage project, then the graphs should be put at the folder "graph" in the resources folder.
      */
     private static final String SYSTEM_PATH_SEPARATOR = "/";
 
     private static final String DEFAULT_GRAPH_FILE_PATH_PREFIX = SYSTEM_PATH_SEPARATOR + "graph" + SYSTEM_PATH_SEPARATOR;
 
     /**
-     * Initiate graph loading process, load all the graphs specified in the {{@link #graphFilePaths} located in the 
+     * Initiate graph loading process, load all the graphs specified in the {@link #graphFilePaths}, which is located in the 
      * default graph directory. 
      * @throws GraphLoadException
      */
@@ -80,7 +80,7 @@ public final class GraphLoader {
             checkGraphConfiguration(graphConfiguration);
             graph.setGraphName(graphConfiguration.getGraphName());
             if (graphConfiguration.getResourceType() == null) {
-            	throw new GraphLoadException("ResourceType is not specified!");
+                throw new GraphLoadException("ResourceType is not specified!");
             }
             graph.setResourceType(ResourceType.valueOf(graphConfiguration.getResourceType()));
             NodeConfiguration[] nodes = graphConfiguration.getNodes();
@@ -117,7 +117,7 @@ public final class GraphLoader {
             graph.setDefaultErrorNode(knowNodes.get(graphConfiguration.getDefaultErrorNode()));
 
             /**
-             * Set up node corerationship net.
+             * Set up node relationship net.
              */
             for (StepPair pair : stepPairs) {
                 final Node predecessor = knowNodes.get(pair.getPredecessor());
@@ -179,7 +179,7 @@ public final class GraphLoader {
         String startNode = graphConfiguration.getStartNode();
         NodeConfiguration[] nodes = graphConfiguration.getNodes();
         if (graphName == null) {
-            throw new GraphLoadException("There is something wrong in graph definition file, graph name should not be empty or missing!");
+            throw new GraphLoadException("There is something wrong in the graph definition file, graph name should not be empty or missing!");
         }
         if (startNode == null) {
             throw new GraphLoadException("Start node is not specified!");

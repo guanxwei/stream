@@ -6,6 +6,8 @@ import lombok.Setter;
 
 /**
  * Encapsulation of customer specific activity, which is performed in a specific {@link Node}.
+ * Users should extend this interface to customize their own logics. The work-flow engine will automatically
+ * pick up these activities and execute them per graph definition files.
  */
 public abstract class Activity {
 
@@ -13,7 +15,7 @@ public abstract class Activity {
     private Node node;
 
     /**
-     * Perform an activity as part of a workflow.
+     * Perform an activity as part of a work-flow.
      * @return The activity result.
      */
     public abstract ActivityResult act();
@@ -35,8 +37,8 @@ public abstract class Activity {
     };
 
     /**
-     * Get the granted resource type of the graph. Basically, activities should follow the resource type limitation, if not unexpedted exception may throws.
-     * @return
+     * Get the granted resource type of the graph. Basically, activities should follow the resource type limitation, if not unexpected exception may throw.
+     * @return The graph's resource type.
      */
     public ResourceType getGrandtedResourceType() {
         return node.getGraph().getResourceType();

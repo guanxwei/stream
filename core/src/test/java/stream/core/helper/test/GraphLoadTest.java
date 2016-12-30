@@ -8,7 +8,6 @@ import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.helper.GraphLoader;
 import org.stream.core.resource.ResourceType;
 import org.testng.Assert;
@@ -30,7 +29,6 @@ public class GraphLoadTest {
         this.graphLoader = new GraphLoader();
         graphLoader.setGraphContext(graphContext);
         graphLoader.setGraphFilePaths(paths);
-        WorkFlowContext.reboot();
     }
 
     /**
@@ -150,4 +148,5 @@ public class GraphLoadTest {
         Assert.assertNotNull(asyncNode);
         Assert.assertEquals(asyncNode.getNodeName(), "node4");
     }
+
 }

@@ -2,6 +2,7 @@ package stream.core.execution.test;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.FutureTask;
 
 import org.stream.core.component.ActivityRepository;
@@ -17,6 +18,7 @@ import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceType;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -40,7 +42,6 @@ public class GraphExecutionTest {
         paths = new LinkedList<>();
         graphLoader.setGraphFilePaths(paths);
         this.engine = new DefaultEngine();
-        WorkFlowContext.reboot();
     }
 
     @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "Graph is not present! Please double check the graph name you provide.")
@@ -141,5 +142,55 @@ public class GraphExecutionTest {
         paths.add(asyncPath);
         graphLoader.init();
         engine.execute(graphContext, "comprehensive2", null, false, ResourceType.SESSION);
+    }
+
+    @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "The work-flow instance has been closed!")
+    public void testExceptionThrownAfterWorkflowClosed() throws Exception {
+        String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
+        paths.add(asyncPath);
+        graphLoader.init();
+        engine.execute(graphContext, "comprehensive2", null, false, ResourceType.OBJECT);
+        WorkFlowContext.close(true);
+        WorkFlowContext.getPrimary();
+    }
+
+    @Test(expectedExceptions = CancellationException.class)
+    public void testCancelAsyncTask() throws Exception {
+        String asyncPath = "ComprehensiveWithAsyncNodeCanceledCase.graph";
+        paths.add(asyncPath);
+        graphLoader.init();
+        engine.execute(graphContext, "comprehensive3", null, false, ResourceType.OBJECT);
+        Resource asyncTaskWrapper = WorkFlowContext.resolveResource("node4" + ResourceHelper.ASYNC_TASK_SUFFIX);
+        // Make sure the async task has chance to start.
+        Thread.sleep(1000);
+        WorkFlowContext.close(true);
+
+        Assert.assertNotNull(asyncTaskWrapper);
+        @SuppressWarnings("unchecked")
+        FutureTask<ActivityResult> task = (FutureTask<ActivityResult>) asyncTaskWrapper.getValue();
+        task.get();
+    }
+
+    @Test
+    public void testAutoClose() throws Exception {
+        String path = "ComprehensiveCase.graph";
+        paths.add(path);
+        graphLoader.init();
+        Resource primaryResource = Resource.builder()
+                .resourceReference("testprimary")
+                .value(null)
+                .resourceType(ResourceType.OBJECT)
+                .build();
+        engine.executeOnce(graphContext, "comprehensive", primaryResource, true, ResourceType.OBJECT);
+        Assert.assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
+
+    }
+
+    @AfterMethod
+    public void AfterMethod() {
+        if (WorkFlowContext.isThereWorkingWorkFlow())
+            WorkFlowContext.reboot();
+        Assert.assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
+
     }
 }

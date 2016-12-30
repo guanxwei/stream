@@ -24,7 +24,7 @@ public class ResourceCatalog {
     private Map<String, ResourceReader> readers = new HashMap<>();
 
     /**
-     * Register a resource instance.
+     * Register a resource reader instance.
      * @param reader The reader instance needed to registered.
      */
     public void registerReader(ResourceReader reader) {
@@ -47,9 +47,9 @@ public class ResourceCatalog {
         }
         ResourceReader reader = resolve(resourceURL);
         if (reader == null) {
-            throw new ResourceReadingExecption(String.format("There is reader registered for this resourceURL represents resource authority [%s]", resourceURL.getResourceAuthority().getValue()));
+            throw new ResourceReadingExecption(String.format("There is no reader registered for this resourceURL represented resource authority [%s]", resourceURL.getResourceAuthority().getValue()));
         }
-        return resolve(resourceURL).read(resourceURL);
+        return reader.read(resourceURL);
     }
 
     /**

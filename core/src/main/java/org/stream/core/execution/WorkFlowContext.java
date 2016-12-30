@@ -15,8 +15,8 @@ import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 
 /**
- * Workflow helper class. Help to create a new workflow, provide existed workflow, reboot the workflow.
- * Also provide helper method to retreive objects from the thread related workflow.
+ * Work-flow helper class. Help to create a new work-flow or provide existed work-flow, or even reboot the work-flow.
+ * Also provide helper method to retrieve objects from the thread related work-flow.
  */
 public final class WorkFlowContext {
 
@@ -24,10 +24,10 @@ public final class WorkFlowContext {
 
     private static final ConcurrentHashMap<String, WorkFlow> WORKFLOWS = new ConcurrentHashMap<>();
 
-    private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(10);
+    private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     /**
-     * Check if there is working workflow in the current thread context. We'd make sure that each thread has only one working workflow instance.
+     * Check if there is working work-flow in the current thread context. We'd make sure that each thread has only one working work-flow instance.
      * @return
      */
     public static boolean isThereWorkingWorkFlow() {
@@ -35,15 +35,14 @@ public final class WorkFlowContext {
     }
 
     /**
-     * Set up a new workflow instance for current thread. The new created workflow instance's status will be {@link WorkFlowStatus#WAITING}.
-     * Clients should manually start the workflow by invoking the method {@link WorkFlow#start()}, the {@linkplain Engine} will help
-     * to invoke this method when create new workflow instance, then the workflow will retrive the graph and execute the logic defined in
-     * the graph definition file.
+     * Set up a new work-flow instance for the current thread. The new created work-flow instance's status will be {@link WorkFlowStatus#WAITING}.
+     * Clients should manually start the work-flow by invoking the method {@link WorkFlow#start()}, default the {@linkplain Engine} will help
+     * to invoke this method when create new work-flow instance.
      * 
-     * Users should not invoke this method in any event.
-     * @return The workflow reference.
+     * Users should not invoke this method in any cases.
+     * @return The work-flow reference.
      */
-    public static WorkFlow setUpWorkFlow() {
+    protected static WorkFlow setUpWorkFlow() {
         WorkFlow newWorkFlow = new WorkFlow();
         Date createTime = Calendar.getInstance().getTime();
         newWorkFlow.setCreateTime(createTime);
@@ -53,17 +52,18 @@ public final class WorkFlowContext {
     }
 
     /**
-     * Provide the current working workflow reference.
+     * Provide the current working work-flow reference.
      * @return
      */
-    public static WorkFlow provide() {
+    protected static WorkFlow provide() {
         return CURRENT.get();
     }
 
     /**
-     * Reboot the workflow, it needs lubrication!
+     * Reboot the work-flow, it needs lubrication!
      */
     public static void reboot() {
+        close(true);
         CURRENT.set(null);
     }
 
@@ -73,6 +73,9 @@ public final class WorkFlowContext {
      * @return
      */
     public static Resource getAsyncTaskWrapper(final String nodeName) {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         return CURRENT.get().getAsyncTaskWrapper(nodeName);
     }
 
@@ -81,13 +84,27 @@ public final class WorkFlowContext {
      * @return
      */
     public static List<ExecutionRecord> getRecords() {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         return CURRENT.get().getRecords();
     }
 
     /**
-     * Force the workflow status to {@linkplain WorkFlowStatus#CLOSED}.
+     * Force the work-flow status to {@linkplain WorkFlowStatus#CLOSED}. And shut down the back-end running async tasks.
+     * @param waitTermination parameter to indicate if we need to wait until all the async tasks are shutdown.
      */
-    public static void close() {
+    public static void close(final boolean mayInterruptIfRunning) {
+        WorkFlow current = CURRENT.get();
+        List<String> asyncTasks = current.getAsyncTaksReferences();
+        asyncTasks.forEach(task -> {
+            Resource taskWrapper = CURRENT.get().resolveResource(task);
+            @SuppressWarnings("unchecked")
+            FutureTask<ActivityResult> future = (FutureTask<ActivityResult>) taskWrapper.getValue();
+            if (!future.isDone() && !future.isCancelled()) {
+                future.cancel(mayInterruptIfRunning);
+            }
+        });
         CURRENT.get().setStatus(WorkFlowStatus.CLOSED);
     }
 
@@ -96,14 +113,20 @@ public final class WorkFlowContext {
      * @param record
      */
     public static void keepRecord(ExecutionRecord record) {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         CURRENT.get().keepRecord(record);
     }
 
     /**
-     * Attach a resource to the workflow.
+     * Attach a resource to the work-flow.
      * @param resource
      */
     public static void attachResource(final Resource resource) {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         CURRENT.get().attachResource(resource);
     }
 
@@ -113,24 +136,33 @@ public final class WorkFlowContext {
      * @return
      */
     public static Resource resolveResource(final String resourceReference) {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         return CURRENT.get().resolveResource(resourceReference);
     }
 
     /**
-     * Add a new graph to the workflow, the workflow will handle it sooner.
+     * Add a new graph to the work-flow, the work-flow will handle it sooner.
      * @param graph
      */
     public static void visitGraph(Graph graph) {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         CURRENT.get().visitGraph(graph);
     }
 
     /**
-     * Appoint a primary source to the workflow, once appointed, the primary resource should never be changed.
-     * @param resource
-     * @throws WorkFlowExecutionExeception 
+     * Appoint a primary source to the work-flow, once appointed, the primary resource should never be changed.
+     * @param resource The primary resource being attached.
+     * @throws WorkFlowExecutionExeception Exception thrown during execution
      */
     public static void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionExeception {
 
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         if (resource == null) {
             return;
         }
@@ -145,10 +177,13 @@ public final class WorkFlowContext {
     }
 
     /**
-     * Extract the primary resource of the workflow.
+     * Extract the primary resource of the work-flow.
      * @return
      */
     public static Resource getPrimary() {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         return CURRENT.get().getPrimary();
     };
 
@@ -157,6 +192,9 @@ public final class WorkFlowContext {
      * @param task Async task.
      */
     public static void submit(FutureTask<ActivityResult> task) {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         EXECUTOR_SERVICE_FOR_ASYNC_TASKS.submit(task);
     }
 
@@ -165,6 +203,9 @@ public final class WorkFlowContext {
      * @param e
      */
     public static void markException(Exception e) {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         CURRENT.get().markException(e);
     }
 
@@ -173,6 +214,9 @@ public final class WorkFlowContext {
      * @return
      */
     public static Exception extractException() {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
+        }
         return CURRENT.get().getE();
     }
 }

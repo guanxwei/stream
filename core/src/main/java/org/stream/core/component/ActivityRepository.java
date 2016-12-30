@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Activity repository which is used to store all the activities. 
+ * Activity repository which is used to store the activities. 
  */
 public class ActivityRepository {
 

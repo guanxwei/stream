@@ -8,7 +8,7 @@ import org.stream.core.resource.ResourceType;
 public interface Engine {
 
     /**
-     * Use the graph with name graphName in the graphContext and execute on it. The workflow will not be cleaned up automatically after execution.
+     * Use the graph with name graphName in the graphContext and execute on it. The work-flow will not be cleaned up automatically after execution.
      * @param graphContext the graph Context from which the graph will be extracted.
      * @param graphName the name of graph which will be executed on.
      * @param autoRecord implicit indicator to work flow engine telling the engine if it need to record events automatically.
@@ -23,7 +23,7 @@ public interface Engine {
     /**
      * Use the graph with name graphName in the graphContext and execute on it. Clients should provide an
      * Resource instance so that the {@link Node} nodes in the graph can use it. The resource will be added to
-     * the resouce tank of the current thread. The workflow will not be cleaned up automatically.
+     * the resource tank of the current thread. The work-flow will not be cleaned up automatically.
      * @param graphContext the graph Context from which the graph will be extracted.
      * @param graphName the name of graph which will be executed on.
      * @param primaryResource resource clients sent to the work flow engine, will be added to the new created resource tank.
@@ -40,7 +40,7 @@ public interface Engine {
     /**
      * Use the graph with name graphName in the graphContext and execute on it. Clients should provide an
      * Resource instance so that the {@link Node} nodes in the graph can use it. The resource will be added to
-     * the resouce tank of the current thread. Once the engine finish the work, it will automaticlly clean the desktroy
+     * the resource tank of the current thread. Once the engine finish the work, it will automatically clean the work-flow
      * instance.
      * @param graphContext the graph Context from which the graph will be extracted.
      * @param graphName the name of graph which will be executed on.
@@ -58,7 +58,7 @@ public interface Engine {
     /**
      * Use the graph with name graphName in the graphContext and execute on it. Clients will not provide an
      * Resource instance. The resource will be added to
-     * the resouce tank of the current thread. Once the engine finish the work, it will automaticlly clean the desktroy
+     * the resource tank of the current thread. Once the engine finish the work, it will automatically clean the work-flow
      * instance.
      * @param graphContext the graph Context from which the graph will be extracted.
      * @param graphName the name of graph which will be executed on.
@@ -72,13 +72,13 @@ public interface Engine {
             final ResourceType resourceType);
 
     /**
-     * Clean up the engine, it needs lubrication! Clients should be very careful to invoke this method, once it is invoked, workflow information is cleaned up.
-     * If the method is invoked in improper time unexpected fatal error will happen!. We provide an elegant way to substitude this method see {{@link #waitAndReboot()}.
+     * Clean up the engine, it needs lubrication! Clients should be very careful to invoke this method, once it is invoked, work-flow information is cleaned up.
+     * If the method is invoked in improper time unexpected fatal error will happen!. We provide an elegant way to substitute this method see {{@link #waitAndReboot()}.
      */
-    public void reboot();
+    public void reboot() throws InterruptedException ;
 
     /**
-     * Wait for the working nodes to finish their work, then clean up the workflow.
+     * Wait for the working nodes to finish their work, then clean up the work-flow.
      */
     public void waitAndReboot();
 }

@@ -29,9 +29,9 @@ public class MemoryCache implements Cache {
      * {@inheritDoc}
      */
     @Override
-    public void put(Resource resource) {
+    public void put(ResourceURL resourceURL, Resource resource) {
         SoftReference<Resource> reference = new SoftReference<Resource>(resource);
-        cached_resources.put(resource.getResourceURL().getPath(), reference);
+        cached_resources.put(resourceURL.getPath(), reference);
     }
 
     /**

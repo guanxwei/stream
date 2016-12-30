@@ -9,8 +9,16 @@ public class Resource {
 
     private ResourceType resourceType;
 
+    /**
+     * Work-flow internal used reference to concrete resource.
+     */
     private String resourceReference;
 
+    /**
+     * Work-flow external used reference to a potential concrete resource. Typically used to get resource
+     * through {@link ResourceReader}. {@link ResourceReader} will use it to find the resource from their
+     * own storage.
+     */
     private ResourceURL resourceURL;
 
     public static ResourceBuilder builder() {

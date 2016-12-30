@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 /**
- * Encapsulation of logical resource authority of a resource that can be used by Stream workflow nodes.
+ * Encapsulation of logical resource authority of a resource that can be used by Stream work-flow.
  */
 @Data
 public class ResourceAuthority {

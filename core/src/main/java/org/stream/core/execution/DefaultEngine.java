@@ -72,7 +72,7 @@ public class DefaultEngine implements Engine {
      * {@inheritDoc}
      */
     @Override
-    public void reboot() {
+    public void reboot() throws InterruptedException {
         WorkFlowContext.reboot();
     }
 
@@ -102,7 +102,7 @@ public class DefaultEngine implements Engine {
 
         WorkFlow workFlow;
         if (!WorkFlowContext.isThereWorkingWorkFlow()) {
-            //Currently there is no working workflow in the same thread, we should create a new workflow.
+            //Currently there is no working work-flow in the same thread, we should create a new work-flow.
             workFlow = WorkFlowContext.setUpWorkFlow();
             isWorkflowEntryGraph = true;
             workFlow.start();
@@ -115,7 +115,7 @@ public class DefaultEngine implements Engine {
                 workFlow.keepRecord(record);
             }
         } else {
-            //Current there is one workfing workflow instance attached to the thread, just reuse it.
+            //Current there is one working work-flow instance attached to the thread, just reuse it.
             workFlow = WorkFlowContext.provide();
             if (workFlow.getStatus().equals(WorkFlowStatus.CLOSED)) {
                 throw new WorkFlowExecutionExeception("The workflow has been closed!");
@@ -155,7 +155,7 @@ public class DefaultEngine implements Engine {
 
             if (activityResult.equals(ActivityResult.SUSPEND)) {
                 /**
-                 * Since the previous node return Suspend result, workflow should suspend and wait for some time to invoke the next node.
+                 * Since the previous node return Suspend result, work-flow should suspend and wait for some time to invoke the next node.
                  * Waiting time is specified by the activity himself, stored in the resource tank with a standard resource reference WAITING_TIME.
                  */
                 Resource timeOut = workFlow.resolveResource(TimeOut.TIME_OUT_REFERENCE);
@@ -175,12 +175,16 @@ public class DefaultEngine implements Engine {
         ResourceTank resourceTank = workFlow.getResourceTank();
         if (autoClean && isWorkflowEntryGraph) {
             /**
-             * Clean up the workflow. This method will be invoked when the customers want the workflow engine to help them clean up the workflow automatically after the
-             * workflow is executed successfully.
+             * Clean up the work-flow. This method will be invoked when the customers want the work-flow engine to help them clean up the work-flow automatically after the
+             * work-flow is executed successfully.
+             * 
+             * Release the connection between the resourceTank and the work-flow instance.
+             * Since the invoker still hold the reference to the return resourceTank, they can
+             * retrieve resources directly from the resourceTank anyway.
+             * After execution, the GC can have opportunity to clean up the memory.
              */
-            workFlow.close();
+            //workFlow.setResourceTank(null);
             WorkFlowContext.reboot();
-            workFlow = null;
         }
 
         return resourceTank;
@@ -237,6 +241,7 @@ public class DefaultEngine implements Engine {
                     .resourceReference(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX)
                     .build();
             workFlow.attachResource(taskWrapper);
+            workFlow.addAsyncTasks(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX);
             WorkFlowContext.submit(task);
         });
     }

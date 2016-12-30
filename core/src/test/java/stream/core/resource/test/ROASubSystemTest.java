@@ -42,7 +42,7 @@ public class ROASubSystemTest {
                 .resourceReference("test")
                 .resourceURL(resourceURL)
                 .build();
-        cache.put(resource);
+        cache.put(resourceURL, resource);
         Resource r = cache.get(resourceURL);
         Assert.assertNotNull(r);
     }
