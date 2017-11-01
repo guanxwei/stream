@@ -5,9 +5,10 @@ import org.stream.core.resource.ResourceType;
 import lombok.Setter;
 
 /**
- * Encapsulation of customer specific activity, which is performed in a specific {@link Node}.
- * Users should extend this interface to customize their own logics. The work-flow engine will automatically
- * pick up these activities and execute them per graph definition files.
+ * Encapsulation of customer specific activity, which will be performed in a specific {@link Node}.
+ *
+ * Users should extend this interface to customize their own logics and configure them in graph definition files.
+ * The work-flow engine will automatically pick up these activities and execute them per graph definition files.
  */
 public abstract class Activity {
 
@@ -22,11 +23,11 @@ public abstract class Activity {
 
     /**
      * Get the name of the activity.
-     * @return
+     * @return The activity's name
      */
     public String getActivityName() {
         return getClass().getName();
-    };
+    }
 
     /**
      * Get the node the activity is running on.
@@ -34,13 +35,14 @@ public abstract class Activity {
      */
     public Node getExecutionContext() {
         return node;
-    };
+    }
 
     /**
-     * Get the granted resource type of the graph. Basically, activities should follow the resource type limitation, if not unexpected exception may throw.
-     * @return The graph's resource type.
+     * Get the granted resource type of the graph. Basically, activities should follow the resource type limitation defined in graph definition file,
+     * if not unexpected exception may throw.
+     * @return The graph's granted primary resource type.
      */
-    public ResourceType getGrandtedResourceType() {
+    public ResourceType getGrandtedPrimaryResourceType() {
         return node.getGraph().getResourceType();
     }
 }

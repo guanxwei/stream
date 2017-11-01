@@ -20,6 +20,8 @@ import org.stream.core.resource.Resource;
  */
 public final class WorkFlowContext {
 
+    private WorkFlowContext() { }
+
     private static final ThreadLocal<WorkFlow> CURRENT = new ThreadLocal<WorkFlow>();
 
     private static final ConcurrentHashMap<String, WorkFlow> WORKFLOWS = new ConcurrentHashMap<>();
@@ -28,7 +30,7 @@ public final class WorkFlowContext {
 
     /**
      * Check if there is working work-flow in the current thread context. We'd make sure that each thread has only one working work-flow instance.
-     * @return
+     * @return Checking result.
      */
     public static boolean isThereWorkingWorkFlow() {
         return CURRENT.get() != null;
@@ -38,7 +40,7 @@ public final class WorkFlowContext {
      * Set up a new work-flow instance for the current thread. The new created work-flow instance's status will be {@link WorkFlowStatus#WAITING}.
      * Clients should manually start the work-flow by invoking the method {@link WorkFlow#start()}, default the {@linkplain Engine} will help
      * to invoke this method when create new work-flow instance.
-     * 
+     *
      * Users should not invoke this method in any cases.
      * @return The work-flow reference.
      */
@@ -53,7 +55,7 @@ public final class WorkFlowContext {
 
     /**
      * Provide the current working work-flow reference.
-     * @return
+     * @return The work-flow instance adhered to the current thread.
      */
     protected static WorkFlow provide() {
         return CURRENT.get();
@@ -69,8 +71,8 @@ public final class WorkFlowContext {
 
     /**
      * Get the task wrapper defined by the node having the nodeName.
-     * @param nodeName
-     * @return
+     * @param nodeName The asynchronous task's node name.
+     * @return Asynchronous task wrapper.
      */
     public static Resource getAsyncTaskWrapper(final String nodeName) {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
@@ -81,7 +83,7 @@ public final class WorkFlowContext {
 
     /**
      * Get all the execution records recored during the procedure.
-     * @return
+     * @return ExecutionRecord list.
      */
     public static List<ExecutionRecord> getRecords() {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
@@ -92,7 +94,7 @@ public final class WorkFlowContext {
 
     /**
      * Force the work-flow status to {@linkplain WorkFlowStatus#CLOSED}. And shut down the back-end running async tasks.
-     * @param waitTermination parameter to indicate if we need to wait until all the async tasks are shutdown.
+     * @param mayInterruptIfRunning Parameter to indicate if we need to wait until all the async tasks are shutdown.
      */
     public static void close(final boolean mayInterruptIfRunning) {
         WorkFlow current = CURRENT.get();
@@ -110,9 +112,9 @@ public final class WorkFlowContext {
 
     /**
      * Add a execution record to the ledger.
-     * @param record
+     * @param record ExecutionRecord to be recorded.
      */
-    public static void keepRecord(ExecutionRecord record) {
+    public static void keepRecord(final ExecutionRecord record) {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
             throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
         }
@@ -121,7 +123,7 @@ public final class WorkFlowContext {
 
     /**
      * Attach a resource to the work-flow.
-     * @param resource
+     * @param resource Resource to be attached.
      */
     public static void attachResource(final Resource resource) {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
@@ -132,8 +134,8 @@ public final class WorkFlowContext {
 
     /**
      * Extract a resource object from the resource tank.
-     * @param resourceReference
-     * @return
+     * @param resourceReference Resource reference.
+     * @return Resource corresponding to the reference.
      */
     public static Resource resolveResource(final String resourceReference) {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
@@ -144,9 +146,9 @@ public final class WorkFlowContext {
 
     /**
      * Add a new graph to the work-flow, the work-flow will handle it sooner.
-     * @param graph
+     * @param graph Graph to be visited.
      */
-    public static void visitGraph(Graph graph) {
+    public static void visitGraph(final Graph graph) {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
             throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
         }
@@ -178,20 +180,20 @@ public final class WorkFlowContext {
 
     /**
      * Extract the primary resource of the work-flow.
-     * @return
+     * @return Primary resource.
      */
     public static Resource getPrimary() {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
             throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
         }
         return CURRENT.get().getPrimary();
-    };
+    }
 
     /**
      * Submit an async task to the executor.
      * @param task Async task.
      */
-    public static void submit(FutureTask<ActivityResult> task) {
+    public static void submit(final FutureTask<ActivityResult> task) {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
             throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
         }
@@ -200,9 +202,9 @@ public final class WorkFlowContext {
 
     /**
      * Mark that there are exceptions occur during execution.
-     * @param e
+     * @param e Exception.
      */
-    public static void markException(Exception e) {
+    public static void markException(final Exception e) {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
             throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
         }
@@ -211,7 +213,7 @@ public final class WorkFlowContext {
 
     /**
      * Extract the root cause exception.
-     * @return
+     * @return The root exception caused any issues.
      */
     public static Exception extractException() {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {

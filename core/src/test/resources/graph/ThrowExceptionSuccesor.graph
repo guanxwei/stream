@@ -1,0 +1,16 @@
+{
+  "graphName":"ThrowExceptionSuccesor",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node2",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.ExceptionThrownSuccesorActivity"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"org.stream.core.test.base.TestActivity"
+    }
+  ]
+}

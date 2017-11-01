@@ -12,27 +12,29 @@ public interface Cache {
      * @param resourceURL resource URL reference to the resource.
      * @return the target resource or null if the resource does not exist in the cache pool.
      */
-    Resource get(ResourceURL resourceURL);
+    Resource get(final ResourceURL resourceURL);
 
     /**
      * Put a resource to the cache pool, so that it can be retrieved faster in the following operations.
+     * @param resourceURL the url referred to the resource.
      * @param resource resource need to be put to the cache pool.
      */
-    void put(ResourceURL resourceURL, Resource resource);
+    void put(final ResourceURL resourceURL, final Resource resource);
 
     /**
      * Check if the resource has been marked as expired. Concrete implementation can determine their own mechanism to realize this character,
      * and they should obey to their usage principle when they plug their implementation into real software system.
-     * @param resource
-     * @return
+     * @param resource resource need to be checked if it is expired.
+     * @return Checking result.
      */
-    boolean isResourceExpired(Resource resource);
+    boolean isResourceExpired(final Resource resource);
 
     /**
      * Mark the resource as expired. Also please refer to {{@link #isResourceExpired(Resource)}, these two methods should keep in coordination
-     * to it work at proper status. Framework does not provide any guarantee that what the real situation is going, it all depends on the concrete implementation.
-     * @param resource
+     * to work properly. Framework does not provide any guarantee what exact work will be done,
+     * it all depends on the concrete implementation.
+     * @param resource resource need to be set as expired.
      */
-    void setResourceExpired(Resource resource);
+    void setResourceExpired(final Resource resource);
 
 }

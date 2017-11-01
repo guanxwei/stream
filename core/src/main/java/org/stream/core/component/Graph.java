@@ -6,6 +6,12 @@ import org.stream.core.resource.ResourceType;
 
 import lombok.Data;
 
+/**
+ * Encapsulation of work-flow execution procedure. Each graph should be defined in a stand-alone file
+ * with suffix ".graph". Work-flow run time context will load these files and assemble them into {@linkplain Graph}
+ * instance so the {@linkplain Engine} can use them to complete the designed work.
+ *
+ */
 @Data
 public class Graph {
 
@@ -20,7 +26,7 @@ public class Graph {
     private List<Node> nodes;
 
     /**
-     * The resourceType of the graph nodes execute on, see {@link ResourceType}. 
+     * The resourceType of the graph nodes execute on, see {@link ResourceType}.
      */
     private ResourceType resourceType;
 

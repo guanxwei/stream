@@ -8,16 +8,22 @@ import org.stream.core.resource.Cache;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceURL;
 
+/**
+ * Sample implementation of {@link Cache}.
+ * Only used for purpose of illustration, please do not use in online environments.
+ * @author hzweiguanxiong
+ *
+ */
 public class MemoryCache implements Cache {
 
-    private Map<String, SoftReference<Resource>> cached_resources = new ConcurrentHashMap<>();
+    private static final Map<String, SoftReference<Resource>> CACHED_RESOURCES = new ConcurrentHashMap<>();
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Resource get(ResourceURL resourceURL) {
-        SoftReference<Resource> reference = cached_resources.get(resourceURL.getPath());
+    public Resource get(final ResourceURL resourceURL) {
+        SoftReference<Resource> reference = CACHED_RESOURCES.get(resourceURL.getPath());
         if (reference != null) {
             return reference.get();
         } else {
@@ -29,16 +35,16 @@ public class MemoryCache implements Cache {
      * {@inheritDoc}
      */
     @Override
-    public void put(ResourceURL resourceURL, Resource resource) {
+    public void put(final ResourceURL resourceURL, final Resource resource) {
         SoftReference<Resource> reference = new SoftReference<Resource>(resource);
-        cached_resources.put(resourceURL.getPath(), reference);
+        CACHED_RESOURCES.put(resourceURL.getPath(), reference);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isResourceExpired(Resource resource) {
+    public boolean isResourceExpired(final Resource resource) {
         /**
          * We don't provide mechanism to help check if the cached object is expired or not, we just return true if you ask us.
          */
@@ -49,9 +55,9 @@ public class MemoryCache implements Cache {
      * {@inheritDoc}
      */
     @Override
-    public void setResourceExpired(Resource resource) {
-        if (cached_resources.containsKey(resource.getResourceURL().getPath())) {
-            cached_resources.remove(resource.getResourceURL().getPath());
+    public void setResourceExpired(final Resource resource) {
+        if (CACHED_RESOURCES.containsKey(resource.getResourceURL().getPath())) {
+            CACHED_RESOURCES.remove(resource.getResourceURL().getPath());
         }
     }
 

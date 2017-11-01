@@ -3,7 +3,8 @@ package org.stream.core.helper;
 import lombok.Data;
 
 /**
- * Graph configuration encapsulation, which is used to initiate a graph. Graph configuration information is retrieved from a 
+ * Graph configuration encapsulation, which is used to initiate a graph.
+ * Graph configuration information is retrieved from a
  * graph definition file, which has a suffix ".graph"
  */
 @Data

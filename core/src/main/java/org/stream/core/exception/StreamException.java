@@ -1,19 +1,25 @@
 package org.stream.core.exception;
 
+/**
+ * Stream work-flow framework exception, may be thrown in any place of the work-flow context.
+ * @author hzweiguanxiong
+ *
+ */
 public class StreamException extends Exception {
 
     private static final long serialVersionUID = 990113735174849552L;
 
-    public StreamException(String message) {
+    // CHECKSTYLE:OFF
+    public StreamException(final String message) {
         super(message);
     }
 
-    public StreamException(String message, Throwable t) {
+    public StreamException(final String message, final Throwable t) {
         super(message, t);
     }
 
-    public StreamException(Throwable t) {
+    public StreamException(final Throwable t) {
         super(t);
     }
-
+    // CHECKSTYLE:ON
 }

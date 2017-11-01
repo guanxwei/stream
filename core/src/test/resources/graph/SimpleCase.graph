@@ -6,11 +6,11 @@
   "nodes":[
     {
       "nodeName":"node1",
-      "activityClass":"stream.core.test.base.TestActivity"
+      "activityClass":"org.stream.core.test.base.TestActivity"
     },
     {
       "nodeName":"node2",
-      "activityClass":"stream.core.test.base.TestActivity"
+      "activityClass":"org.stream.core.test.base.TestActivity"
     }
   ]
 }

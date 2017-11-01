@@ -1,18 +1,25 @@
 package org.stream.core.exception;
 
+/**
+ * Work-flow execution exception, may be thrown during work-flow execution process.
+ * @author hzweiguanxiong
+ *
+ */
 public class WorkFlowExecutionExeception extends RuntimeException {
 
     private static final long serialVersionUID = -9138588163767012469L;
 
-    public WorkFlowExecutionExeception(String message) {
+    // CHECKSTYLE:OFF
+    public WorkFlowExecutionExeception(final String message) {
         super(message);
     }
 
-    public WorkFlowExecutionExeception(String message, Throwable t) {
+    public WorkFlowExecutionExeception(final String message, final Throwable t) {
         super(message, t);
     }
 
-    public WorkFlowExecutionExeception(Throwable t) {
+    public WorkFlowExecutionExeception(final Throwable t) {
         super(t);
     }
+    // CHECKSTYLE:ON
 }

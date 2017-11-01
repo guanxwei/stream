@@ -1,0 +1,190 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<!--
+Developer Tools Checkstyle configuration composed of:
+
+- the Java Language Specification at http://java.sun.com/docs/books/jls/second_edition/html/index.html
+- the Sun Code Conventions at http://java.sun.com/docs/codeconv/
+- the Javadoc guidelines at http://java.sun.com/j2se/javadoc/writingdoccomments/index.html
+- the JDK Api documentation http://java.sun.com/j2se/docs/api/index.html
+- some best practices
+
+Checkstyle is very configurable. Be sure to read the documentation at
+http://checkstyle.sf.net (or in your downloaded distribution).
+
+Most Checks are configurable, be sure to consult the documentation.
+
+To completely disable a check, just comment it out or delete it from the file.
+
+Finally, it is worth reading the documentation.
+-->
+
+<module name="Checker">
+
+    <module name="FileLength"/>
+
+    <!-- Spaces instead of tabs -->
+    <module name="FileTabCharacter"/>
+
+    <!-- Check for trailing whitespace                   -->
+    <!-- See http://checkstyle.sf.net/config_regexp.html -->
+    <module name="RegexpSingleline">
+        <!-- \s matches whitespace character, $ matches end of line. -->
+        <property name="format" value="\s+$"/>
+    </module>
+
+    <!-- Checks whether files end with a new line.                        -->
+    <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
+    <module name="NewlineAtEndOfFile">
+        <property name="lineSeparator" value="lf"/>
+    </module>
+
+    <!-- Checks that property files contain the same keys.         -->
+    <!-- See http://checkstyle.sf.net/config_misc.html#Translation -->
+    <module name="Translation"/>
+
+    <module name="SuppressionFilter">
+        <!--  <property name="file" value="${checkstyle.suppression.filter}"/> -->
+    </module>
+
+    <module name="SuppressionCommentFilter">
+        <property name="offCommentFormat" value="CHECKSTYLE\:OFF.*$"/>
+        <property name="onCommentFormat" value="CHECKSTYLE\:ON"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Make comments available for the suppression comment filter. -->
+        <module name="FileContentsHolder"/>
+
+        <!-- Checks for Javadoc comments.                     -->
+        <!-- See http://checkstyle.sf.net/config_javadoc.html -->
+        <module name="JavadocMethod">
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="scope" value="package"/>
+        </module>
+        <module name="JavadocType">
+            <property name="scope" value="package"/>
+        </module>
+        <module name="JavadocVariable">
+            <property name="scope" value="package"/>
+        </module>
+
+        <!-- Checks for Naming Conventions.                  -->
+        <!-- See http://checkstyle.sf.net/config_naming.html -->
+        <module name="ConstantName"/>
+        <module name="LocalFinalVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="MethodName"/>
+        <module name="PackageName"/>
+        <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
+        <module name="TypeName"/>
+
+        <!-- Checks for imports                              -->
+        <!-- See http://checkstyle.sf.net/config_import.html -->
+        <module name="AvoidStarImport"/>
+        <module name="IllegalImport"> <!-- defaults contains sun.* packages -->
+            <property name="illegalPkgs" value="com.amazon.coral.google, org.apache.commons.lang, org.apache.commons.collections"/>
+        </module>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
+
+        <!-- Checks for Size Violations.                    -->
+        <!-- See http://checkstyle.sf.net/config_sizes.html -->
+        <module name="LineLength">
+            <property name="max" value="160"/>
+            <!-- Ignore "$Id: <path>" lines in Amazon source files. -->
+            <property name="ignorePattern" value="(^ *\** *\$Id\:)|(^import )|(^ *@)|(^.*#.*)"/>
+        </module>
+        <module name="ParameterNumber">
+            <property name="max" value="11"/>
+        </module>
+
+        <!-- Checks for whitespace                               -->
+        <!-- See http://checkstyle.sf.net/config_whitespace.html -->
+        <module name="EmptyForIteratorPad"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceBefore"/>
+        <module name="OperatorWrap"/>
+        <module name="ParenPad"/>
+        <module name="TypecastParenPad"/>
+        <!-- Restrict white space after typecast -->
+        <module name="WhitespaceAfter">
+          <property name="tokens" value="COMMA, SEMI"/>
+        </module>
+        <!-- Enforce WhitespaceAround the usual tokens, except GENERIC_*. -->
+        <module name="WhitespaceAround">
+            <property
+                name="tokens"
+                value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR,
+                BSR_ASSIGN, BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN,
+                EQUAL, GE, GT, LAND, LCURLY, LE, LITERAL_ASSERT,
+                LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY,
+                LITERAL_FOR, LITERAL_IF, LITERAL_RETURN,
+                LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, LOR,
+                LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL,
+                PLUS, PLUS_ASSIGN, RCURLY, SL, SLIST, SL_ASSIGN,
+                SR, SR_ASSIGN, STAR, STAR_ASSIGN, TYPE_EXTENSION_AND"/>
+        </module>
+
+        <!-- Enforce correct method and field separation. Don't allow multiple blank lines. -->
+        <module name="EmptyLineSeparator">
+            <property name="allowNoEmptyLineBetweenFields" value="true"/>
+            <property name="allowMultipleEmptyLines" value="false"/>
+        </module>
+
+        <!-- Modifier Checks                                    -->
+        <!-- See http://checkstyle.sf.net/config_modifiers.html -->
+        <module name="ModifierOrder"/>
+
+        <!-- Checks for blocks. You know, those {}'s         -->
+        <!-- See http://checkstyle.sf.net/config_blocks.html -->
+        <module name="EmptyBlock">
+            <property
+                name="tokens"
+                value="LITERAL_DO, LITERAL_FINALLY, LITERAL_FOR, LITERAL_TRY, LITERAL_WHILE"/>
+        </module>
+        <module name="LeftCurly"/>
+        <module name="NeedBraces"/>
+        <module name="RightCurly"/>
+
+        <!-- Checks for common coding problems               -->
+        <!-- See http://checkstyle.sf.net/config_coding.html -->
+        <module name="EmptyStatement"/>
+        <module name="EqualsHashCode"/>
+        <module name="HiddenField">
+            <property name="tokens" value="VARIABLE_DEF"/>
+            <property name="ignoreSetter" value="true"/>
+            <property name="ignoreConstructorParameter" value="true"/>
+        </module>
+        <module name="IllegalInstantiation"/>
+        <module name="InnerAssignment"/>
+        <module name="MissingSwitchDefault"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+
+        <!-- Checks for class design                         -->
+        <!-- See http://checkstyle.sf.net/config_design.html -->
+        <module name="FinalClass"/>
+        <module name="HideUtilityClassConstructor"/>
+        <module name="InterfaceIsType"/>
+        <module name="VisibilityModifier"/>
+
+        <!-- Miscellaneous other checks.                   -->
+        <!-- See http://checkstyle.sf.net/config_misc.html -->
+        <module name="ArrayTypeStyle"/>
+        <module name="FinalParameters"/>
+        <module name="TodoComment">
+            <property name="severity" value="info"/>
+        </module>
+        <module name="UpperEll"/>
+        <module name="JavadocStyle">
+            <property name="checkFirstSentence" value="false"/>
+        </module>
+    </module>
+</module>

@@ -22,9 +22,13 @@ public class NodeConfiguration {
 
     private AsyncNodeConfiguration[] asyncDependencies;
 
-    public class AsyncNodeConfiguration {
-        @Setter
-        @Getter
+    /**
+     * Encapsulation of asynchronous Node configuration, which is used to initiate a asynchronous node.
+     * @author hzweiguanxiong
+     *
+     */
+    public static class AsyncNodeConfiguration {
+        @Setter @Getter
         private String asyncNode;
     }
 }

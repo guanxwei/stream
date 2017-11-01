@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Activity repository which is used to store the activities. 
+ * Activity repository that is used to store the activity instances.
  */
 public class ActivityRepository {
 
@@ -23,7 +23,7 @@ public class ActivityRepository {
     /**
      * Check if the repository contains the activity.
      * @param activity Activity to check if it exists in the repository.
-     * @return
+     * @return Checking Result.
      */
     public boolean isActivityRegistered(final Activity activity) {
         return activities.containsKey(activity.getActivityName());
@@ -31,8 +31,8 @@ public class ActivityRepository {
 
     /**
      * Check if a {@link Activity} with name activityName has been registered.
-     * @param activityName
-     * @return
+     * @param activityName The activity's name.
+     * @return Checking Result.
      */
     public boolean isActivityRegistered(final String activityName) {
         return activities.containsKey(activityName);
@@ -40,8 +40,8 @@ public class ActivityRepository {
 
     /**
      * Get a {@link Activity} from the repository having name activityName.
-     * @param activityName
-     * @return
+     * @param activityName The activity's name.
+     * @return Activity instance registered in this repository.
      */
     public Activity getActivity(final String activityName) {
         return activities.get(activityName);

@@ -29,13 +29,14 @@ import lombok.Data;
 import com.google.gson.Gson;
 
 /**
- * Graph helper who is responsible to load a graph from a input stream. Basically, graph definition information is stored in a file with suffix ".graph".
+ * Graph helper who is responsible to load a graph from a input stream. Basically,
+ * graph definition information is stored in a file with suffix ".graph".
  * The file content should be stored as Json object stringfied style.
  */
 @Data
 public final class GraphLoader {
 
-    private static final Gson gson = new Gson();
+    private static final Gson GSON = new Gson();
 
     private List<String> graphFilePaths;
 
@@ -50,12 +51,12 @@ public final class GraphLoader {
     private static final String DEFAULT_GRAPH_FILE_PATH_PREFIX = SYSTEM_PATH_SEPARATOR + "graph" + SYSTEM_PATH_SEPARATOR;
 
     /**
-     * Initiate graph loading process, load all the graphs specified in the {@link #graphFilePaths}, which is located in the 
-     * default graph directory. 
-     * @throws GraphLoadException
+     * Initiate graph loading process, load all the graphs specified in the {@link #graphFilePaths}, which is located in the
+     * default graph directory.
+     * @throws GraphLoadException GraphLoadException.
      */
-    public void init() throws GraphLoadException{
-        if (graphFilePaths == null|| graphFilePaths.size() == 0) {
+    public void init() throws GraphLoadException {
+        if (graphFilePaths == null || graphFilePaths.size() == 0) {
             throw new GraphLoadException("Graph definition file paths not specified!");
         }
         for (String path : graphFilePaths) {
@@ -68,90 +69,14 @@ public final class GraphLoader {
         }
     }
 
-    private Graph loadGraphFromFile(InputStream input) throws GraphLoadException {
+    private Graph loadGraphFromFile(final InputStream input) throws GraphLoadException {
         Graph graph = new Graph();
-        String cause = null;
+        StringBuilder cause = new StringBuilder(100);
         List<StepPair> stepPairs = new LinkedList<StepPair>();
         List<AsyncPair> asyncPairs = new LinkedList<AsyncPair>();
         Map<String, Node> knowNodes = new HashMap<String, Node>();
         try {
-            String compressedInputString = buildStringfyInput(input);
-            GraphConfiguration graphConfiguration = gson.fromJson(compressedInputString, GraphConfiguration.class);
-            checkGraphConfiguration(graphConfiguration);
-            graph.setGraphName(graphConfiguration.getGraphName());
-            if (graphConfiguration.getResourceType() == null) {
-                throw new GraphLoadException("ResourceType is not specified!");
-            }
-            graph.setResourceType(ResourceType.valueOf(graphConfiguration.getResourceType()));
-            NodeConfiguration[] nodes = graphConfiguration.getNodes();
-            List<Node> staticNodes = new ArrayList<Node>();
-            for (NodeConfiguration nodeConfiguration : nodes) {
-                checkNodeConfiguration(nodeConfiguration);
-                String currentNodeName = nodeConfiguration.getNodeName();
-                String activityClass = nodeConfiguration.getActivityClass();
-                Activity activity;
-                if (!graphContext.isActivityRegistered(activityClass)) {
-                    cause = activityClass;
-                    Class<?> clazz = Class.forName(activityClass);
-                    activity = (Activity) clazz.newInstance();
-                    graphContext.registerActivity(activity);
-                } else {
-                    activity = graphContext.getActivity(activityClass);
-                }
-
-                stepPairs.addAll(setUpNextSteps(nodeConfiguration, currentNodeName));
-                asyncPairs.addAll(setUpAsyncPairs(nodeConfiguration, currentNodeName));
-
-                Node node = Node.builder()
-                        .activity(activity)
-                        .nodeName(currentNodeName)
-                        .next(new NextSteps())
-                        .graph(graph)
-                        .build();
-                activity.setNode(node);
-                staticNodes.add(node);
-                knowNodes.put(node.getNodeName(), node);
-            }
-            graph.setNodes(staticNodes);
-            graph.setStartNode(knowNodes.get(graphConfiguration.getStartNode()));
-            graph.setDefaultErrorNode(knowNodes.get(graphConfiguration.getDefaultErrorNode()));
-
-            /**
-             * Set up node relationship net.
-             */
-            for (StepPair pair : stepPairs) {
-                final Node predecessor = knowNodes.get(pair.getPredecessor());
-                final Node successor = knowNodes.get(pair.getSuccessor());
-                final NextStepType type = pair.getNextStepType();
-                for (final ActivityResult result : ActivityResult.values()) {
-                    result.accept(new Visitor<Void>() {
-                        public Void success() {
-                            if (type.equals(NextStepType.SUCCESS))
-                                predecessor.getNext().setSuccess(successor);
-                            return null;
-                        }
-                        public Void fail() {
-                            if (type.equals(NextStepType.FAIL))
-                                predecessor.getNext().setFail(successor);
-                            return null;
-                        }
-                        public Void suspend() {
-                            if (type.equals(NextStepType.SUSPEND))
-                                predecessor.getNext().setSuspend(successor);
-                            return null;
-                        }
-                    });
-                }
-            }
-
-            asyncPairs.forEach(asyncPair -> {
-                String host = asyncPair.getHost();
-                Node hostNode = knowNodes.get(host);
-                List<Node> asyncNodes = hostNode.getAsyncDependencies() == null ? new LinkedList<>() : hostNode.getAsyncDependencies();
-                asyncNodes.add(knowNodes.get(asyncPair.getAysncNode()));
-                hostNode.setAsyncDependencies(asyncNodes);
-            });
-
+            parse(graph, input, stepPairs, asyncPairs, knowNodes, cause);
         } catch (IOException e) {
             throw new GraphLoadException("Failed to load graph configuration information from the definition file", e);
         } catch (ClassNotFoundException e) {
@@ -164,17 +89,127 @@ public final class GraphLoader {
         return graph;
     }
 
-    private String buildStringfyInput(InputStream input) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+    private void parse(final Graph graph, final InputStream input, final List<StepPair> stepPairs, final List<AsyncPair> asyncPairs,
+            final Map<String, Node> knowNodes, final StringBuilder cause) throws GraphLoadException, ClassNotFoundException,
+                    InstantiationException, IllegalAccessException, IOException {
+        GraphConfiguration graphConfiguration = parseGraphConfiguration(buildStringfyInput(input), graph);
+        graph.setResourceType(ResourceType.valueOf(graphConfiguration.getResourceType()));
+        NodeConfiguration[] nodes = graphConfiguration.getNodes();
+        List<Node> staticNodes = new ArrayList<Node>();
+        for (NodeConfiguration nodeConfiguration : nodes) {
+            parseNodeConfiguration(nodeConfiguration, graph, stepPairs, asyncPairs, knowNodes, cause, staticNodes);
+        }
+
+        setDefaultHandlers(graph, staticNodes, knowNodes, graphConfiguration);
+
+        /**
+         * Set up node relationship net.
+         */
+        for (StepPair pair : stepPairs) {
+            trackNodes(knowNodes, pair);
+        }
+
+        resolveAsyncDependencies(asyncPairs, knowNodes);
+    }
+
+    private GraphConfiguration parseGraphConfiguration(final String compressedInputString, final Graph graph) throws GraphLoadException {
+        GraphConfiguration graphConfiguration = GSON.fromJson(compressedInputString, GraphConfiguration.class);
+        checkGraphConfiguration(graphConfiguration);
+        graph.setGraphName(graphConfiguration.getGraphName());
+        if (graphConfiguration.getResourceType() == null) {
+            throw new GraphLoadException("ResourceType is not specified!");
+        }
+        return graphConfiguration;
+    }
+
+    private void setDefaultHandlers(final Graph graph, final List<Node> staticNodes, final Map<String, Node> knowNodes,
+            final GraphConfiguration graphConfiguration) {
+        graph.setNodes(staticNodes);
+        graph.setStartNode(knowNodes.get(graphConfiguration.getStartNode()));
+        graph.setDefaultErrorNode(knowNodes.get(graphConfiguration.getDefaultErrorNode()));
+    }
+
+    private void parseNodeConfiguration(final NodeConfiguration nodeConfiguration, final Graph graph, final List<StepPair> stepPairs,
+            final List<AsyncPair> asyncPairs, final Map<String, Node> knowNodes, final StringBuilder cause, final List<Node> staticNodes)
+                    throws GraphLoadException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        checkNodeConfiguration(nodeConfiguration);
+        String currentNodeName = nodeConfiguration.getNodeName();
+        String activityClass = nodeConfiguration.getActivityClass();
+        Activity activity;
+        if (!graphContext.isActivityRegistered(activityClass)) {
+            cause.append(activityClass);
+            Class<?> clazz = Class.forName(activityClass);
+            activity = (Activity) clazz.newInstance();
+            graphContext.registerActivity(activity);
+        } else {
+            activity = graphContext.getActivity(activityClass);
+        }
+
+        stepPairs.addAll(setUpNextSteps(nodeConfiguration, currentNodeName));
+        asyncPairs.addAll(setUpAsyncPairs(nodeConfiguration, currentNodeName));
+
+        Node node = Node.builder()
+                .activity(activity)
+                .nodeName(currentNodeName)
+                .next(new NextSteps())
+                .graph(graph)
+                .build();
+        activity.setNode(node);
+        staticNodes.add(node);
+        knowNodes.put(node.getNodeName(), node);
+    }
+
+    private void trackNodes(final Map<String, Node> knowNodes, final StepPair pair) {
+        final Node predecessor = knowNodes.get(pair.getPredecessor());
+        final Node successor = knowNodes.get(pair.getSuccessor());
+        final NextStepType type = pair.getNextStepType();
+        for (final ActivityResult result : ActivityResult.values()) {
+            result.accept(new Visitor<Void>() {
+                public Void success() {
+                    if (type.equals(NextStepType.SUCCESS)) {
+                        predecessor.getNext().setSuccess(successor);
+                    }
+                    return null;
+                }
+
+                public Void fail() {
+                    if (type.equals(NextStepType.FAIL)) {
+                        predecessor.getNext().setFail(successor);
+                    }
+                    return null;
+                }
+
+                public Void suspend() {
+                    if (type.equals(NextStepType.SUSPEND)) {
+                        predecessor.getNext().setSuspend(successor);
+                    }
+                    return null;
+                }
+            });
+        }
+    }
+
+    private void resolveAsyncDependencies(final List<AsyncPair> asyncPairs, final Map<String, Node> knowNodes) {
+        asyncPairs.forEach(asyncPair -> {
+            String host = asyncPair.getHost();
+            Node hostNode = knowNodes.get(host);
+            List<Node> asyncNodes = hostNode.getAsyncDependencies() == null ? new LinkedList<>() : hostNode.getAsyncDependencies();
+            asyncNodes.add(knowNodes.get(asyncPair.getAysncNode()));
+            hostNode.setAsyncDependencies(asyncNodes);
+        });
+    }
+
+    private String buildStringfyInput(final InputStream input) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input, "UTF-8"));
         String singleLine = null;
         StringBuffer buffer = new StringBuffer();
-        while ( (singleLine = reader.readLine()) != null) {
+        while ((singleLine = reader.readLine()) != null) {
             buffer.append(singleLine.trim());
         }
         return buffer.toString();
     }
 
-    private void checkGraphConfiguration(GraphConfiguration graphConfiguration) throws GraphLoadException {
+    private void checkGraphConfiguration(final GraphConfiguration graphConfiguration) throws GraphLoadException {
         String graphName = graphConfiguration.getGraphName();
         String startNode = graphConfiguration.getStartNode();
         NodeConfiguration[] nodes = graphConfiguration.getNodes();
@@ -189,7 +224,7 @@ public final class GraphLoader {
         }
     }
 
-    private void checkNodeConfiguration(NodeConfiguration nodeConfiguration) throws GraphLoadException {
+    private void checkNodeConfiguration(final NodeConfiguration nodeConfiguration) throws GraphLoadException {
         String nodeName = nodeConfiguration.getNodeName();
         String activityClass = nodeConfiguration.getActivityClass();
         if (nodeName == null || nodeName.length() == 0) {
@@ -216,7 +251,7 @@ public final class GraphLoader {
                         .build();
                 list.add(pair);
             } else {
-                count ++;
+                count++;
             }
         }
         return list;

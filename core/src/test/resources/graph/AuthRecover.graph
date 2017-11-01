@@ -1,0 +1,26 @@
+{
+  "graphName":"autoRetain",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node3",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.extension.RetryActivity",
+      "successNode":"node2"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"org.stream.core.test.base.SuccessTestActivity",
+      "failNode":"node3"
+    },
+    {
+      "nodeName":"node3",
+      "activityClass":"org.stream.core.test.base.FailTestActivity"
+    },
+    {
+      "nodeName":"node4",
+      "activityClass":"org.stream.core.test.base.AsyncCanceledTestActivity"
+    }
+  ]
+}

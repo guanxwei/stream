@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.FutureTask;
 
 import org.stream.core.component.Graph;
 import org.stream.core.exception.WorkFlowExecutionExeception;
@@ -74,7 +73,9 @@ public class WorkFlow {
     private Exception e;
 
     /**
-     * The graph instances this work-flow have been executing on. Every time clients invoke the {@linkplain Engine} to execute a graph, the graph reference will be added to the work-flow.
+     * The graph instances this work-flow have been executing on.
+     * Every time clients invoke the {@linkplain Engine} to execute a graph,
+     * the graph reference will be added to the work-flow.
      */
     private Map<String, Graph> graphs;
 
@@ -111,19 +112,23 @@ public class WorkFlow {
 
     /**
      * Add a execution record to the ledger.
-     * @param record
+     * @param record ExecutionRecord to be recorded.
      */
-    protected void keepRecord(ExecutionRecord record) {
+    protected void keepRecord(final ExecutionRecord record) {
         records.add(record);
     }
 
+    /**
+     * Get execution record list.
+     * @return ExecutionRecord list.
+     */
     protected List<ExecutionRecord> getRecords() {
         return records;
     }
 
     /**
      * Attach a resource to the work-flow.
-     * @param resource
+     * @param resource Resource to be attached.
      */
     protected void attachResource(final Resource resource) {
         resourceTank.addResource(resource);
@@ -131,8 +136,8 @@ public class WorkFlow {
 
     /**
      * Extract a resource object from the resource tank.
-     * @param resourceReference
-     * @return
+     * @param resourceReference The resource's reference.
+     * @return Resource instance corresponding to the reference.
      */
     protected Resource resolveResource(final String resourceReference) {
         return resourceTank.resolve(resourceReference);
@@ -140,16 +145,16 @@ public class WorkFlow {
 
     /**
      * Add a new graph to the work-flow, the work-flow will handle it sooner.
-     * @param graph
+     * @param graph Graph to be visited
      */
-    protected void visitGraph(Graph graph) {
+    protected void visitGraph(final Graph graph) {
         graphs.put(graph.getGraphName(), graph);
     }
 
     /**
      * Attach a primary source to the work-flow, once appointed, the primary resource should never be changed.
-     * @param resource
-     * @throws WorkFlowExecutionExeception 
+     * @param resource resource Resource to be attached.
+     * @throws WorkFlowExecutionExeception WorkFlowExecutionExeception
      */
     protected void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionExeception {
 
@@ -167,8 +172,8 @@ public class WorkFlow {
     }
 
     /**
-     * Extract the primary resource of the workflow.
-     * @return
+     * Extract the primary resource of the work-flow.
+     * @return The primary resource of the work-flow.
      */
     protected Resource getPrimary() {
         if (primaryResourceReference == null) {
@@ -176,20 +181,24 @@ public class WorkFlow {
         } else {
             return resolveResource(primaryResourceReference);
         }
-    };
+    }
 
     /**
-     * Get async task wrapper. Value contained in the wrapper is an instance of {@link FutureTask} which returns the execution result of async activity.
-     * @param nodeName The node name of async activity node.
-     * @return async task wrapper instance.
+     * Get asynchronous task wrapper. Value contained in the wrapper is an instance of {@link FutureTask}
+     * which provides the execution result of asynchronous activity.
+     *
+     * @param nodeName The node name of asynchronous activity node.
+     * @return asynchronous task wrapper instance.
      */
     protected Resource getAsyncTaskWrapper(final String nodeName) {
         return resolveResource(nodeName + ResourceHelper.ASYNC_TASK_SUFFIX);
     }
 
     /**
-     * Mark the exception that cause the system ran into crash. Only used when the system itself can not tune to normal from the exception. Basically, this method should
-     * be used only once for every single execution plan. After the work-flow engine handle over the control to the invoker, the invoker can check if the {{@link #e} is
+     * Mark the exception that cause the system ran into crash.
+     * Only used when the system itself can not tune to normal state from the exception.
+     * Basically, this method should be used only once for every single execution plan.
+     * After the work-flow engine handle over the control to the invoker, the invoker can check if the {@link #e} is
      * null, if not they can log the exception message to the log by there own strategy.
      * @param e exception that cause the work-flow ran into crash.
      */
@@ -197,10 +206,15 @@ public class WorkFlow {
         this.e = e;
     }
 
+    /**
+     * Add an asynchronous task for the current work-flow.
+     * @param taskReference Reference to the task.
+     */
     protected void addAsyncTasks(final String taskReference) {
         this.asyncTaksReferences.add(taskReference);
     }
 
+    // CHECKSTYLE:OFF
     public enum WorkFlowStatus {
 
         WAITING(1), WORKING(2), CLOSED(3);
@@ -215,5 +229,6 @@ public class WorkFlow {
             return status;
         }
     }
+    // CHECKSTYLE:ON
 
 }

@@ -8,8 +8,17 @@ package org.stream.core.resource;
  */
 public interface ResourceReader {
 
-    Resource read(ResourceURL resourceURL);
+    /**
+     * Read and load the resource from the underline resource storage via its url.
+     * @param resourceURL Resource url.
+     * @return Resource entity.
+     */
+    Resource read(final ResourceURL resourceURL);
 
+    /**
+     * Resolve the reader's resource authority.
+     * @return ResourceAuthority
+     */
     ResourceAuthority resolve();
 
 }

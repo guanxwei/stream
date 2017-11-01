@@ -6,18 +6,18 @@
   "nodes":[
     {
       "nodeName":"node1",
-      "activityClass":"stream.core.test.base.TestActivity",
+      "activityClass":"org.stream.core.test.base.TestActivity",
       "successNode":"node2",
       "failNode":"node3"
     },
     {
       "nodeName":"node2",
-      "activityClass":"stream.core.test.base.SuccessTestActivity",
+      "activityClass":"org.stream.core.test.base.SuccessTestActivity",
       "failNode":"node3"
     },
     {
       "nodeName":"node3",
-      "activityClass":"stream.core.test.base.FailTestActivity"
+      "activityClass":"org.stream.core.test.base.FailTestActivity"
     }
   ]
 }

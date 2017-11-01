@@ -17,6 +17,10 @@ public class ExecutionRecord {
     @Getter
     private String description;
 
+    /**
+     * Print the record information.
+     * @return Human friendly information about the record.
+     */
     public String print() {
         return toString();
     }
