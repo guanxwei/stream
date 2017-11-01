@@ -10,10 +10,17 @@ import java.util.List;
 public interface EventCenter {
 
     /**
-     * Fire an event.
+     * Fire an event. Default, the event will be delivered to event storage asynchronously.
      * @param event Event to be fired.
      */
     void fireEvent(final Event<?, ?> event);
+
+    /**
+     * Fire an event. The event will be delivered to event storage immediately.
+     * @param event Event to be fired.
+     * @throws Exception Any exception that will be thrown during message delivery.
+     */
+    void fireSyncEvent(final Event<?, ?> event) throws Exception;
 
     /**
      * Register and event listener.

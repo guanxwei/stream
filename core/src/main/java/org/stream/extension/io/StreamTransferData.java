@@ -17,7 +17,7 @@ import lombok.Setter;
  */
 public class StreamTransferData implements Serializable {
 
-   private static final long serialVersionUID = -3946269022445783584L;
+    private static final long serialVersionUID = -3946269022445783584L;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

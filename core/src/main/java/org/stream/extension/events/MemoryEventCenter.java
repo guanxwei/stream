@@ -7,8 +7,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.stream.core.helper.Jackson;
 import org.stream.extension.clients.KafkaClient;
 
@@ -45,6 +47,24 @@ public class MemoryEventCenter implements EventCenter {
     @Override
     public void fireEvent(final Event<?, ?> event) {
         pendingEvents.offer(event);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void fireSyncEvent(final Event<?, ?> event) throws Exception {
+        try {
+            String eventEntity = Jackson.json(event);
+            log.info("Receive request to deliver event synchronouly, will push it to the Kafka queue service immediately",
+                    eventEntity, event.getClass().getSimpleName());
+            Future<RecordMetadata> result = kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), eventEntity);
+            result.get();
+            log.info("Event [{}] sent to Kafka cluster successfully", eventEntity);
+        } catch (Exception e) {
+            log.warn("Event dispatch error!", e);
+            throw e;
+        }
     }
 
     /**
@@ -96,7 +116,7 @@ public class MemoryEventCenter implements EventCenter {
     public void init() {
         // We just create a thread pool with up limit (1 + number of event types * 2).
         service = Executors.newFixedThreadPool(1 + listeners.keySet().size() * 2);
-        log.info("Stock service event center initiating...");
+        log.info("Event center initiating...");
         log.info("Find kafka topic [{}]", topic);
         Runnable pipeline = createPipelineWorker();
         service.submit(pipeline);
@@ -105,7 +125,7 @@ public class MemoryEventCenter implements EventCenter {
             service.submit(createListenerNotifiers(clazz));
             service.submit(createListenerNotifiers(clazz));
         }
-        log.info("Stock service event center initiated.");
+        log.info("Event center initiated.");
     }
 
     private Runnable createPipelineWorker() {
@@ -183,4 +203,5 @@ public class MemoryEventCenter implements EventCenter {
         }
         return listeners.get(type);
     }
+
 }

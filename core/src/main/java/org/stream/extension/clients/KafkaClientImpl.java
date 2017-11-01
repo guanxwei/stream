@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,6 +16,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -138,18 +140,18 @@ public class KafkaClientImpl implements KafkaClient {
      * {@inheritDoc}
      */
     @Override
-    public boolean sendMessage(final String topic, final String data) {
+    public Future<RecordMetadata> sendMessage(final String topic, final String data) {
         ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, data);
-        return !producer.send(record).isCancelled();
+        return producer.send(record);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean sendMessage(final String topic, final String key, final String data) {
+    public Future<RecordMetadata> sendMessage(final String topic, final String key, final String data) {
         ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, key, data);
-        return !producer.send(record).isCancelled();
+        return producer.send(record);
     }
 
     /**
