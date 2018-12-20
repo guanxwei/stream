@@ -1,37 +1,35 @@
 package org.stream.core.execution;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.stream.core.component.Graph;
 import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.helper.Jackson;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
 import org.stream.core.resource.ResourceType;
+import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStep;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.utils.TaskIDGenerator;
+import org.stream.extension.utils.UUIDTaskIDGenerator;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Auto scheduled work-flow engine. This engine is mainly used to support
- * auto retry cases, extremely suitable for distributed systems.
+ * Auto scheduled work-flow engine. This engine is mainly designed to support auto retry cases in distributed environments.
+ * In distributed world, there are always more than one service arranged to complete one task, sometimes retry is also needed
+ * to process temporary unavailable cases. Developers have to spend much more time on managing the service invoking hierarchy and handling
+ * exceptions painfully, which in fact should be handled in a more elegant way letting developers focus on business development.
  *
- * In distributed systems, many services will be arranged to complete one job. As the requirements changes, the system will
- * become more and more complicated, many more services will be involved. Managing the whole work-flow will turns into a big
- * problem to developers.
+ * To help eliminate the effort solving such tricky problems, stream work-flow framework provides this lightly flow engine implementation.
+ * With this engine, developers just need to implements their business logic in stand alone activities and managing the procedure through defining human friendly graphs.
+ * Every thing else will be done silently by this engine including executing the missions in order and auto retry failed sub-missions, .etc.
  *
- * To help eliminate the effort to manage the service invoke hierarchy, stream work-flow provides this lightly engine implementation.
- * Developers just need to define their own procedure graph, this engine will automatically pick the graph and help execute the whole task.
- * The most important difference between this engine and {@link DefaultEngine} is that the works in each node is to communicate with
- * external services, and if the engine fail to connect the services, it will help to retry in the near future.
- *
+ * Please be aware that currently AutoScheduledEngine does not support sub-work-flow situations. If you want to run sub procedures within another
+ * work-flow context, you'd probably use other tools.
  */
 @Slf4j
 public class AutoScheduledEngine implements Engine {
@@ -58,29 +56,22 @@ public class AutoScheduledEngine implements Engine {
     @Setter
     private TaskPersister taskPersister;
 
-    /**
-     * Work-flow retry pattern.
-     * "EqualDifference" : Will retry the stuck work-flow at fixed rate.
-     * "ScheduledTime" : Will retry the stuck work-flow at the scheduled time.
-     *
-     * "EqualDifference" : default option.
-     */
     @Setter
-    private String pattern = RetryPattern.EQUAL_DIFFERENCE;
+    private String application;
 
-    private ExecutorService executorService = Executors.newFixedThreadPool(100);
+    @Setter
+    private TaskExecutor taskExecutor;
+
+    @Setter
+    private TaskIDGenerator taskIDGenerator = new UUIDTaskIDGenerator();
 
     /**
-     * Begin to execute auto scheduled job according to graph definition file.
-     *
-     * @param graphContext Graph context.
-     * @param graphName Graph's name to be executed on.
-     * @param autoRecord Ignore it.
-     * @param resourceType Ignore it.
+     * {@inheritDoc}
      */
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord,
             final ResourceType resourceType) {
+
         String taskId = start(graphName, graphContext, null);
         Resource taskResource = Resource.builder()
                 .value(taskId)
@@ -92,13 +83,7 @@ public class AutoScheduledEngine implements Engine {
     }
 
     /**
-     * Begin to execute auto scheduled job according to graph definition file.
-     *
-     * @param graphContext Graph context.
-     * @param graphName Graph's name to be executed on.
-     * @param autoRecord Ignore it.
-     * @param primaryResource Resource to be used in the execution phase.
-     * @param resourceType Ignore it.
+     * {@inheritDoc}
      */
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final Resource primaryResource,
@@ -114,46 +99,21 @@ public class AutoScheduledEngine implements Engine {
     }
 
     /**
-     * Begin to execute auto scheduled job according to graph definition file.
-     *
-     * @param graphContext Graph context.
-     * @param graphName Graph's name to be executed on.
-     * @param autoRecord Ignore it.
-     * @param primaryResource Resource to be used in the execution phase.
-     * @param resourceType Ignore it.
+     * {@inheritDoc}
      */
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final Resource primaryResource,
             final boolean autoRecord, final ResourceType resourceType) {
-        String taskId = start(graphName, graphContext, primaryResource.getValue());
-        Resource taskResource = Resource.builder()
-                .value(taskId)
-                .resourceReference(TASK_REFERENCE)
-                .build();
-        ResourceTank tank = new ResourceTank();
-        tank.addResource(taskResource);
-        return tank;
+        return execute(graphContext, graphName, primaryResource, autoRecord, resourceType);
     }
 
     /**
-     * Begin to execute auto scheduled job according to graph definition file.
-     *
-     * @param graphContext Graph context.
-     * @param graphName Graph's name to be executed on.
-     * @param autoRecord Ignore it.
-     * @param resourceType Ignore it.
+     * {@inheritDoc}
      */
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord,
             final ResourceType resourceType) {
-        String taskId = start(graphName, graphContext, null);
-        Resource taskResource = Resource.builder()
-                .value(taskId)
-                .resourceReference(TASK_REFERENCE)
-                .build();
-        ResourceTank tank = new ResourceTank();
-        tank.addResource(taskResource);
-        return tank;
+        return execute(graphContext, graphName, autoRecord, resourceType);
     }
 
     /**
@@ -173,20 +133,25 @@ public class AutoScheduledEngine implements Engine {
     }
 
     private String start(final String graphName, final GraphContext graphContext, final Object resource) {
+
         initiateContextIfNotPresent(graphContext);
-        String taskId = UUID.randomUUID().toString();
+        String taskId = taskIDGenerator.generateTaskID();
 
-        log.info("Begin to process the incoming request with task id [{}]", taskId);
+        log.info("Begin to process the incoming request [{}] with task id [{}]", Jackson.json(resource), taskId);
 
-        StreamTransferData data = new StreamTransferData();
-        data.set(ORIGINAL_RESOURCE_REFERENCE, resource);
         Resource primaryResource = Resource.builder()
-                .resourceReference("Auto_Scheduled_Workflow_PrimaryResource_Reference")
-                .value(data)
+                .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
+                .value(resource)
                 .build();
-        Task task = initiateTask(taskId, graphName, primaryResource, data);
-        ExecutionRunner runner = new ExecutionRunner(graphContext, graphName, pattern, primaryResource, task, taskPersister);
-        executorService.submit(runner);
+
+        Graph graph = graphContext.getGraph(graphName);
+
+        Task task = initiateTask(taskId, graphName, primaryResource, new StreamTransferData());
+
+        log.info("New task [{}] initiated", task.toString());
+        taskExecutor.submit(graph, primaryResource, task);
+
+        log.info("Task [{}] submited", taskId);
         return taskId;
     }
 
@@ -208,67 +173,25 @@ public class AutoScheduledEngine implements Engine {
             throw new WorkFlowExecutionExeception("Graph not existes! Please double check！");
         }
         Task task = Task.builder()
-                .taskId(taskId)
+                .application(application)
                 .graphName(graphName)
-                .lastExcutionTime(System.currentTimeMillis())
-                .nodeName(graph.getStartNode().getNodeName())
                 .jsonfiedPrimaryResource(primaryResource.toString())
+                .lastExcutionTime(System.currentTimeMillis())
+                .nextExecutionTime(System.currentTimeMillis())
+                .nodeName(graph.getStartNode().getNodeName())
+                .retryTimes(0)
+                .status("Initiated")
+                .taskId(taskId)
+                .build();
+        TaskStep taskStep = TaskStep.builder()
+                .createTime(System.currentTimeMillis())
+                .graphName(graphName)
+                .nodeName(graph.getStartNode().getNodeName())
                 .jsonfiedTransferData(data.toString())
                 .status("Initiated")
+                .taskId(taskId)
                 .build();
-        taskPersister.tryLock(taskId);
-        taskPersister.setHub(taskId, task.toString());
+        taskPersister.setHub(taskId, task, true, taskStep);
         return task;
-    }
-
-    /**
-     * Initiation method to prepare back-end workers to process pending on retry work-flow instances.
-     */
-    public void init() {
-        Runnable backend = new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    /**
-                     * Updated 2017/09/30:
-                     * We decided to support two strategies to re-run the suspended work-flow instances:
-                     * 1、Re-run the suspended instances periodically with up-limit times 12. That's what we do here.
-                     * 2、Re-run the suspended instances at fixed time points, currently we will re-run the suspended work-flow at most
-                     *     12 times, the time points are:5s,10s,30s,60s,5m,10m,30m,1h,3h,10h,20h,24h,this strategy depends on Redis's zadd/zrange
-                     *     function, each time when we mark the work-flow as suspended, we also set up the expire time as the score for the task,
-                     *     before re-runing the work-flow we will check if the time fulfill our requirements.
-                     *
-                     * Fetch suspended cases.
-                     *
-                     */
-                    List<String> contents = new LinkedList<>();
-                    contents.addAll(taskPersister.getPendingList(1));
-                    // Then fetch crashed cases.
-                    contents.addAll(taskPersister.getPendingList(2));
-                    if (!contents.isEmpty()) {
-                        process(contents);
-                    }
-                    // The stuck work-flows should be re-ran at least 5 seconds later, so we can sleep here for 5 minutes safely.
-                    sleep(5000);
-                }
-            }
-        };
-        executorService.submit(backend);
-    }
-
-    private void process(final List<String> contents) {
-        for (String content :contents) {
-            RetryRunner worker = new RetryRunner(taskPersister.get(content), graphContext, taskPersister, pattern);
-            executorService.submit(worker);
-        }
-    }
-
-    private void sleep(final long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 }

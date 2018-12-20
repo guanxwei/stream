@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
+import org.bson.Document;
+
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.WriteResult;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,11 +28,11 @@ import lombok.Setter;
 public class MangoClientImpl implements MangoClient {
 
     private MongoClient mango;
-    private DB db;
+    private MongoDatabase db;
     private String dbName;
 
     private List<ServerAddress> addrs;
-    private List<MongoCredential> credentials;
+    private MongoCredential credential;
 
     private boolean autoRetry = true;
     private int connections = 50;
@@ -45,12 +45,12 @@ public class MangoClientImpl implements MangoClient {
      */
     @Override
     public boolean save(final String key, final Object object, final String collectionName) {
-        DBCollection collection = getCollection(collectionName);
-        BasicDBObject insertObj = new BasicDBObject();
-        insertObj.put(key, object);
+        MongoCollection<Document> collection = getCollection(collectionName);
+        Document document = new Document();
+        document.put(key, object);
         try {
-            WriteResult result = collection.insert(insertObj);
-            return result.getError() == null;
+            collection.insertOne(document);
+            return true;
         } catch (Exception e) {
             return false;
         }
@@ -69,19 +69,16 @@ public class MangoClientImpl implements MangoClient {
         this.dbName = dbName;
         this.addrs = addresses;
 
-        MongoCredential credential = MongoCredential.createMongoCRCredential(username, dbName, password.toCharArray());
-        List<MongoCredential> credentialList = new ArrayList<MongoCredential>();
-        credentialList.add(credential);
-        this.credentials = credentialList;
+        MongoCredential credential = MongoCredential.createCredential(username, dbName, password.toCharArray());
+        this.credential = credential;
 
-        mango = new MongoClient(addresses, credentialList, option());
-        this.db = mango.getDB(dbName);
+        mango = new MongoClient(addresses, credential, option());
+        this.db = mango.getDatabase(dbName);
     }
 
     private MongoClientOptions option() {
         MongoClientOptions.Builder build = new MongoClientOptions.Builder();
         build.connectionsPerHost(connections);
-        build.autoConnectRetry(autoRetry);
         build.threadsAllowedToBlockForConnectionMultiplier(threads);
         build.maxWaitTime(waitTime);
         build.connectTimeout(timeOut);
@@ -89,7 +86,7 @@ public class MangoClientImpl implements MangoClient {
         return build.build();
     }
 
-    private DBCollection getCollection(final String collectionName) {
+    private MongoCollection<Document> getCollection(final String collectionName) {
         return db.getCollection(collectionName);
     }
 }

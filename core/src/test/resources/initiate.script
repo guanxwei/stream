@@ -1,0 +1,2 @@
+create table if not exists users(id bigint primary key, name varchar(100), email varchar(100));
+create table if not exists Stream_Task(id bigint primary key, taskId varchar(128), status varchar(32), graphName varchar(256), nodeName varchar(256), lastExcutionTime bigint, nextExecutionTime bigint, jsonfiedTransferData LONGVARCHAR, jsonfiedPrimaryResource LONGVARCHAR, retryTimes int, application varchar(256));

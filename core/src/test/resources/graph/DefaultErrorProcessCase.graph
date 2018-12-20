@@ -1,0 +1,22 @@
+{
+  "graphName":"defaultErrorNode",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node3",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.TestActivity",
+      "successNode":"node2",
+      "failNode":"node3"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"org.stream.core.test.base.FailTestActivity"
+    },
+    {
+      "nodeName":"node3",
+      "activityClass":"org.stream.core.test.base.SuccessTestActivity"
+    }
+  ]
+}

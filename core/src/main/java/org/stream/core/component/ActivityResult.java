@@ -28,7 +28,17 @@ public enum ActivityResult {
     },
 
     /**
-     * Unknown result, maybe the current thread should be suspened or not.
+     * Result unknown after the node is executed, sometimes extra effort need to be taken to check if everything is okay.
+     */
+    UNKNOWN {
+        @Override
+        public <E> E accept(final Visitor<E> visitor) {
+            return visitor.check();
+        }
+    },
+
+    /**
+     * Unknown result, maybe the current work flow should be suspended and tried again later.
      */
     SUSPEND {
         @Override
@@ -41,9 +51,30 @@ public enum ActivityResult {
     public abstract <E> E accept(final Visitor<E> visitor);
 
     public interface Visitor<T> {
+
+        /**
+         * Visit the success step.
+         * @return Processing result.
+         */
         T success();
+
+        /**
+         * Visit the failure step.
+         * @return Processing result.
+         */
         T fail();
+
+        /**
+         * Visit the suspend step.
+         * @return Processing result.
+         */
         T suspend();
+
+        /**
+         * Visit the check step.
+         * @return Processing result.
+         */
+        T check();
     }
     // CHECKSTYLE:ON
 }

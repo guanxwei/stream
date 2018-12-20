@@ -1,5 +1,6 @@
 package org.stream.core.execution;
 
+import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
 
 import lombok.Setter;
@@ -25,6 +26,9 @@ public class NextSteps {
 
     @Setter
     private Node suspend;
+
+    @Setter
+    private Node check;
 
     /**
      * Return the successor {@link Node}, invoked only when the current {@link Node} returns
@@ -53,9 +57,18 @@ public class NextSteps {
         return suspend;
     }
 
+    /**
+     * Return the successor {@link Node}, invoked only when the current {@link Node} returns
+     * {@link ActivityResult#UNKNOWN}.
+     * @return The successor {@link Node}.
+     */
+    public Node onCheck() {
+        return check;
+    }
+
     // CHECKSTYLE:OFF
     public enum NextStepType {
-        SUCCESS, FAIL, SUSPEND;
+        SUCCESS, FAIL, SUSPEND, CHECK;
     }
     // CHECKSTYLE:ON
 }

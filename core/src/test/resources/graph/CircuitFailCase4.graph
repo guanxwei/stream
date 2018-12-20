@@ -1,0 +1,21 @@
+{
+  "graphName":"circuitFailCaseGraph",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node3",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.CheckActivity",
+      "failNode":"node1"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"org.stream.core.test.base.TestActivity"
+    },
+    {
+      "nodeName":"node3",
+      "activityClass":"org.stream.core.test.base.TestActivity"
+    }
+  ]
+}

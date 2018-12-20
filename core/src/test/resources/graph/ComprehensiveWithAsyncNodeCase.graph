@@ -1,5 +1,5 @@
 {
-  "graphName":"comprehensive2",
+  "graphName":"ComprehensiveWithAsyncNodeCase",
   "resourceType":"OBJECT",
   "startNode":"node1",
   "defaultErrorNode":"node3",

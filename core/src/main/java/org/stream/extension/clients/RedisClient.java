@@ -3,8 +3,6 @@ package org.stream.extension.clients;
 import java.util.List;
 import java.util.Set;
 
-import redis.clients.jedis.Tuple;
-
 /**
  * Redis service client.
  * Only define partial functions that Redis provides.
@@ -110,23 +108,21 @@ public interface RedisClient {
      * @param end End cursor.
      * @return Result.
      */
-    Set<Tuple> zrange(final String key, final int begin, final int end);
+    Set<String> zrange(final String key, final double begin, final double end);
 
     /**
-     * Get Redis connection.
-     * @return Redis connection.
+     * Execute zdel commmand.
+     * @param set Set name.
+     * @param key Key to be deleted.
+     * @return {@code true} deleted, {@code false} not deleted.
      */
-    AssembledShardedJedis getJedis();
+    boolean zdel(final String set, final String key);
 
     /**
-     * Return resource.
-     * @param jedis Resource to be returned.
+     * Execute rpush commmand.
+     * @param set Set name.
+     * @param key Key to be added.
+     * @return Affected rows.
      */
-    void returnResource(final AssembledShardedJedis jedis);
-
-    /**
-     * Return broken resource.
-     * @param jedis Resource to be returned.
-     */
-    void returnBrokenResource(final AssembledShardedJedis jedis);
+    boolean rpush(final String set, final String key);
 }

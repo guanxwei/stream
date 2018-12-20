@@ -2,6 +2,7 @@ package org.stream.core.execution;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -15,8 +16,9 @@ import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 
 /**
- * Work-flow helper class. Help to create a new work-flow or provide existed work-flow, or even reboot the work-flow.
- * Also provide helper method to retrieve objects from the thread related work-flow.
+ * Encapsulation of work-flow context.
+ * Help to create a new work-flow or provide existed work-flow, or even reboot the work-flow.
+ * Also provides many convenient methods to manage the resources within the work-flow.
  */
 public final class WorkFlowContext {
 
@@ -28,8 +30,19 @@ public final class WorkFlowContext {
 
     private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
+    public static final String WORK_FLOW_RESPONSE_CODE_REFERENCE = "Stream::Workflow::ResponseCode::Reference";
+
+    public static final String WORK_FLOW_RESPONSE_REFERENCE = "Stream::Workflow::Response::Reference";
+
+    public static final String WORK_FLOW_TRANSTER_DATA_REFERENCE = "Stream::Workflow::Transfer::Data::Reference";
+
     /**
-     * Check if there is working work-flow in the current thread context. We'd make sure that each thread has only one working work-flow instance.
+     * Check if there is working work-flow in the current thread context.
+     * We'd make sure that each thread has only one working work-flow instance, since version 0.1.6 we have supported
+     * sub-work-flow normally, so there would be more than one working work-flow instance within the same thread, but there
+     * is only one instance at the top of work-flow hierarchy, other work-flow instances will be treated as the top instance's
+     * descendants.
+     *
      * @return Checking result.
      */
     public static boolean isThereWorkingWorkFlow() {
@@ -38,14 +51,15 @@ public final class WorkFlowContext {
 
     /**
      * Set up a new work-flow instance for the current thread. The new created work-flow instance's status will be {@link WorkFlowStatus#WAITING}.
-     * Clients should manually start the work-flow by invoking the method {@link WorkFlow#start()}, default the {@linkplain Engine} will help
-     * to invoke this method when create new work-flow instance.
+     * Clients should manually start the work-flow by invoking the method {@link WorkFlow#start()}, normally the {@linkplain Engine} implementation will help
+     * invoke this method when create a new work-flow instance.
      *
      * Users should not invoke this method in any cases.
      * @return The work-flow reference.
      */
     protected static WorkFlow setUpWorkFlow() {
         WorkFlow newWorkFlow = new WorkFlow();
+        newWorkFlow.setChildren(new LinkedList<>());
         Date createTime = Calendar.getInstance().getTime();
         newWorkFlow.setCreateTime(createTime);
         WORKFLOWS.put(newWorkFlow.getWorkFlowId(), newWorkFlow);
@@ -66,7 +80,11 @@ public final class WorkFlowContext {
      */
     public static void reboot() {
         close(true);
-        CURRENT.set(null);
+        WORKFLOWS.remove(CURRENT.get().getWorkFlowId());
+        CURRENT.get().getRecords().clear();
+        WorkFlow parent = CURRENT.get().getParent();
+        // Hand over responsibility to the father instance. If there is no parent instance, exit directly.
+        CURRENT.set(parent);
     }
 
     /**
@@ -82,7 +100,7 @@ public final class WorkFlowContext {
     }
 
     /**
-     * Get all the execution records recored during the procedure.
+     * Get all the execution records generated during the execution procedure.
      * @return ExecutionRecord list.
      */
     public static List<ExecutionRecord> getRecords() {
@@ -93,8 +111,8 @@ public final class WorkFlowContext {
     }
 
     /**
-     * Force the work-flow status to {@linkplain WorkFlowStatus#CLOSED}. And shut down the back-end running async tasks.
-     * @param mayInterruptIfRunning Parameter to indicate if we need to wait until all the async tasks are shutdown.
+     * Force the work-flow status changing to {@linkplain WorkFlowStatus#CLOSED}. And shut down the back-end running asynchronous tasks.
+     * @param mayInterruptIfRunning Parameter to indicate if we need to wait until all the asynchronous tasks are shutdown.
      */
     public static void close(final boolean mayInterruptIfRunning) {
         WorkFlow current = CURRENT.get();
@@ -220,5 +238,29 @@ public final class WorkFlowContext {
             throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
         }
         return CURRENT.get().getE();
+    }
+
+    /**
+     * Resolve resource containing response code.
+     * @return Resource containing response code.
+     */
+    public static Resource resolveResponseCodeResource() {
+        return resolveResource(WORK_FLOW_RESPONSE_CODE_REFERENCE);
+    }
+
+    /**
+     * Resolve response resource.
+     * @return Resource containing response entity.
+     */
+    public static Resource resolveResponseResource() {
+        return resolveResource(WORK_FLOW_RESPONSE_REFERENCE);
+    }
+
+    /**
+     * Resolve transfer data resource. Used in auto scheduled engine context only.
+     * @return Transfer data resource.
+     */
+    public static Resource resolveTransferDataResource() {
+        return resolveResource(WORK_FLOW_TRANSTER_DATA_REFERENCE);
     }
 }

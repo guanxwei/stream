@@ -17,6 +17,7 @@ public class AsyncCanceledTestActivity extends AsyncActivity {
         } catch (InterruptedException e) {
             return ActivityResult.FAIL;
         }
+        cleanUp();
         return ActivityResult.SUCCESS;
     }
 

@@ -1,8 +1,12 @@
 package org.stream.extension.persist;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStep;
 
 /**
  * Encapsulation of Task persister.
@@ -19,24 +23,8 @@ public interface TaskPersister {
     boolean persist(final Task task);
 
     /**
-     * Mark a task as pending on retry status in Redis.
-     * @param task Task to marked.
-     * @param pattern Retry pattern execution pattern.
-     * @param time Expire time.
-     * @return Manipulation result.
-     */
-    boolean mark(final Task task, final String pattern, final int time);
-
-    /**
-     * Mark a task as processed and remove its record in Redis.
-     * @param task Task to be unmarked.
-     * @return Manipulation result.
-     */
-    boolean unmark(final Task task);
-
-    /**
      * Get a task by key.
-     * @param key Task's Redis key.
+     * @param key Task's unique key.
      * @return Manipulation result.
      */
     String get(final String key);
@@ -53,6 +41,7 @@ public interface TaskPersister {
     /**
      * Try to lock the task Id to avoid contention.
      * @param taskId Task id to be locked.
+     * @param withInsert {@code true} insert new task in the db, otherwise update task in db.
      * @return Manipulation result.
      */
     boolean tryLock(final String taskId);
@@ -65,12 +54,16 @@ public interface TaskPersister {
     boolean releaseLock(final String taskId);
 
     /**
-     * Save an back up in DB in case the server crashes.
+     * Grab the distribute lock of the task so that only one runner can process the task.
+     * If the target task is not initiated yet in db, create a new record in the db table;
+     * if it is initiated, update the task status. A new task step record will always be added.
      * @param taskId Task id.
      * @param content Passby content.
+     * @param withInsert {@code true} insert new task in the db, otherwise update task in db.
+     * @param taskStep Task step detail.
      * @return Manipulation result.
      */
-    boolean setHub(final String taskId, final String content);
+    boolean setHub(final String taskId, final Task content, final boolean withInsert, final TaskStep taskStep);
 
     /**
      * Remove the hub since the job is completely done.
@@ -78,13 +71,6 @@ public interface TaskPersister {
      * @return Manipulation result.
      */
     boolean removeHub(final String taskId);
-
-    /**
-     * Update expire time.
-     * @param taskId Task id.
-     * @return Operation result.
-     */
-    boolean updateTime(final String taskId);
 
     /**
      * Set the application name, the application's name should be unique.
@@ -95,9 +81,10 @@ public interface TaskPersister {
     /**
      * Mark the task as suspended.
      * @param task Task to be suspended.
-     * @param time Time window.
+     * @param time Time interval in {@link TimeUnit#MILLISECONDS}.
+     * @param taskStep Task step detail.
      */
-    void suspend(final Task task, final int time);
+    void suspend(final Task task, final double time, final TaskStep taskStep);
 
     /**
      * Mark the task as completed.
@@ -110,4 +97,17 @@ public interface TaskPersister {
      * @param debug Flag to make the persister work in debug mode.
      */
     void setDebug(final boolean debug);
+
+    /**
+     * Retrieve the latest transfer data.
+     * @param taskId Task id.
+     * @return The latest transfer data.
+     */
+    StreamTransferData retrieveData(final String taskId);
+
+    /**
+     * Retrieve stuck tasks from the storage.
+     * @return Stuck task list.
+     */
+    List<Task> retrieveStuckTasksFromDB();
 }

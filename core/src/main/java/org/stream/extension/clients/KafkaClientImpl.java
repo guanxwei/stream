@@ -140,9 +140,9 @@ public class KafkaClientImpl implements KafkaClient {
      * {@inheritDoc}
      */
     @Override
-    public Future<RecordMetadata> sendMessage(final String topic, final String data) {
+    public boolean sendMessage(final String topic, final String data) {
         ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, data);
-        return producer.send(record);
+        return !producer.send(record).isCancelled();
     }
 
     /**
@@ -172,7 +172,7 @@ public class KafkaClientImpl implements KafkaClient {
     @Override
     public boolean markAsConsumed() {
         accounter.decrementAndGet();
-        return false;
+        return true;
     }
 
 }

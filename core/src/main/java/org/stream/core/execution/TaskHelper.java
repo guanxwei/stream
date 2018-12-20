@@ -1,40 +1,49 @@
 package org.stream.core.execution;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.AsyncActivity;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
-import org.stream.core.helper.Jackson;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStep;
+import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * Task helper.
+ * Helper class containing utility methods to help manage the execution task info.
  * @author hzweiguanxiong
  *
  */
+@Slf4j
 public final class TaskHelper {
+
+    // 本地重试队列长度为100.
+    private static final ScheduledExecutorService LOCAL_RETRY_SCHEDULER = Executors.newScheduledThreadPool(100);
 
     private TaskHelper() { }
 
     /**
-     * Prepare execution context for the incoming request.
+     * Prepare execution context for the incoming request. Auto scheduled cases should always initiate a new workflow instance.
      * @param graphName Graph name that the request asks.
      * @param primaryResource Primary resource that will be shared between all the nodes.
      * @param graphContext Graph context.
      * @return Chosen graph.
      */
     public static Graph prepare(final String graphName, final Resource primaryResource, final GraphContext graphContext) {
-        if (!WorkFlowContext.isThereWorkingWorkFlow()) {
-            WorkFlowContext.setUpWorkFlow();
-        }
+        WorkFlowContext.setUpWorkFlow();
         WorkFlow workflow = WorkFlowContext.provide();
         workflow.setResourceTank(new ResourceTank());
         WorkFlowContext.attachPrimaryResource(primaryResource);
@@ -54,6 +63,7 @@ public final class TaskHelper {
         try {
             activityResult = node.perform();
         } catch (Exception e) {
+            log.warn("Fail to execute graph [{}] at node [{}]", node.getGraph().getGraphName(), node.getNodeName());
             activityResult = ActivityResult.SUSPEND;
         }
         return activityResult;
@@ -67,11 +77,12 @@ public final class TaskHelper {
      */
     public static void updateTask(final Task task, final Node node, final String status) {
         task.setNodeName(node.getNodeName());
-        task.setJsonfiedPrimaryResource(Jackson.json(WorkFlowContext.getPrimary()));
-        StreamTransferData data = (StreamTransferData) WorkFlowContext.getPrimary().getValue();
-        task.setJsonfiedTransferData(data.toString());
+        task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
         task.setRetryTimes(0);
         task.setStatus(status);
+        task.setLastExcutionTime(System.currentTimeMillis());
+        // In case run into conflict with the backup scanner.
+        task.setNextExecutionTime(System.currentTimeMillis() + 1000);
     }
 
     /**
@@ -82,18 +93,35 @@ public final class TaskHelper {
      * @param primaryResource Primary resource that will be recovered by back-end runner.
      * @param taskPersister Task persister.
      * @param pattern Retry suspended cases pattern.
+     *
+     * @return Retry interval.
      */
-    public static void suspend(final Task task, final Node node, final Resource primaryResource, final TaskPersister taskPersister,
-            final String pattern) {
+    public static int suspend(final Task task, final Node node, final Resource primaryResource, final TaskPersister taskPersister,
+            final RetryPattern pattern) {
         // Persist work-flow status to persistent layer.
-        StreamTransferData data = (StreamTransferData) WorkFlowContext.getPrimary().getValue();
+        StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
         task.setNodeName(node.getNodeName());
         task.setJsonfiedPrimaryResource(primaryResource.toString());
-        task.setJsonfiedTransferData(data.toString());
         task.setStatus("PendingOnRetry");
         task.setRetryTimes(0);
-        // Let the back-end runners have chances to retry the suspended work-flow.
-        taskPersister.suspend(task, RetryRunner.getTime(0, pattern));
+        task.setLastExcutionTime(System.currentTimeMillis());
+        // Let the back-end runners have chances to retry the suspended work-flow.;
+        int interval = RetryRunner.getTime(pattern, 0);
+        if (node.getIntervals() != null && node.getNextRetryInterval(0) > 0) {
+            interval = node.getNextRetryInterval(0);
+        }
+        task.setNextExecutionTime(task.getLastExcutionTime() + interval);
+        TaskStep taskStep = TaskStep.builder()
+                .createTime(System.currentTimeMillis())
+                .graphName(node.getGraph().getGraphName())
+                .jsonfiedTransferData(data.toString())
+                .nodeName(node.getNodeName())
+                .status(StreamTransferDataStatus.SUSPEND)
+                .taskId(task.getTaskId())
+                .build();
+        taskPersister.suspend(task, interval, taskStep);
+
+        return interval;
     }
 
     /**
@@ -103,10 +131,9 @@ public final class TaskHelper {
      * @param taskPersister Task persister.
      */
     public static void complete(final Task task, final StreamTransferData data, final TaskPersister taskPersister) {
-        task.setJsonfiedTransferData(data.toString());
         task.setStatus("Completed");
-        taskPersister.complete(task);
         taskPersister.persist(task);
+        taskPersister.complete(task);
     }
 
     /**
@@ -129,12 +156,18 @@ public final class TaskHelper {
 
             @Override
             public Node fail() {
-                return startNode.getNext().onFail();
+                // 如果没有配置fail节点，默认使用default error node处理.循环 Default error 处理完只能返回success，否者会陷入死.
+                return startNode.getNext().onFail() == null ? startNode.getGraph().getDefaultErrorNode() : startNode.getNext().onFail();
             }
 
             @Override
             public Node suspend() {
                 return startNode.getNext().onSuspend();
+            }
+
+            @Override
+            public Node check() {
+                return startNode.getNext().onCheck();
             }
         });
     }
@@ -184,5 +217,30 @@ public final class TaskHelper {
             }
         }
         return node;
+    }
+
+    /**
+     * Retry the suspended work-flow instance locally after scheduled delay if possible.
+     * @param interval Time to delay in {@link TimeUnit#MILLISECONDS}, if it is less than 5000, herd framework will try to run it locally to speed up.
+     * @param taskID Task id.
+     * @param graphContext Graph context.
+     * @param taskPersister Task persister.
+     * @param pattern Retry pattern.
+     */
+    public static void retryLocalIfPossible(final int interval, final String taskID, final GraphContext graphContext,
+            final TaskPersister taskPersister, final RetryPattern pattern) {
+        if (interval < 5000) {
+            LOCAL_RETRY_SCHEDULER.schedule(() -> {
+                String content = taskPersister.get(taskID);
+                log.info("Local retry for task [{}] begin after interval [{}]", taskID, interval);
+                RetryRunner retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+                try {
+                    retryRunner.run();
+                } catch (Exception e) {
+                    log.info("Error happend", e);
+                }
+
+            }, interval, TimeUnit.MILLISECONDS);
+        }
     }
 }

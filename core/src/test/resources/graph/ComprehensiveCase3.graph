@@ -1,0 +1,29 @@
+{
+  "graphName":"comprehensive3",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node3",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.TestActivity",
+      "successNode":"node2",
+      "failNode":"node3"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"org.stream.core.test.base.SuccessTestActivity",
+      "successNode":"node4",
+      "failNode":"node3"
+    },
+    {
+      "nodeName":"node4",
+      "activityClass":"org.stream.core.test.base.PrintRecordActivity",
+      "failNode":"node3"
+    },
+    {
+      "nodeName":"node3",
+      "activityClass":"org.stream.core.test.base.FailTestActivity"
+    }
+  ]
+}

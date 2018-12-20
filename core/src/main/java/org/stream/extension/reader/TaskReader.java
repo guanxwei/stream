@@ -36,6 +36,9 @@ public class TaskReader implements ResourceReader {
         return taskResource;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResourceAuthority resolve() {
         return this.taskResourceAuthority;

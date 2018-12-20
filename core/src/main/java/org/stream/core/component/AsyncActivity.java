@@ -4,9 +4,9 @@ import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 
 /**
- * Encapsulation of asynchronous activities.
+ * Encapsulation of asynchronous stream work flow activities.
  *
- * These activities will be executed asynchronously.
+ * All the asynchronous activities will be executed asynchronously alone with the main procedure.
  */
 public abstract class AsyncActivity extends Activity {
 
@@ -17,10 +17,10 @@ public abstract class AsyncActivity extends Activity {
     /**
      * Link-up the execution work-flow instance's resource tank with this activity instance.
      * Since AsyncActivitys will be executed in separated threads,
-     * we will be no longer able to achieve this by using the methods in {@linkplain WorkFlowContext}.
+     * we will be no longer able to achieve the work flow resources by using the methods in {@linkplain WorkFlowContext}.
      * To make these AsyncActivitys be able to retrieve resources from the work-flow or attach back
      * resources to the work-flow instance, work-flow engine will help invoke these method to link-up
-     * that resource tank with this activity.
+     * the work flow resource tank with the async-activity.
      * Basically, this method may potentially delay the GC to collect unneeded objects, users should keep
      * in mind that the method {@code AsyncActivity#cleanUp()} must be invoked after all the work is done.
      *
@@ -61,7 +61,7 @@ public abstract class AsyncActivity extends Activity {
     }
 
     /**
-     * Clean the thread local variables so that this thread can be reused by other work-flow instances.
+     * Clean the thread local variables so that the host thread can be reused by other work-flow instances.
      * And make sure that the unneeded {@linkplain ResourceTank} instance initiated in the main thread is collected.
      */
     public void cleanUp() {

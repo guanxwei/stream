@@ -1,0 +1,12 @@
+{
+  "graphName":"springCase",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node1",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.SpringActivity"
+    }
+  ]
+}

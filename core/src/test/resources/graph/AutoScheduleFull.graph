@@ -12,7 +12,10 @@
     {
       "nodeName":"node2",
       "activityClass":"org.stream.core.test.base.SuccessTestActivity",
-      "failNode":"node3"
+      "failNode":"node3",
+      "intervals":[
+          10,10,10,100,100
+      ]
     },
     {
       "nodeName":"node3",

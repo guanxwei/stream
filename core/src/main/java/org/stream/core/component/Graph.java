@@ -2,14 +2,15 @@ package org.stream.core.component;
 
 import java.util.List;
 
+import org.stream.core.execution.Engine;
 import org.stream.core.resource.ResourceType;
 
 import lombok.Data;
 
 /**
- * Encapsulation of work-flow execution procedure. Each graph should be defined in a stand-alone file
+ * Encapsulation of work-flow execution procedure definition. Each graph represents single one procedure, which should be defined in a stand-alone file
  * with suffix ".graph". Work-flow run time context will load these files and assemble them into {@linkplain Graph}
- * instance so the {@linkplain Engine} can use them to complete the designed work.
+ * instances so the {@linkplain Engine} can use them to complete the designed work.
  *
  */
 @Data
@@ -31,14 +32,17 @@ public class Graph {
     private ResourceType resourceType;
 
     /**
-     * The entry point of the graph, a work flow execution engine will choose this node to execute first.
+     * The entry point of the graph, the work flow execution engine will choose this node to execute first.
      */
     private Node startNode;
 
     /**
-     * The default error handling node of the graph. It will be invoked in scenarios when a node throws exception or
-     * a node returns {@link ActivityResult.FAIL} while it not specify its own error handling node.
+     * The default error handler node of the graph. It will be invoked in scenarios when a node throws exception or
+     * a node returns {@link ActivityResult.FAIL} while it does not specify its own error handling node.
      * When a node returns fail result, before the work-flow engine exits, the error handling node should help do some clean work.
+     *
+     * Default error node should never throw any exception and can only return {@link ActivityResult#SUCCESS}, otherwise the programe
+     * will run into dead circle causing crash.
      */
     private Node defaultErrorNode;
 

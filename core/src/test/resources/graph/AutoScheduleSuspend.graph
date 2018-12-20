@@ -1,0 +1,16 @@
+{
+  "graphName":"autoSchedule2",
+  "resourceType":"OBJECT",
+  "startNode":"node4",
+  "nodes":[
+    {
+      "nodeName":"node4",
+      "activityClass":"org.stream.core.test.base.AutoScheduleNormalCaseActivity",
+      "successNode":"node5"
+    },
+    {
+      "nodeName":"node5",
+      "activityClass":"org.stream.core.test.base.AutoScheduleSuspendCaseActivity"
+    }
+  ]
+}

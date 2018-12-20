@@ -1,77 +1,47 @@
 package org.stream.core.execution;
 
-import org.apache.commons.lang3.StringUtils;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
+import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStep;
+import org.stream.extension.pattern.RetryPattern;
+import org.stream.extension.pattern.defaults.EqualTimeIntervalPattern;
+import org.stream.extension.pattern.defaults.ScheduledTimeIntervalPattern;
 import org.stream.extension.persist.TaskPersister;
-
-import com.google.common.collect.ImmutableList;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Runnable implementation to process pending on retry tasks.
  *
- * Updated 2017/09/30:
- * We decided to support two strategies to re-run the suspended work-flow instances:
- * 1、Re-run the suspended instances periodically() with up-limit times 12. That's what we do here.
- * 2、Re-run the suspended instances at fixed time points, currently we will re-run the suspended work-flow at most
- *     12 times, the time points are:5s,10s,30s,60s,5m,10m,30m,1h,3h,10h,20h,24h,this strategy depends on Redis's zadd/zrange
- *     function, each time when we mark the work-flow as suspended, we also set up the expire time as the score for the task,
- *     before re-run the work-flow we will check if the time fulfill our requirements.
  *
- * See also {@linkplain AutoScheduledEngine#init()}, to Enable strategy 2, users should <p> explicitly
- * invoke the {@linkplain AutoScheduledEngine#setPattern(String)} before executing, set the pattern as "PubSub".
- * As the {@linkplain AutoScheduledEngine#init()} is invoked at initiation period(and executed only once), so the user should keep in mind
- * that the pattern will serve for the whole life cycle of the {@linkplain AutoScheduledEngine} instance. Users <p>should not change the pattern
- * for any reason, if both two strategies are needed, people should instantiate two instacces of {@linkplain AutoScheduledEngine}, each one
- * serves for exactly one strategy.
+ * Updated 2018/09/12:
+ * Herd updated the max retry times to 24, which means Herd framework will retry single one node at most 24 times and
+ * Herd framework will treat suspend activity result as failed result once max retry times reaches.
+ * Herd framework will invoke {@link RetryPattern} to deduce the next time point the work-flow will be retried.
  *
- * This back-end runner serve both the strategy one and two, using parameter {@code RetryRunner#pattern]} to differentiate them.
+ * Herd provides two default implemented retry patterns, for detail please refer to {@link EqualTimeIntervalPattern} &
+ * {@link ScheduledTimeIntervalPattern}.
  *
+ * Users can also use their own retry pattern by implements interface {@link RetryPattern} and set the {@link AutoScheduledEngine#setRetryPattern(RetryPattern)}
+ * as their implementation.
+ *
+ * Update 20180920, users can also set retry interval by adding configuration to the nodes in graphs, for detail please refer to
+ * {@link NodeConfiguration#getIntervals()}.
  */
 @Slf4j
 public class RetryRunner implements Runnable {
 
-    private static final ImmutableList<Integer> SCHEDULED = ImmutableList.<Integer>builder()
-            .add(5)
-            .add(10)
-            .add(20)
-            .add(30)
-            .add(240)
-            .add(300)
-            .add(1200)
-            .add(1800)
-            .add(7200)
-            .add(25200)
-            .add(36000)
-            .add(14400)
-            .build();
-
-    private static final ImmutableList<Integer> EQUAL = ImmutableList.<Integer>builder()
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .add(10)
-            .build();
-
-    private static final int MAX_RETRY = 11;
+    private static final int MAX_RETRY = 24;
 
     private String content;
     private GraphContext graphContext;
     private TaskPersister taskPersister;
-    private String pattern;
+    private RetryPattern retryPattern;
 
     /**
      * Constructor.
@@ -81,63 +51,106 @@ public class RetryRunner implements Runnable {
      * @param pattern Retry pattern.
      */
     public RetryRunner(final String content, final GraphContext graphContext, final TaskPersister taskPersister,
-            final String pattern) {
+            final RetryPattern pattern) {
         this.content = content;
         this.graphContext = graphContext;
         this.taskPersister = taskPersister;
+        this.retryPattern = pattern;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void run() {
-        Task task = Task.parse(content);
-        if (!task.getStatus().equals("PendingOnRetry")) {
-            return;
-        }
 
-        StreamTransferData data = (StreamTransferData) StreamTransferData.parse(task.getJsonfiedTransferData());
-        Node node = TaskHelper.deduceNode(task, graphContext);
-        if (node == null) {
-            log.error("Unvalid node, data [{}]", content);
+        log.info("Begin to process stuck task [{}]", content);
+        Task task = Task.parse(content);
+        if (task.getStatus().equals("Completed")) {
+            taskPersister.complete(task);
             return;
         }
 
         if (!taskPersister.tryLock(task.getTaskId())) {
             //Some one else is being processing the task, quit.
+            log.info("Fail to grab lock for task [{}]", content);
+
             return;
         }
 
-        Resource primaryResource = preparePrimaryResource(task, data);
+        Node node = TaskHelper.deduceNode(task, graphContext);
+        if (node == null) {
+            log.error("Unvalid node, data [{}]", content);
+            // 防止不断重试.
+            taskPersister.complete(task);
+
+            return;
+        }
+
+        Resource primaryResource = preparePrimaryResource(task);
+        StreamTransferData data = taskPersister.retrieveData(task.getTaskId());
+
         TaskHelper.prepare(task.getGraphName(), primaryResource, graphContext);
+        WorkFlowContext.attachResource(Resource.builder()
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .value(data)
+                .build());
 
+        System.out.println(5);
+
+        log.info("Retry workflow at node [{}]", node.getNodeName());
         while (node != null && !WorkFlowContext.provide().isRebooting()) {
-            /**
-             * Before executing the activity, we'd check if the node contains asynchronous dependency nodes,
-             * if yes, we should construct some asynchronous tasks then turn back to the normal procedure.
-             */
-            if (node.getAsyncDependencies() != null) {
-                TaskHelper.setUpAsyncTasks(WorkFlowContext.provide(), node);
-            }
-
-            ActivityResult activityResult = TaskHelper.perform(node);
-
-            if (activityResult.equals(ActivityResult.SUSPEND)) {
-                suspend(task, node, data);
+            log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());
+            ActivityResult activityResult = doRetry(node, task, data);
+            if (activityResult == null) {
                 return;
             }
 
-            TaskHelper.updateTask(task, node, "Executing");
-            taskPersister.setHub(task.getTaskId(), task.toString());
-            node = TaskHelper.traverse(activityResult, node);
+            node = TaskHelper.traverse(activityResult, node);;
         }
+
         TaskHelper.complete(task, data, taskPersister);
     }
 
-    private Resource preparePrimaryResource(final Task task, final StreamTransferData data) {
+    private ActivityResult doRetry(final Node node, final Task task, final StreamTransferData data) {
+
+        /**
+         * Before executing the activity, we'd check if the node contains asynchronous dependency nodes,
+         * if yes, we should construct some asynchronous tasks then turn back to the normal procedure.
+         */
+        if (node.getAsyncDependencies() != null) {
+            TaskHelper.setUpAsyncTasks(WorkFlowContext.provide(), node);
+        }
+
+        ActivityResult activityResult = TaskHelper.perform(node);
+
+        if (activityResult.equals(ActivityResult.SUSPEND)) {
+            suspend(task, node, data);
+            if (task.getRetryTimes() == MAX_RETRY) {
+                activityResult = ActivityResult.FAIL;
+            } else {
+                return null;
+            }
+        }
+
+        TaskStep taskStep = TaskStep.builder()
+                .createTime(System.currentTimeMillis())
+                .graphName(node.getGraph().getGraphName())
+                .jsonfiedTransferData(data.toString())
+                .nodeName(node.getNodeName())
+                .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
+                .taskId(task.getTaskId())
+                .build();
+        TaskHelper.updateTask(task, node, "Executing");
+        taskPersister.setHub(task.getTaskId(), task, false, taskStep);
+
+        return activityResult;
+    }
+
+    private Resource preparePrimaryResource(final Task task) {
         String primaryResourceString = task.getJsonfiedPrimaryResource();
         if (primaryResourceString != null) {
-            Resource resource = Resource.parse(primaryResourceString);
-            resource.setValue(data);
-            return resource;
+            return Resource.parse(primaryResourceString);
         }
         return null;
     }
@@ -146,22 +159,47 @@ public class RetryRunner implements Runnable {
         // Persist workflow status to persistent layer.
         task.setNodeName(node.getNodeName());
         task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
-        task.setJsonfiedTransferData(data.toString());
-        doSuspend(task, node);
+        task.setLastExcutionTime(System.currentTimeMillis());
+        task.setStatus("PendingOnRetry");
+        doSuspend(task, node, data);
     }
 
-    private void doSuspend(final Task task, final Node node) {
+    private void doSuspend(final Task task, final Node node, final StreamTransferData data) {
+        int interval = 100;
+        TaskStep taskStep = TaskStep.builder()
+                .createTime(System.currentTimeMillis())
+                .graphName(node.getGraph().getGraphName())
+                .jsonfiedTransferData(data.toString())
+                .nodeName(node.getNodeName())
+                .status(StreamTransferDataStatus.SUSPEND)
+                .taskId(task.getTaskId())
+                .build();
         if (task.getRetryTimes() == MAX_RETRY && task.getNodeName().equals(node.getNodeName())) {
             // Will not try any more.
-            taskPersister.complete(task);
-            taskPersister.persist(task);
+            task.setStatus("Completed");
+            log.error("Max retry times reached for task [{}] at node [{}] in procedure [{}]", task.getTaskId(),
+                    node.getNodeName(), node.getGraph().getGraphName());
         } else if (task.getNodeName().equals(node.getNodeName()) && task.getRetryTimes() < MAX_RETRY) {
             task.setRetryTimes(task.getRetryTimes() + 1);
-            taskPersister.suspend(task, getTime(task.getRetryTimes() + 1, pattern));
+            interval = getTime(this.retryPattern, task.getRetryTimes());
+            if (node.getIntervals() != null && node.getNextRetryInterval(task.getRetryTimes()) > 0) {
+                interval = node.getNextRetryInterval(0);
+            }
+            task.setNextExecutionTime(task.getLastExcutionTime() + interval);
+            taskPersister.suspend(task, interval, taskStep);
+            TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
+            log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] seconds",
+                    task.getTaskId(), task.getRetryTimes(), interval);
         } else {
             // Recount.
             task.setRetryTimes(0);
-            taskPersister.suspend(task, getTime(0, pattern));
+            interval = getTime(this.retryPattern, 0);
+            if (node.getIntervals() != null && node.getNextRetryInterval(0) > 0) {
+                interval = node.getNextRetryInterval(0);
+            }
+            task.setNextExecutionTime(task.getLastExcutionTime() + interval);
+            taskPersister.suspend(task, interval, taskStep);
+            TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
         }
     }
 
@@ -171,13 +209,10 @@ public class RetryRunner implements Runnable {
      * @param pattern Retry pattern.
      * @return Next time window
      */
-    public static int getTime(final int time, final String pattern) {
-        if (StringUtils.equals(RetryPattern.SCHEDULED_TIME, pattern)) {
-            return SCHEDULED.get(time);
-        } else if (StringUtils.equals(RetryPattern.EQUAL_DIFFERENCE, pattern)) {
-            return EQUAL.get(time);
-        } else {
-            throw new RuntimeException("Unsupported pattern");
+    public static int getTime(final RetryPattern retryPattern, final int time) {
+        if (retryPattern != null) {
+            return retryPattern.getTimeInterval(time);
         }
+        throw new RuntimeException("Retry pattern should not be null");
     }
 }

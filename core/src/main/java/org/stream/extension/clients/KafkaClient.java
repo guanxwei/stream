@@ -17,7 +17,7 @@ public interface KafkaClient {
      * @param data  The record contents
      * @return Manipulation result.
      */
-    public Future<RecordMetadata> sendMessage(final String topic, final String data);
+    public boolean sendMessage(final String topic, final String data);
 
     /**
      * Send a message (with key) to the kafka queue.

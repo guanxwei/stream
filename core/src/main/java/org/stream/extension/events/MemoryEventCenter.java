@@ -41,30 +41,17 @@ public class MemoryEventCenter implements EventCenter {
     @Setter
     private String topic;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void fireEvent(final Event<?, ?> event) {
-        pendingEvents.offer(event);
-    }
+    private volatile boolean shutingDown = false;
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void fireSyncEvent(final Event<?, ?> event) throws Exception {
-        try {
-            String eventEntity = Jackson.json(event);
-            log.info("Receive request to deliver event synchronouly, will push it to the Kafka queue service immediately",
-                    eventEntity, event.getClass().getSimpleName());
-            Future<RecordMetadata> result = kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), eventEntity);
-            result.get();
-            log.info("Event [{}] sent to Kafka cluster successfully", eventEntity);
-        } catch (Exception e) {
-            log.warn("Event dispatch error!", e);
-            throw e;
+    public void fireEvent(final Event<?, ?> event) {
+        if (shutingDown) {
+            throw new RuntimeException("JVM has been shuted down");
         }
+        pendingEvents.offer(event);
     }
 
     /**
@@ -109,12 +96,45 @@ public class MemoryEventCenter implements EventCenter {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Listener> getListenerListByEventType(final Class<?> type) {
+        if (!type.getSuperclass().isAssignableFrom(Event.class)) {
+            // Only event type can be key of the map.
+            return null;
+        }
+        return listeners.get(type);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void fireSyncEvent(final Event<?, ?> event) throws Exception {
+        if (shutingDown) {
+            throw new RuntimeException("JVM has been shuted down");
+        }
+        try {
+            String eventEntity = Jackson.json(event);
+            log.info("Receive request to deliver event synchronouly, will push it to the Kafka queue service immediately",
+                    eventEntity, event.getClass().getSimpleName());
+            Future<RecordMetadata> result = kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), eventEntity);
+            result.get();
+            log.info("Event [{}] sent to Kafka cluster successfully", eventEntity);
+        } catch (Exception e) {
+            log.warn("Event dispatch error!", e);
+            throw e;
+        }
+    }
+
+    /**
      * Initiate new threads to process the events.
      * Our strategy is to send a message to Kafaka cluster for each event,
      * let the Kafaka consumers to process the event asynchronously.
      */
     public void init() {
-        // We just create a thread pool with up limit (1 + number of event types * 2).
+        // We just create a thread pool with threads up limit (1 + number of event types * 2).
         service = Executors.newFixedThreadPool(1 + listeners.keySet().size() * 2);
         log.info("Event center initiating...");
         log.info("Find kafka topic [{}]", topic);
@@ -126,6 +146,7 @@ public class MemoryEventCenter implements EventCenter {
             service.submit(createListenerNotifiers(clazz));
         }
         log.info("Event center initiated.");
+        registerStopHook();
     }
 
     private Runnable createPipelineWorker() {
@@ -133,31 +154,36 @@ public class MemoryEventCenter implements EventCenter {
             @Override
             public void run() {
                 log.info("Pipeline worker [{}] started working to transfer event message to Kafka queue service", Thread.currentThread().getName());
-                Event<?, ?> event = null;
                 while (true) {
-                    try {
-                        String eventEntity;
-                        event = pendingEvents.take();
-                        eventEntity = Jackson.json(event);
-                        log.info("Retrieve event entity [{}] with type [{}] from the buffered queue, will push it to the Kafka queue service",
-                                eventEntity, event.getClass().getSimpleName());
-                        kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), eventEntity);
-                        log.info("Event [{}] sent to Kafka cluster", eventEntity);
-                    } catch (Exception e) {
-                        log.warn("Event dispatch error!", e);
-                        try {
-                            log.info("Take a little break! Will continue to work after one second.");
-                            Thread.sleep(100);
-                        } catch (InterruptedException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
-                        }
-                        pendingEvents.offer(event);
-                    }
+                    retrieveAndProcess(false);
                 }
             }
         };
         return producer;
+    }
+
+    private void retrieveAndProcess(final boolean discarded) {
+        Event<?, ?> event = null;
+        try {
+            String eventEntity;
+            event = pendingEvents.take();
+            eventEntity = Jackson.json(event);
+            log.info("Retrieve event entity [{}] with type [{}] from the buffered queue, will push it to the Kafka queue service",
+                    eventEntity, event.getClass().getSimpleName());
+            kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), eventEntity);
+            log.info("Event [{}] sent to Kafka cluster", eventEntity);
+        } catch (Exception e) {
+            log.warn("Event dispatch error!", e);
+            if (!discarded) {
+                try {
+                    log.info("Take a little break! Will continue to work after one second.");
+                    Thread.sleep(100);
+                } catch (InterruptedException e1) {
+                    log.warn("Thread interrupted", e1);
+                }
+                pendingEvents.offer(event);
+            }
+        }
     }
 
     private Runnable createListenerNotifiers(final Class<?> clazz) {
@@ -179,6 +205,7 @@ public class MemoryEventCenter implements EventCenter {
                             try {
                                 listener.handle(event);
                             } catch (Exception e) {
+                                fireEvent(event);
                                 log.warn("Handler [{}] failed to handle the event message [{}]", listener.getClass().getSimpleName(), message);
                             }
                         }
@@ -192,16 +219,12 @@ public class MemoryEventCenter implements EventCenter {
         return worker;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<Listener> getListenerListByEventType(final Class<?> type) {
-        if (!type.getSuperclass().isAssignableFrom(Event.class)) {
-            // Only event type can be key of the map.
-            return null;
-        }
-        return listeners.get(type);
+    private void registerStopHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            shutingDown = true;
+            while (!pendingEvents.isEmpty()) {
+                retrieveAndProcess(true);
+            }
+        }));
     }
-
 }

@@ -10,20 +10,20 @@ import java.util.List;
 public interface EventCenter {
 
     /**
-     * Fire an event. Default, the event will be delivered to event storage asynchronously.
+     * Fire an event asynchronously.
      * @param event Event to be fired.
      */
     void fireEvent(final Event<?, ?> event);
 
     /**
-     * Fire an event. The event will be delivered to event storage immediately.
+     * Fire an event synchronously.
      * @param event Event to be fired.
-     * @throws Exception Any exception that will be thrown during message delivery.
+     * @throws Exception  Exception thrown when fail to communicate with kafka server.
      */
     void fireSyncEvent(final Event<?, ?> event) throws Exception;
 
     /**
-     * Register and event listener.
+     * Register the event listener.
      * @param event Event type that the listener interested in.
      * @param listener Event listener.
      */

@@ -17,6 +17,7 @@ public class AsyncTestActivity extends AsyncActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        cleanUp();
         return ActivityResult.SUCCESS;
     }
 

@@ -1,7 +1,7 @@
 package org.stream.extension.events;
 
 /**
- * Base class for different kinds of asynchronous events.
+ * Base class to abstract different kinds of asynchronous events.
  * @param <T> Request.
  * @param <U> Response.
  *

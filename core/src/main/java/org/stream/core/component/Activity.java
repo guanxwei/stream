@@ -2,8 +2,6 @@ package org.stream.core.component;
 
 import org.stream.core.resource.ResourceType;
 
-import lombok.Setter;
-
 /**
  * Encapsulation of customer specific activity, which will be performed in a specific {@link Node}.
  *
@@ -11,9 +9,6 @@ import lombok.Setter;
  * The work-flow engine will automatically pick up these activities and execute them per graph definition files.
  */
 public abstract class Activity {
-
-    @Setter
-    private Node node;
 
     /**
      * Perform an activity as part of a work-flow.
@@ -30,11 +25,11 @@ public abstract class Activity {
     }
 
     /**
-     * Get the node the activity is running on.
+     * Get the host node the activity is running on.
      * @return The host node of the activity.
      */
     public Node getExecutionContext() {
-        return node;
+        return Node.CURRENT.get();
     }
 
     /**
@@ -43,6 +38,6 @@ public abstract class Activity {
      * @return The graph's granted primary resource type.
      */
     public ResourceType getGrandtedPrimaryResourceType() {
-        return node.getGraph().getResourceType();
+        return Node.CURRENT.get().getGraph().getResourceType();
     }
 }

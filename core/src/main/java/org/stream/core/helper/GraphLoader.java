@@ -6,10 +6,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
+import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.ActivityResult.Visitor;
@@ -24,14 +28,14 @@ import org.stream.core.execution.StepPair;
 import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
 import org.stream.core.resource.ResourceType;
 
-import lombok.Data;
-
 import com.google.gson.Gson;
 
+import lombok.Data;
+
 /**
- * Graph helper who is responsible to load a graph from a input stream. Basically,
- * graph definition information is stored in a file with suffix ".graph".
- * The file content should be stored as Json object stringfied style.
+ * Graph helper who is responsible to load graphs from specific graph definition files.
+ * Basically a graph definition file should be named with suffix ".graph" and the file content
+ * should be stored as standard json string of object {@link GraphConfiguration}.
  */
 @Data
 public final class GraphLoader {
@@ -50,6 +54,10 @@ public final class GraphLoader {
 
     private static final String DEFAULT_GRAPH_FILE_PATH_PREFIX = SYSTEM_PATH_SEPARATOR + "graph" + SYSTEM_PATH_SEPARATOR;
 
+    private ApplicationContext applicationContext;
+
+    private boolean circuitChecking = false;
+
     /**
      * Initiate graph loading process, load all the graphs specified in the {@link #graphFilePaths}, which is located in the
      * default graph directory.
@@ -60,13 +68,29 @@ public final class GraphLoader {
             throw new GraphLoadException("Graph definition file paths not specified!");
         }
         for (String path : graphFilePaths) {
+            if (!path.endsWith(".graph")) {
+                path += ".graph";
+            }
             InputStream input = getClass().getResourceAsStream(DEFAULT_GRAPH_FILE_PATH_PREFIX + path);
             if (input == null) {
                 throw new GraphLoadException(String.format("Graph definition file is not found, file name is [%s]", DEFAULT_GRAPH_FILE_PATH_PREFIX + path));
             }
             Graph graph = loadGraphFromFile(input);
             graphContext.addGraph(graph);
+            if (circuitChecking) {
+                checkCircuit(graph);
+            }
         }
+    }
+
+    /**
+     * Initiate graph loading process, load all the graphs specified in the {@link #graphFilePaths}, which is located in the
+     * default graph directory. Default, used the spring framework registered activity bean instead of initiating new instances.
+     * @throws GraphLoadException GraphLoadException.
+     */
+    public void initInSpring(final ApplicationContext applicationContext) throws GraphLoadException {
+        this.applicationContext = applicationContext;
+        init();
     }
 
     private Graph loadGraphFromFile(final InputStream input) throws GraphLoadException {
@@ -135,11 +159,21 @@ public final class GraphLoader {
         checkNodeConfiguration(nodeConfiguration);
         String currentNodeName = nodeConfiguration.getNodeName();
         String activityClass = nodeConfiguration.getActivityClass();
-        Activity activity;
+        Activity activity = null;
         if (!graphContext.isActivityRegistered(activityClass)) {
             cause.append(activityClass);
             Class<?> clazz = Class.forName(activityClass);
-            activity = (Activity) clazz.newInstance();
+            if (applicationContext != null && !applicationContext.getBeansOfType(Activity.class).isEmpty()) {
+                Map<String, Activity> candidates = applicationContext.getBeansOfType(Activity.class);
+                Optional<Activity> activityOptional = candidates.values().stream()
+                        .filter(candidate -> clazz.isAssignableFrom(candidate.getClass()))
+                        .findFirst();
+                if (activityOptional.isPresent()) {
+                    activity = activityOptional.get();
+                }
+            } else {
+                activity = (Activity) clazz.newInstance();
+            }
             graphContext.registerActivity(activity);
         } else {
             activity = graphContext.getActivity(activityClass);
@@ -154,8 +188,9 @@ public final class GraphLoader {
                 .next(new NextSteps())
                 .graph(graph)
                 .build();
-        activity.setNode(node);
+
         staticNodes.add(node);
+        node.setIntervals(nodeConfiguration.getIntervals());
         knowNodes.put(node.getNodeName(), node);
     }
 
@@ -182,6 +217,14 @@ public final class GraphLoader {
                 public Void suspend() {
                     if (type.equals(NextStepType.SUSPEND)) {
                         predecessor.getNext().setSuspend(successor);
+                    }
+                    return null;
+                }
+
+                @Override
+                public Void check() {
+                    if (type.equals(NextStepType.CHECK)) {
+                        predecessor.getNext().setCheck(successor);
                     }
                     return null;
                 }
@@ -239,8 +282,9 @@ public final class GraphLoader {
         String successStep = nodeConfiguration.getSuccessNode();
         String failStep = nodeConfiguration.getFailNode();
         String suspendStep = nodeConfiguration.getSuspendNode();
+        String checkStep = nodeConfiguration.getCheckNode();
         List<StepPair> list = new LinkedList<StepPair>();
-        String[] nexts = {successStep, failStep, suspendStep};
+        String[] nexts = {successStep, failStep, suspendStep, checkStep};
         int count = 0;
         for (String nextStep : nexts) {
             if (nextStep != null) {
@@ -277,5 +321,38 @@ public final class GraphLoader {
         }
 
         return list;
+    }
+
+    private void checkCircuit(final Graph graph) throws GraphLoadException {
+        Set<String> nodes = new HashSet<>();
+        Node targetNode = graph.getStartNode();
+        nodes.add(targetNode.getNodeName());
+        doCheck(targetNode, nodes, graph);
+    }
+
+    private void doCheck(final Node targetNode, final Set<String> nodes, final Graph graph) throws GraphLoadException {
+        if (targetNode == null) {
+            return;
+        }
+
+        NextSteps nextSteps = targetNode.getNext();
+        doCheckChild(targetNode, nextSteps.onSuccess(), nodes, graph);
+        doCheckChild(targetNode, nextSteps.onCheck(), nodes, graph);
+        doCheckChild(targetNode, nextSteps.onFail(), nodes, graph);
+    }
+
+    private void doCheckChild(final Node targetNode, final Node child, final Set<String> nodes, final Graph graph) throws GraphLoadException {
+        if (child == null) {
+            return;
+        }
+
+        if (nodes.contains(child.getNodeName())) {
+            throw new GraphLoadException(String.format("Circuit condition found at node [%s] in graph [%s]",
+                    targetNode.getNodeName(), graph.getGraphName()));
+        }
+
+        nodes.add(child.getNodeName());
+        doCheck(child, nodes, graph);
+        nodes.remove(child.getNodeName());
     }
 }

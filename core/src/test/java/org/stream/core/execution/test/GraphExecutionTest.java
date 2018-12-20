@@ -107,11 +107,9 @@ public class GraphExecutionTest {
                 .build();
         engine.execute(graphContext, "cascade", primaryResource, false, ResourceType.OBJECT);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
-        Assert.assertEquals(records.size(), 4);
+        Assert.assertEquals(records.size(), 2);
         Assert.assertEquals(records.get(0).getDescription(), "keep a cascade record");
-        Assert.assertEquals(records.get(1).getDescription(), "keep a record");
-        Assert.assertEquals(records.get(2).getDescription(), "keep a success record");
-        Assert.assertEquals(records.get(3).getDescription(), "keep a success record");
+        Assert.assertEquals(records.get(1).getDescription(), "keep a success record");
         primaryResource = WorkFlowContext.getPrimary();
         Assert.assertEquals(((Long)primaryResource.getValue()).longValue(), 100000);
     }
@@ -122,7 +120,7 @@ public class GraphExecutionTest {
         String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "comprehensive2", null, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false, ResourceType.OBJECT);
         Thread.sleep(1100);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertEquals(records.size(), 2);
@@ -141,7 +139,7 @@ public class GraphExecutionTest {
         String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "comprehensive2", null, false, ResourceType.SESSION);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false, ResourceType.SESSION);
     }
 
     @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "The work-flow instance has been closed!")
@@ -149,7 +147,7 @@ public class GraphExecutionTest {
         String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "comprehensive2", null, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false, ResourceType.OBJECT);
         WorkFlowContext.close(true);
         WorkFlowContext.getPrimary();
     }
@@ -159,7 +157,7 @@ public class GraphExecutionTest {
         String asyncPath = "ComprehensiveWithAsyncNodeCanceledCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "comprehensive3", null, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCanceledCase", null, false, ResourceType.OBJECT);
         Resource asyncTaskWrapper = WorkFlowContext.resolveResource("node4" + ResourceHelper.ASYNC_TASK_SUFFIX);
         // Make sure the async task has chance to start.
         Thread.sleep(1000);

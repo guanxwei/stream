@@ -13,6 +13,7 @@ import org.stream.core.resource.ResourceType;
 import org.stream.core.test.base.TestActivity;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class GraphLoadTest {
@@ -28,6 +29,7 @@ public class GraphLoadTest {
         this.graphLoader = new GraphLoader();
         graphLoader.setGraphContext(graphContext);
         graphLoader.setGraphFilePaths(paths);
+        graphLoader.setCircuitChecking(true);
     }
 
     /**
@@ -133,7 +135,7 @@ public class GraphLoadTest {
         graphLoader.init();
 
         Assert.assertEquals(activityRepository.getActivityNum(), 4);
-        Graph graph = graphContext.getGraph("comprehensive2");
+        Graph graph = graphContext.getGraph("ComprehensiveWithAsyncNodeCase");
         Assert.assertNotNull(graph);
 
         List<Node> nodes = graph.getNodes();
@@ -148,4 +150,22 @@ public class GraphLoadTest {
         Assert.assertEquals(asyncNode.getNodeName(), "node4");
     }
 
+    @Test(expectedExceptions = GraphLoadException.class, dataProvider = "noProvider")
+    public void testCircuitFailCase(final String no) throws Exception {
+        String path = "CircuitFailCase" + no + ".graph";
+        paths.add(path);
+        ActivityRepository activityRepository = new ActivityRepository();
+        graphContext.setActivityRepository(activityRepository);
+        graphLoader.init();
+    }
+
+    @DataProvider(name = "noProvider")
+    private Object[][] noProvider() {
+        return new Object[][] {
+            {""},
+            {"2"},
+            {"3"},
+            {"4"}
+        };
+    }
 }

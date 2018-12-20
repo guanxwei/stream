@@ -1,5 +1,7 @@
 package org.stream.core.helper;
 
+import java.util.List;
+
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +22,11 @@ public class NodeConfiguration {
 
     private String suspendNode;
 
+    private String checkNode;
+
     private AsyncNodeConfiguration[] asyncDependencies;
+
+    private List<Integer> intervals;
 
     /**
      * Encapsulation of asynchronous Node configuration, which is used to initiate a asynchronous node.

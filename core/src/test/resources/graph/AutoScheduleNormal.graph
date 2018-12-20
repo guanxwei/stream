@@ -1,0 +1,12 @@
+{
+  "graphName":"autoSchedule1",
+  "resourceType":"OBJECT",
+  "startNode":"node4",
+  "defaultErrorNode":"node4",
+  "nodes":[
+    {
+      "nodeName":"node4",
+      "activityClass":"org.stream.core.test.base.AutoScheduleNormalCaseActivity"
+    }
+  ]
+}

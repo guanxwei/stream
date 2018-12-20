@@ -41,6 +41,18 @@ public class WorkFlow {
     private String primaryResourceReference;
 
     /**
+     * The parent work-flow instance.
+     */
+    @Setter @Getter
+    private WorkFlow parent;
+
+    /**
+     * The children work-flow instances.
+     */
+    @Setter @Getter
+    private List<WorkFlow> children;
+
+    /**
      * Resource tank used to store resources attached to the work-flow. Nodes in the current work-flow share the resource tank.
      */
     @Getter(value = AccessLevel.PACKAGE)
@@ -140,7 +152,12 @@ public class WorkFlow {
      * @return Resource instance corresponding to the reference.
      */
     protected Resource resolveResource(final String resourceReference) {
-        return resourceTank.resolve(resourceReference);
+        Resource resource = resourceTank.resolve(resourceReference);
+        if (resource == null && parent != null) {
+            resource = parent.resolveResource(resourceReference);
+        }
+
+        return resource;
     }
 
     /**
@@ -177,6 +194,9 @@ public class WorkFlow {
      */
     protected Resource getPrimary() {
         if (primaryResourceReference == null) {
+            if (parent != null) {
+                return parent.getPrimary();
+            }
             return null;
         } else {
             return resolveResource(primaryResourceReference);
@@ -221,7 +241,7 @@ public class WorkFlow {
 
         private int status;
 
-        private WorkFlowStatus(int status) {
+        private WorkFlowStatus(final int status) {
             this.status = status;
         };
 

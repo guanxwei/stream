@@ -6,7 +6,8 @@
   "nodes":[
     {
       "nodeName":"node1",
-      "activityClass":"org.stream.core.test.base.ExceptionThrownActivity"
+      "activityClass":"org.stream.core.test.base.ExceptionThrownActivity",
+      "failNode":"node2"
     },
     {
       "nodeName":"node2",

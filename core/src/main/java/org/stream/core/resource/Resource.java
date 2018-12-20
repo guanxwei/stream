@@ -81,6 +81,18 @@ public class Resource {
 
     }
 
+    /**
+     * Helper method to retrieve value type safely.
+     * @param clazz Value's type
+     * @return {@link #value} is {@link #value}'s type inherits from the parameter class.
+     */
+    public <T> T resolveValue(final Class<T> clazz) {
+        if (clazz.isInstance(value)) {
+            return clazz.cast(value);
+        }
+        throw new ClassCastException();
+    }
+
     // CHECKSTYLE:OFF
     /**
      * Resource builder.
