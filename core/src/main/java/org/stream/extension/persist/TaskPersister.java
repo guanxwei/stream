@@ -34,9 +34,10 @@ public interface TaskPersister {
      * @param type List type.
      *         1 : retry list
      *         2 : back-up list
+     * @param queue The target queue.
      * @return Task list.
      */
-    Collection<String> getPendingList(final int type);
+    Collection<String> getPendingList(final int type, final int queue);
 
     /**
      * Try to lock the task Id to avoid contention.
@@ -110,4 +111,11 @@ public interface TaskPersister {
      * @return Stuck task list.
      */
     List<Task> retrieveStuckTasksFromDB();
+
+    /**
+     * Return queues the tasks are persisted, the main reason why the storage is divided into several queues
+     * is to speed up processing.
+     * @return Queues the tasks are persisted
+     */
+    int getQueues();
 }

@@ -50,6 +50,8 @@ public class TaskPersisterRDBImpl implements TaskPersister {
     // Lock expire time in milliseconds.
     private static final long LOCK_EXPIRE_TIME = 10 * 1000;
 
+    private static final int DEFAULT_QUEUES = 4;
+
     /**
      * {@inheritDoc}
      */
@@ -77,16 +79,16 @@ public class TaskPersisterRDBImpl implements TaskPersister {
      * {@inheritDoc}
      */
     @Override
-    public Collection<String> getPendingList(final int type) {
+    public Collection<String> getPendingList(final int type, final int queue) {
         assert application != null;
 
         try {
             if (type == 1) {
-                Set<String> result = redisService.zrange(RETRY_KEY + application, Double.valueOf("0"),
+                Set<String> result = redisService.zrange(getQueueName(RETRY_KEY, application, queue), Double.valueOf("0"),
                         System.currentTimeMillis());
                 return result;
             } else if (type == 2) {
-                return redisService.lrange(BACKUP_KEY + application, 0, 10);
+                return redisService.lrange(getQueueName(BACKUP_KEY, application, queue), 0, 10);
             } else if (type == 3) {
                 List<Task> tasks = taskDao.queryStuckTasks();
                 if (!CollectionUtils.isEmpty(tasks)) {
@@ -147,11 +149,11 @@ public class TaskPersisterRDBImpl implements TaskPersister {
     }
 
     private void markAsLocked(final String taskId) {
-        redisService.lrem(BACKUP_KEY + application, 0, taskId);
+        redisService.lrem(getQueueName(BACKUP_KEY, application, taskId), 0, taskId);
         // Add the task id at the tail of the back up queue.
-        redisService.rpush(BACKUP_KEY + application, taskId);
+        redisService.rpush(getQueueName(BACKUP_KEY, application, taskId), taskId);
         // Remove the task from the retry queue.
-        redisService.zdel(RETRY_KEY + application, taskId);
+        redisService.zdel(getQueueName(RETRY_KEY, application, taskId), taskId);
         redisService.set(taskId + "_locktime", String.valueOf(System.currentTimeMillis()));
     }
 
@@ -205,8 +207,8 @@ public class TaskPersisterRDBImpl implements TaskPersister {
     public boolean removeHub(final String taskId) {
         assert application != null;
 
-        redisService.zdel(RETRY_KEY + application, taskId);
-        return redisService.lrem(BACKUP_KEY + application, 0, taskId);
+        redisService.zdel(getQueueName(RETRY_KEY, application, taskId), taskId);
+        return redisService.lrem(getQueueName(BACKUP_KEY, application, taskId), 0, taskId);
     }
 
     /**
@@ -230,8 +232,8 @@ public class TaskPersisterRDBImpl implements TaskPersister {
             // To make sure Unit test cases can be run quickly.
             score = 100;
         }
-        redisService.lrem(BACKUP_KEY + application, 0, task.getTaskId());
-        redisService.zadd(RETRY_KEY + application, task.getTaskId(), score);
+        redisService.lrem(getQueueName(BACKUP_KEY, application, task.getTaskId()), 0, task.getTaskId());
+        redisService.zadd(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
         redisService.del(task.getTaskId() + "_lock");
         log.info("Task updated to [{}]", task.toString());
     }
@@ -243,8 +245,8 @@ public class TaskPersisterRDBImpl implements TaskPersister {
     public void complete(final Task task) {
         redisService.del(task.getTaskId());
         redisService.del(task.getTaskId() + "_lock");
-        redisService.zdel(RETRY_KEY + application, task.getTaskId());
-        redisService.lrem(BACKUP_KEY + application, 1, task.getTaskId());
+        redisService.zdel(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId());
+        redisService.lrem(getQueueName(BACKUP_KEY, application, task.getTaskId()), 1, task.getTaskId());
     }
 
     /**
@@ -264,4 +266,25 @@ public class TaskPersisterRDBImpl implements TaskPersister {
         return taskDao.queryStuckTasks();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getQueues() {
+        return DEFAULT_QUEUES;
+    }
+
+    private String getQueueName(final String prefix, final String application, final String taskID) {
+        int hashcode = taskID.hashCode();
+        int queue = hashcode % DEFAULT_QUEUES;
+        StringBuilder sb = new StringBuilder();
+        sb.append(prefix).append(application).append("_").append(queue);
+        return sb.toString();
+    }
+
+    private String getQueueName(final String prefix, final String application, final int queue) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(prefix).append(application).append("_").append(queue);
+        return sb.toString();
+    }
 }

@@ -75,19 +75,32 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
     }
 
     private void initiate(final int type, final int time) {
-        new Thread(() -> {
-            while (!shuttingDown) {
-                List<String> contents = new LinkedList<>();
-                contents.addAll(taskPersister.getPendingList(type));
-                log.info("Pending tasks [{}] loaded for type [{}]", Jackson.json(contents), type);
-                if (!contents.isEmpty()) {
-                    process(contents);
+        int threads = getQueues(type);
+        for (int i = 0; i < threads; i++) {
+            Integer queue = i;
+            new Thread(() -> {
+                while (!shuttingDown) {
+                    List<String> contents = new LinkedList<>();
+                    contents.addAll(taskPersister.getPendingList(type, queue));
+                    log.info("Pending tasks [{}] loaded for type [{}]", Jackson.json(contents), type);
+                    if (!contents.isEmpty()) {
+                        process(contents);
+                    }
+                    sleep(time);
                 }
-                sleep(time);
-            }
-        }).start();
+            }).start();
+        }
     }
 
+    private int getQueues(final int type) {
+        if (type == 3) {
+            return 1;
+        }
+        if (type == 1 || type == 2) {
+            return taskPersister.getQueues();
+        }
+        return 0;
+    }
     private void shutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             shuttingDown = true;
