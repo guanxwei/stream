@@ -96,8 +96,6 @@ public class RetryRunner implements Runnable {
                 .value(data)
                 .build());
 
-        System.out.println(5);
-
         log.info("Retry workflow at node [{}]", node.getNodeName());
         while (node != null && !WorkFlowContext.provide().isRebooting()) {
             log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());

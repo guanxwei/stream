@@ -18,12 +18,15 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * DDB based implementation of {@link TaskPersister}.
+ * Default implementation of {@link TaskPersister}.
+ * Users should themselves implements {@link TaskStepStorage}, 
+ * {@link TaskStepStorage}, and inject the implementations into this
+ * object if they want to use this default implementation.
  * @author hzweiguanxiong
  *
  */
 @Slf4j
-public class TaskPersisterRDBImpl implements TaskPersister {
+public class TaskPersisterImpl implements TaskPersister {
 
     @Setter
     private TaskStorage kafkaBasedTaskDao;
@@ -230,7 +233,7 @@ public class TaskPersisterRDBImpl implements TaskPersister {
         double score = System.currentTimeMillis() + time;
         if (debug) {
             // To make sure Unit test cases can be run quickly.
-            score = 100;
+            score = 5;
         }
         redisService.lrem(getQueueName(BACKUP_KEY, application, task.getTaskId()), 0, task.getTaskId());
         redisService.zadd(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);

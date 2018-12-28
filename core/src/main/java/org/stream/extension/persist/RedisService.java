@@ -11,7 +11,7 @@ import org.stream.extension.clients.RedisClientImpl;
 public class RedisService extends RedisClientImpl {
 
     /**
-     * Initiation method to initiate Redis clients pool.
+     * Initiate method to initiate Redis clients pool.
      * @param nodes Cluster node list.
      * @param timeout Timeout.
      * @param maxRetryTimes Max retry times.
