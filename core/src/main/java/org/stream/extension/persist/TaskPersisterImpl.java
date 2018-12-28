@@ -29,13 +29,13 @@ import lombok.extern.slf4j.Slf4j;
 public class TaskPersisterImpl implements TaskPersister {
 
     @Setter
-    private TaskStorage kafkaBasedTaskDao;
+    private TaskStorage kafkaBasedTaskStorage;
 
     @Setter
-    private TaskStorage taskDao;
+    private TaskStorage taskStorage;
 
     @Setter
-    private TaskStepStorage taskStepDAO;
+    private TaskStepStorage taskStepStorage;
 
     @Setter
     private RedisService redisService;
@@ -60,8 +60,10 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean persist(final Task task) {
-        // 最后处理完，丢到kafka，有兴趣的自己订阅.
-        return taskDao.update(task) && kafkaBasedTaskDao.persist(task);
+        /**
+         * Persist the task in reliable storage and send a message to Kafka cluster if configured. 
+         */
+        return taskStorage.update(task) && kafkaBasedTaskStorage.persist(task);
     }
 
     /**
@@ -69,7 +71,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public String get(final String key) {
-        Task task = taskDao.query(key);
+        Task task = taskStorage.query(key);
 
         if (task != null) {
             return task.toString();
@@ -93,7 +95,7 @@ public class TaskPersisterImpl implements TaskPersister {
             } else if (type == 2) {
                 return redisService.lrange(getQueueName(BACKUP_KEY, application, queue), 0, 10);
             } else if (type == 3) {
-                List<Task> tasks = taskDao.queryStuckTasks();
+                List<Task> tasks = taskStorage.queryStuckTasks();
                 if (!CollectionUtils.isEmpty(tasks)) {
                     return tasks.parallelStream()
                             .map(Task::getTaskId)
@@ -179,9 +181,9 @@ public class TaskPersisterImpl implements TaskPersister {
             markAsLocked(taskId);
 
             if (withInsert) {
-                return taskStepDAO.insert(taskStep) && taskDao.persist(content);
+                return taskStepStorage.insert(taskStep) && taskStorage.persist(content);
             } else {
-                return taskStepDAO.insert(taskStep) && taskDao.update(content);
+                return taskStepStorage.insert(taskStep) && taskStorage.update(content);
             }
         } else {
             throw new WorkFlowExecutionExeception("Lock has been grabed by other processors, give up execution");
@@ -228,8 +230,8 @@ public class TaskPersisterImpl implements TaskPersister {
     @Override
     public void suspend(final Task task, final double time, final TaskStep taskStep) {
         log.info("Suspend task [{}] at node [{}]", task.getTaskId(), task.getNodeName());
-        taskDao.update(task);
-        taskStepDAO.insert(taskStep);
+        taskStorage.update(task);
+        taskStepStorage.insert(taskStep);
         double score = System.currentTimeMillis() + time;
         if (debug) {
             // To make sure Unit test cases can be run quickly.
@@ -257,7 +259,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public StreamTransferData retrieveData(final String taskId) {
-        TaskStep taskStep = taskStepDAO.getLatestStep(taskId);
+        TaskStep taskStep = taskStepStorage.getLatestStep(taskId);
         return StreamTransferData.parse(taskStep.getJsonfiedTransferData());
     }
 
@@ -266,7 +268,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public List<Task> retrieveStuckTasksFromDB() {
-        return taskDao.queryStuckTasks();
+        return taskStorage.queryStuckTasks();
     }
 
     /**

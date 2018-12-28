@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MangoDBBasedTaskCompleteListener implements Listener {
 
     @Setter
-    private TaskDao taskDao;
+    private TaskStorage taskStorage;
 
     /**
      * {@inheritDoc}
@@ -28,7 +28,7 @@ public class MangoDBBasedTaskCompleteListener implements Listener {
         Task task = realEvent.getObject();
         log.info("Save completed task [{}]", task.getTaskId());
 
-        taskDao.persist(task);
+        taskStorage.persist(task);
     }
 
 }
