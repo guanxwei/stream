@@ -102,10 +102,10 @@ public class Jackson {
             return (T) Integer.valueOf(node.asInt());
         }
         if (clazz == Float.class || clazz == float.class) {
-            return (T) new Float(node.asDouble());
+            return (T) Float.valueOf(node.asText());
         }
         if (clazz == Double.class || clazz == double.class) {
-            return (T) new Double(node.asDouble());
+            return (T) Double.valueOf(node.asDouble());
         }
         if (clazz.isAssignableFrom(String.class)) {
             return (T) node.asText();

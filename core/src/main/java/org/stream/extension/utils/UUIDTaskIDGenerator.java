@@ -5,7 +5,7 @@ import java.util.UUID;
 /**
  * A {@link TaskIDGenerator} implementation to generate task id
  * using UUID facility.
- * @author 魏冠雄
+ * @author weiguanxiong
  *
  */
 public class UUIDTaskIDGenerator implements TaskIDGenerator {

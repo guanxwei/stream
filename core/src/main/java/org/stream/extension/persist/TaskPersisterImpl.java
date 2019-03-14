@@ -20,8 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Default implementation of {@link TaskPersister}.
  * Users should themselves implements {@link TaskStepStorage}, 
- * {@link TaskStepStorage}, and inject the implementations into this
+ * {@link TaskStepStorage}, {@link RedisService} and inject the implementations into this
  * object if they want to use this default implementation.
+ *
+ * This implement uses redis cluster to speed up the work-flows's processing procedure.
+ * Users should prepare a redis cluster in real environment, if not, please implement {@link TaskPersister}
+ * and use that version.
  * @author hzweiguanxiong
  *
  */

@@ -172,7 +172,11 @@ public final class GraphLoader {
                     activity = activityOptional.get();
                 }
             } else {
-                activity = (Activity) clazz.newInstance();
+                try {
+                    activity = (Activity) clazz.getDeclaredConstructor().newInstance();
+                } catch (Exception e) {
+                    throw new GraphLoadException(e);
+                }
             }
             graphContext.registerActivity(activity);
         } else {

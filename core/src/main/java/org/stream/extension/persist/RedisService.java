@@ -4,7 +4,7 @@ import org.stream.extension.clients.RedisClientImpl;
 
 /**
  * Encapsulation of Redis Service.
- * Provide some valuable APIs to manufacture Redis DB.
+ * Provide some valuable APIs to manufacture data stored in Redis cluster.
  * @author hzweiguanxiong
  *
  */

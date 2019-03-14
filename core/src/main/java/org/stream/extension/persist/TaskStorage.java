@@ -5,7 +5,8 @@ import java.util.List;
 import org.stream.extension.meta.Task;
 
 /**
- * Task DAO used to store task information in DB.
+ * Task data access layer object provides data access methods like saving a new task
+ * in db, updating a task's status & .etc.
  * @author hzweiguanxiong
  *
  */

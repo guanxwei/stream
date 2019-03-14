@@ -2,7 +2,7 @@ package org.stream.extension.utils;
 
 /**
  * A generator to help generate unique task id.
- * @author 魏冠雄
+ * @author weiguanxiong
  *
  */
 public interface TaskIDGenerator {
