@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +43,8 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private GraphContext graphContext;
 
+    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(32);
+
     public ThreadPoolTaskExecutor(final TaskPersister taskPersister, final RetryPattern retryPattern, final GraphContext graphContext) {
         this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext);
     }
@@ -78,17 +81,16 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
         int threads = getQueues(type);
         for (int i = 0; i < threads; i++) {
             Integer queue = i;
-            new Thread(() -> {
-                while (!shuttingDown) {
+            scheduledExecutorService.scheduleAtFixedRate(() -> {
+                if (!shuttingDown) {
                     List<String> contents = new LinkedList<>();
                     contents.addAll(taskPersister.getPendingList(type, queue));
                     log.info("Pending tasks [{}] loaded for type [{}]", Jackson.json(contents), type);
                     if (!contents.isEmpty()) {
                         process(contents);
                     }
-                    sleep(time);
                 }
-            }).start();
+            }, 0, time, TimeUnit.SECONDS);
         }
     }
 
@@ -121,14 +123,6 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
             }
             RetryRunner worker = new RetryRunner(content, graphContext, taskPersister, retryPattern);
             executorService.submit(worker);
-        }
-    }
-
-    private void sleep(final long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            log.warn("Thread interruped", e);
         }
     }
 

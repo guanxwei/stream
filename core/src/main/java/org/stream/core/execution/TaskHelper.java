@@ -184,7 +184,9 @@ public final class TaskHelper {
                 AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
                 String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
                 asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
-                return async.perform();
+                ActivityResult activityResult = async.perform();
+                asyncActivity.cleanUp();
+                return activityResult;
             };
             FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
             Resource taskWrapper = Resource.builder()
@@ -229,7 +231,7 @@ public final class TaskHelper {
      */
     public static void retryLocalIfPossible(final int interval, final String taskID, final GraphContext graphContext,
             final TaskPersister taskPersister, final RetryPattern pattern) {
-        if (interval < 5000) {
+        if (interval <= 1000) {
             LOCAL_RETRY_SCHEDULER.schedule(() -> {
                 String content = taskPersister.get(taskID);
                 log.info("Local retry for task [{}] begin after interval [{}]", taskID, interval);

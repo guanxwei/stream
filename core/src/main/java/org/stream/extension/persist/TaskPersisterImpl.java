@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -33,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TaskPersisterImpl implements TaskPersister {
 
     @Setter
-    private TaskStorage kafkaBasedTaskStorage;
+    private TaskStorage messageQueueBasedTaskStorage;
 
     @Setter
     private TaskStorage taskStorage;
@@ -57,7 +56,7 @@ public class TaskPersisterImpl implements TaskPersister {
     // Lock expire time in milliseconds.
     private static final long LOCK_EXPIRE_TIME = 10 * 1000;
 
-    private static final int DEFAULT_QUEUES = 4;
+    private static final int DEFAULT_QUEUES = 8;
 
     /**
      * {@inheritDoc}
@@ -67,7 +66,7 @@ public class TaskPersisterImpl implements TaskPersister {
         /**
          * Persist the task in reliable storage and send a message to Kafka cluster if configured. 
          */
-        return taskStorage.update(task) && kafkaBasedTaskStorage.persist(task);
+        return taskStorage.update(task) && messageQueueBasedTaskStorage.persist(task);
     }
 
     /**
@@ -91,21 +90,29 @@ public class TaskPersisterImpl implements TaskPersister {
     public Collection<String> getPendingList(final int type, final int queue) {
         assert application != null;
 
+        Collection<String> result = Collections.emptyList();
         try {
-            if (type == 1) {
-                Set<String> result = redisService.zrange(getQueueName(RETRY_KEY, application, queue), Double.valueOf("0"),
+            switch (type) {
+            case 1:
+                result = redisService.zrange(getQueueName(RETRY_KEY, application, queue), Double.valueOf("0"),
                         System.currentTimeMillis());
-                return result;
-            } else if (type == 2) {
-                return redisService.lrange(getQueueName(BACKUP_KEY, application, queue), 0, 10);
-            } else if (type == 3) {
+                break;
+            case 2:
+                result = redisService.lrange(getQueueName(BACKUP_KEY, application, queue), 0, 10);
+                break;
+            case 3:
                 List<Task> tasks = taskStorage.queryStuckTasks();
                 if (!CollectionUtils.isEmpty(tasks)) {
-                    return tasks.parallelStream()
+                    result = tasks.parallelStream()
                             .map(Task::getTaskId)
                             .collect(Collectors.toList());
                 }
+                break;
+            default:
+                break;
             }
+
+            return result;
         } catch (Exception e) {
             log.warn("Fail to load pending tasks for type [{}]", type, e);
         }

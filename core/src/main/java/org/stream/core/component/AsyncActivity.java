@@ -21,8 +21,7 @@ public abstract class AsyncActivity extends Activity {
      * To make these AsyncActivitys be able to retrieve resources from the work-flow or attach back
      * resources to the work-flow instance, work-flow engine will help invoke these method to link-up
      * the work flow resource tank with the async-activity.
-     * Basically, this method may potentially delay the GC to collect unneeded objects, users should keep
-     * in mind that the method {@code AsyncActivity#cleanUp()} must be invoked after all the work is done.
+     * Basically, this method may potentially delay the GC to collect unneeded objects.
      *
      * @param resourceTank The father work-flow instance's resource tank.
      * @param primaryResourceReference The father work-flow instance's primary resource reference.
@@ -63,6 +62,10 @@ public abstract class AsyncActivity extends Activity {
     /**
      * Clean the thread local variables so that the host thread can be reused by other work-flow instances.
      * And make sure that the unneeded {@linkplain ResourceTank} instance initiated in the main thread is collected.
+     * 
+     * From now on, this method will be automatically invoked after execution, implementations of the {@link AsyncActivity}
+     * only need to override the {@link Activity#act()} to do their business actions, all the other things will be done by the
+     * execution engine.
      */
     public void cleanUp() {
         resources.set(null);

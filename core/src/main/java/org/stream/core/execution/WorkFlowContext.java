@@ -263,4 +263,16 @@ public final class WorkFlowContext {
     public static Resource resolveTransferDataResource() {
         return resolveResource(WORK_FLOW_TRANSTER_DATA_REFERENCE);
     }
+
+    /**
+     * Helper method to resolve resource value directly from the work flow context.
+     * @param reference Resource reference.
+     * @param clazz Resource's real type.
+     * @return The value of the target resource.
+     */
+    public static <T> T resolve(final String reference, final Class<T> clazz) {
+        Resource resource = resolveResource(reference);
+
+        return resource.resolveValue(clazz);
+    }
 }

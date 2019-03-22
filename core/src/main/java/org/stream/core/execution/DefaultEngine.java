@@ -371,7 +371,9 @@ public class DefaultEngine implements Engine {
                 AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
                 String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
                 asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
-                return async.perform();
+                ActivityResult activityResult = async.perform();
+                asyncActivity.cleanUp();
+                return activityResult;
             };
             FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
             Resource taskWrapper = Resource.builder()
