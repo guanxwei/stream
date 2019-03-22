@@ -46,4 +46,8 @@ public class Graph {
      */
     private Node defaultErrorNode;
 
+    /**
+     * Original deiniftion of the graph.
+     */
+    private String originalDefinition;
 }
