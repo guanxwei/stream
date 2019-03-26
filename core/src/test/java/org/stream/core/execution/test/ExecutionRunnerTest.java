@@ -15,7 +15,7 @@ import org.stream.core.execution.ExecutionRunner;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.TaskHelper;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
@@ -42,7 +42,7 @@ public class ExecutionRunnerTest {
     @Mock
     private RetryPattern pattern;
 
-    private GraphLoader graphLoader;
+    private LocalGraphLoader graphLoader;
     private GraphContext graphContext;
     private List<String> paths;
 
@@ -56,7 +56,7 @@ public class ExecutionRunnerTest {
         paths.add("AutoScheduleSuspend2.graph");
 
         this.graphContext = new GraphContext();
-        this.graphLoader = new GraphLoader();
+        this.graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);

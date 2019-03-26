@@ -11,7 +11,7 @@ import org.mockito.MockitoAnnotations;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
@@ -36,7 +36,7 @@ public class AutoScheduledEngineTest {
 
     private List<String> paths;
 
-    private GraphLoader graphLoader;
+    private LocalGraphLoader graphLoader;
 
     @Mock
     private ResourceCatalog resourceCatalog;
@@ -61,7 +61,7 @@ public class AutoScheduledEngineTest {
 
         this.graphContext = new GraphContext();
         autoScheduledEngine.setGraphContext(graphContext);
-        this.graphLoader = new GraphLoader();
+        this.graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);

@@ -11,7 +11,7 @@ import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.ExecutionRecord;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceType;
 import org.testng.Assert;
@@ -29,7 +29,7 @@ public class DefaultEngineTest {
 
     private List<String> paths;
 
-    private GraphLoader graphLoader;
+    private LocalGraphLoader graphLoader;
 
     @BeforeClass
     public void BeforeClass() throws Exception {
@@ -47,7 +47,7 @@ public class DefaultEngineTest {
         paths.add("ComprehensiveWithAsyncNodeCase.graph");
 
         this.graphContext = new GraphContext();
-        this.graphLoader = new GraphLoader();
+        this.graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);

@@ -13,7 +13,7 @@ import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRecord;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
@@ -28,7 +28,7 @@ public class GraphExecutionTest {
 
     private Engine engine;
     private GraphContext graphContext;
-    private GraphLoader graphLoader;
+    private LocalGraphLoader graphLoader;
     private ActivityRepository activityRepository;
     private List<String> paths;
 
@@ -36,7 +36,7 @@ public class GraphExecutionTest {
     public void BeforeMethod() {
         this.activityRepository = new ActivityRepository();
         this.graphContext = new GraphContext();
-        this.graphLoader = new GraphLoader();
+        this.graphLoader = new LocalGraphLoader();
         graphContext.setActivityRepository(activityRepository);
         graphLoader.setGraphContext(graphContext);
         paths = new LinkedList<>();

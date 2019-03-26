@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
@@ -33,12 +35,13 @@ import com.google.gson.Gson;
 import lombok.Data;
 
 /**
- * Graph helper who is responsible to load graphs from specific graph definition files.
- * Basically a graph definition file should be named with suffix ".graph" and the file content
- * should be stored as standard json string of object {@link GraphConfiguration}.
+ * Abstract class for {@link LocalGraphLoader} and {@link DynamicGraphLoader}, providing some
+ * useful common used methods.
+ * @author weiguanxiong
+ *
  */
 @Data
-public final class GraphLoader {
+public abstract class AbstractGraphLoader {
 
     private static final Gson GSON = new Gson();
 
@@ -46,61 +49,46 @@ public final class GraphLoader {
 
     private GraphContext graphContext;
 
-    /**
-     * Use absolute path to load the graph definition files, the graph folder should be put at the root directory of the projects.
-     * If the customers use Maven to manage project, then the graphs should be put at the folder "graph" in the resources folder.
-     */
-    private static final String SYSTEM_PATH_SEPARATOR = "/";
-
-    private static final String DEFAULT_GRAPH_FILE_PATH_PREFIX = SYSTEM_PATH_SEPARATOR + "graph" + SYSTEM_PATH_SEPARATOR;
-
+    @Resource
     private ApplicationContext applicationContext;
 
     private boolean circuitChecking = false;
 
     /**
-     * Initiate graph loading process, load all the graphs specified in the {@link #graphFilePaths}, which is located in the
-     * default graph directory.
-     * @throws GraphLoadException GraphLoadException.
+     * Load graph from the input source. A input source may be a local file or a remote http page.
+     * Graph loader implementations should implement their own @{@link #loadInputStream(String)} so that
+     * the graph can be loaded properly.
+     * @param sourcePath Source path of the graph definition file is located. It can be located at the local disk 
+     *      or even can be located on remote server retrieved by HTTP apis.
+     * @return A graph loaded from the source path.
+     * @throws GraphLoadException Exception thrown when loading the graph.
      */
-    public void init() throws GraphLoadException {
-        if (graphFilePaths == null || graphFilePaths.size() == 0) {
-            throw new GraphLoadException("Graph definition file paths not specified!");
-        }
-        for (String path : graphFilePaths) {
-            if (!path.endsWith(".graph")) {
-                path += ".graph";
-            }
-            InputStream input = getClass().getResourceAsStream(DEFAULT_GRAPH_FILE_PATH_PREFIX + path);
-            if (input == null) {
-                throw new GraphLoadException(String.format("Graph definition file is not found, file name is [%s]", DEFAULT_GRAPH_FILE_PATH_PREFIX + path));
-            }
-            Graph graph = loadGraphFromFile(input);
-            graphContext.addGraph(graph);
-            if (circuitChecking) {
-                checkCircuit(graph);
-            }
-        }
+    public Graph loadGraphFromSource(final String sourcePath) throws GraphLoadException {
+        InputStream inputStream = loadInputStream(sourcePath);
+        return loadGraph(inputStream);
     }
 
     /**
-     * Initiate graph loading process, load all the graphs specified in the {@link #graphFilePaths}, which is located in the
-     * default graph directory. Default, used the spring framework registered activity bean instead of initiating new instances.
-     * @throws GraphLoadException GraphLoadException.
+     * Set the spring application context so that the spring framework can manage the life cycle of the graphs and their
+     * underling activities.
+     * 
+     * @param applicationContext Spring application context.
      */
-    public void initInSpring(final ApplicationContext applicationContext) throws GraphLoadException {
+    public void setSpringAppplicationContext(final ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
-        init();
     }
 
-    private Graph loadGraphFromFile(final InputStream input) throws GraphLoadException {
+    protected abstract InputStream loadInputStream(final String sourcePath) throws GraphLoadException;
+
+    private Graph loadGraph(final InputStream inputStream) throws GraphLoadException {
         Graph graph = new Graph();
         StringBuilder cause = new StringBuilder(100);
         List<StepPair> stepPairs = new LinkedList<StepPair>();
         List<AsyncPair> asyncPairs = new LinkedList<AsyncPair>();
         Map<String, Node> knowNodes = new HashMap<String, Node>();
         try {
-            parse(graph, input, stepPairs, asyncPairs, knowNodes, cause);
+            parse(graph, inputStream, stepPairs, asyncPairs, knowNodes, cause);
+            inputStream.close();
         } catch (IOException e) {
             throw new GraphLoadException("Failed to load graph configuration information from the definition file", e);
         } catch (ClassNotFoundException e) {
@@ -110,6 +98,10 @@ public final class GraphLoader {
         } catch (IllegalAccessException e) {
             throw new GraphLoadException(String.format("No access to class [%s]", cause), e);
         }
+        if (circuitChecking) {
+            checkCircuit(graph);
+        }
+        graphContext.addGraph(graph);
         return graph;
     }
 

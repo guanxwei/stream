@@ -8,7 +8,7 @@ import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.ResourceType;
 import org.stream.core.test.base.TestActivity;
 import org.testng.Assert;
@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 
 public class GraphLoadTest {
 
-    private GraphLoader graphLoader;
+    private LocalGraphLoader graphLoader;
     private GraphContext graphContext;
     private List<String> paths;
 
@@ -26,7 +26,7 @@ public class GraphLoadTest {
     public void BeforeMethod() {
         this.paths = new LinkedList<String>();
         this.graphContext = new GraphContext();
-        this.graphLoader = new GraphLoader();
+        this.graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         graphLoader.setGraphFilePaths(paths);
         graphLoader.setCircuitChecking(true);

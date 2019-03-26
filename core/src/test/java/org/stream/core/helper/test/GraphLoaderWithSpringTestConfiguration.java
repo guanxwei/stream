@@ -13,7 +13,7 @@ import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.test.base.SpringActivity;
 
 @Configuration
@@ -40,14 +40,15 @@ public class GraphLoaderWithSpringTestConfiguration {
     }
 
     @Bean
-    public GraphLoader graphLoader() throws GraphLoadException {
-        GraphLoader graphLoader = new GraphLoader();
+    public LocalGraphLoader graphLoader() throws GraphLoadException {
+        LocalGraphLoader graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext());
         List<String> graphFilePaths = new LinkedList<>();
         graphFilePaths.add("SpringCase");
         graphLoader.setGraphFilePaths(graphFilePaths);
-        graphLoader.initInSpring(applicationContext);
+        graphLoader.setApplicationContext(applicationContext);
 
+        graphLoader.init();
         return graphLoader;
     }
 

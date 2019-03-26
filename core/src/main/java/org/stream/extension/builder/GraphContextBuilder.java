@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.helper.LocalGraphLoader;
 
 public final class GraphContextBuilder {
 
@@ -17,7 +17,7 @@ public final class GraphContextBuilder {
 
     private ApplicationContext applicationContext;
 
-    private GraphLoader graphLoader;
+    private LocalGraphLoader graphLoader;
 
     public static GraphContextBuilder builder() {
         return new GraphContextBuilder();
@@ -38,7 +38,7 @@ public final class GraphContextBuilder {
         return this;
     }
 
-    public GraphContextBuilder graphLoader(final GraphLoader graphLoader) {
+    public GraphContextBuilder graphLoader(final LocalGraphLoader graphLoader) {
         this.graphLoader = graphLoader;
         return this;
     }

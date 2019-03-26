@@ -360,10 +360,10 @@ public class DefaultEngine implements Engine {
     }
 
     /**
-     * Set up async tasks and submit them to executor, all the work-flow instances share one async task executor, so it is expectable to
+     * Set up asynchronous tasks and submit them to executor, all the work-flow instances share one asynchronous task executor, so it is expectable to
      * take some time to complete the task, sometimes when the traffic is busy it may take more time to complete the task than normal.
-     * @param workFlow The async task belong to.
-     * @param node The node that need submit async tasks.
+     * @param workFlow The asynchronous task belong to.
+     * @param node The node that need submit asynchronous tasks.
      */
     private void setUpAsyncTasks(final WorkFlow workFlow, final Node node) {
         node.getAsyncDependencies().forEach(async -> {

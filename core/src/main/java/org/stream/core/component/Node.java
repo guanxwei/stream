@@ -8,26 +8,58 @@ import org.stream.core.execution.NextSteps;
 import lombok.Builder;
 import lombok.Data;
 
-
 /**
- * Encapsulation of graph nodes. Each node holds a concrete entity {@link Activity} who is responsible to do the designed work.
+ * Encapsulation of graph nodes.
+ * Each node holds a concrete entity {@link Activity} who is responsible to do the designed work.
  *
- * The work-flow engine will invoke the nodes in a graph one by one following the order defined in *.graph files, except asynchronized tasks,
- * stream work flow framework provides a asynchronous mechanism to help customers to leverage from asynchronous concurrent processing.
+ * The work-flow engines will invoke the nodes in a graph one by one following
+ * the order defined in *.graph files except asynchronous tasks.
  *
- * Nodes will be treated as singleton instances in single JVM context and can be shared in multi-graphs running in multi-threads
+ * Stream work flow framework provides a mechanism to help customers
+ * leverage from concurrent processing. Customer can make a node as asynchronous just by adding
+ * it the to the target node as it's asyncDependencies. AsyncDependencies nodes will be executed
+ * parallel when executing the target node.</br>
+ * <p> For example <p> </br>
+ * <code>
+ *     {
+          "graphName":"ComprehensiveWithAsyncNodeCase",
+          "resourceType":"OBJECT",
+          "startNode":"node1",
+          "defaultErrorNode":"node3",
+          "nodes":[
+            {
+              "nodeName":"node1",
+              "activityClass":"org.stream.core.test.base.TestActivity",
+              "successNode":"node2",
+              "failNode":"node3",
+              "asyncDependencies": [
+                {
+                  "asyncNode":"node4"
+                }
+              ]
+            },
+            {
+              "nodeName":"node2",
+              "activityClass":"org.stream.core.test.base.SuccessTestActivity",
+              "failNode":"node3"
+            },
+            {
+              "nodeName":"node3",
+              "activityClass":"org.stream.core.test.base.FailTestActivity"
+            },
+            {
+              "nodeName":"node4",
+              "activityClass":"org.stream.core.test.base.AsyncTestActivity"
+            }
+          ]
+        }
+ * </code>
+ * The only difference between the normals nodes is that these nodes' activities should extend {@link AsyncActivity}.
+ * For detail, please refer to the sample graph files located in the test resource folder.
+ *
+ * Nodes will be treated as singleton instances in single JVM context and can be shared in multiple graphs running in multiple threads
  * while having no side-effect.
  *
- * Customers can easily benefit from asynchronous processing by just adding asynchronous dependencies to the target node in graph definition files,
- * the only requirement is that these nodes' activities should extend {@link AsyncActivity}. For detail, please refer to the sample graph files located
- * in the test resource folder.
- *
- * The work-flow engine will help construct asynchronous workers and submit the asynchronous tasks to thread pool
- * before it invoke the host Nodes. When the asynchronous tasks are completed, customers can use the result they provide to complete other tasks.
- *
- * Customers should always keep in mind that, they should be responsible for managing the asynchronous activities created by themselves.
- * Before they try to reboot the work-flow or leave or close the work-flow, they'd make sure
- * all necessary work has been done, for example, {@link AsyncActivity#cleanUp()} should be invoked before leave the work flow.
  */
 @Builder
 @Data
@@ -36,7 +68,7 @@ public class Node {
     // Node name
     private String nodeName;
 
-    // Underlying activity that will the performed when invoked the work flow engine.
+    // Underlying activity that will do the real job when invoked by the work flow engine.
     private Activity activity;
 
     // The next node that will be executed when everything is okay.
