@@ -11,7 +11,8 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 
 /**
- * Encapsulation of Jackson framework provided methods.
+ * Utility class providing some useful methods to process Json text.
+ * Uses the jackson framework to parse & jsonfy the inputs.
  *
  */
 

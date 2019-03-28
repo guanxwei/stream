@@ -1,11 +1,8 @@
 package org.stream.core.helper;
 
 import java.io.InputStream;
-import java.util.List;
 
 import org.stream.core.exception.GraphLoadException;
-
-import lombok.Setter;
 
 /**
  * Graph helper who is responsible to load graphs from specific graph definition files.
@@ -13,9 +10,6 @@ import lombok.Setter;
  * should be stored as standard json string of object {@link GraphConfiguration}.
  */
 public class LocalGraphLoader extends AbstractGraphLoader {
-
-    @Setter
-    private List<String> graphFilePaths;
 
     /**
      * Use absolute path to load the graph definition files, the graph folder should be put at the root directory of the projects.

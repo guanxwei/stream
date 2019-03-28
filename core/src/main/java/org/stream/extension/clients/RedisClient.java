@@ -125,4 +125,11 @@ public interface RedisClient {
      * @return Affected rows.
      */
     boolean rpush(final String set, final String key);
+
+    /**
+     * Get the list size.
+     * @param list Target list.
+     * @return List size.
+     */
+    long getListSize(final String list);
 }

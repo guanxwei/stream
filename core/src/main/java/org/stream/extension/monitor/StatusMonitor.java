@@ -1,6 +1,8 @@
 package org.stream.extension.monitor;
 
 import org.stream.extension.executors.TaskExecutor;
+import org.stream.extension.persist.RedisService;
+import org.stream.extension.persist.TaskPersisterImpl;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +16,9 @@ public class StatusMonitor {
 
     @Setter @Getter
     private TaskExecutor taskExecutor;
+
+    @Setter
+    private RedisService redisService;
 
     /**
      * Get active task number that being executed by the work flow engine.
@@ -37,5 +42,22 @@ public class StatusMonitor {
      */
     public int getPoolSize() {
         return taskExecutor.getPoolSize();
+    }
+
+    /**
+     * Get the quantity of suspended tasks.
+     * @param application Application name.
+     * @return The quantity of suspended tasks.
+     */
+    public long getSuspendedTaks(final String application) {
+        long sum = 0;
+        for (int i = 0; i < TaskPersisterImpl.DEFAULT_QUEUES; i++) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(TaskPersisterImpl.RETRY_KEY).append(application).append("_").append(i);
+            String queue = sb.toString();
+            sum += redisService.getListSize(queue);
+        }
+
+        return sum;
     }
 }

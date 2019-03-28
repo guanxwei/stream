@@ -45,14 +45,14 @@ public abstract class AbstractGraphLoader {
 
     private static final Gson GSON = new Gson();
 
-    private List<String> graphFilePaths;
-
     private GraphContext graphContext;
 
     @Resource
     private ApplicationContext applicationContext;
 
     private boolean circuitChecking = false;
+
+    protected List<String> graphFilePaths;
 
     /**
      * Load graph from the input source. A input source may be a local file or a remote http page.

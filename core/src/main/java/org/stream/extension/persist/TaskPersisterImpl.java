@@ -43,9 +43,6 @@ public class TaskPersisterImpl implements TaskPersister {
     @Setter
     private RedisService redisService;
 
-    private static final String RETRY_KEY = "stream_auto_scheduled_retry_set_";
-    private static final String BACKUP_KEY = "stream_auto_scheduled_backup_set_";
-
     private String application;
 
     @Setter
@@ -56,7 +53,9 @@ public class TaskPersisterImpl implements TaskPersister {
     // Lock expire time in milliseconds.
     private static final long LOCK_EXPIRE_TIME = 10 * 1000;
 
-    private static final int DEFAULT_QUEUES = 8;
+    public static final int DEFAULT_QUEUES = 8;
+    public static final String RETRY_KEY = "stream_auto_scheduled_retry_set_";
+    public static final String BACKUP_KEY = "stream_auto_scheduled_backup_set_";
 
     /**
      * {@inheritDoc}

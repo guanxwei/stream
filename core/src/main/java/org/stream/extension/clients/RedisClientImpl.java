@@ -163,4 +163,12 @@ public class RedisClientImpl implements RedisClient {
     public boolean rpush(final String set, final String key) {
         return jedisCluster.rpush(set, key) == 1L;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getListSize(final String list) {
+        return jedisCluster.llen(list);
+    }
 }
