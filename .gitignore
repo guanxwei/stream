@@ -1,3 +1,9 @@
 test-output/*
 */.classpath*
 */*classpath*
+*.classpath
+*.settings*
+core/.classpath
+core/.settings/*
+.classpath
+.settings*

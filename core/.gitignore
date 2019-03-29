@@ -17,3 +17,9 @@ javadocs/
 */DS_Store
 .idea/
 test-output/
+*.classpath
+*.settings/*
+core/.classpath
+core/.settings/*
+.classpath
+.settings*
