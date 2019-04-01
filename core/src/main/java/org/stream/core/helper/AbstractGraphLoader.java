@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
+import org.stream.core.component.ActorActivity;
 import org.stream.core.component.ActivityResult.Visitor;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
@@ -29,6 +30,7 @@ import org.stream.core.execution.NextSteps.NextStepType;
 import org.stream.core.execution.StepPair;
 import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
 import org.stream.core.resource.ResourceType;
+import org.stream.extension.io.Actor;
 
 import com.google.gson.Gson;
 
@@ -68,7 +70,10 @@ public abstract class AbstractGraphLoader {
      */
     public Graph loadGraphFromSource(final String sourcePath) throws GraphLoadException {
         InputStream inputStream = loadInputStream(sourcePath);
-        return loadGraph(inputStream);
+        Graph graph = loadGraph(inputStream);
+
+        graph.setOriginalDefinition(sourcePath);
+        return graph;
     }
 
     /**
@@ -113,6 +118,7 @@ public abstract class AbstractGraphLoader {
                     InstantiationException, IllegalAccessException, IOException {
         GraphConfiguration graphConfiguration = parseGraphConfiguration(buildStringfyInput(input), graph);
         graph.setResourceType(ResourceType.valueOf(graphConfiguration.getResourceType()));
+        graph.setPrimaryResourceType(graphConfiguration.getPrimaryResourceType());
         NodeConfiguration[] nodes = graphConfiguration.getNodes();
         List<Node> staticNodes = new ArrayList<Node>();
         for (NodeConfiguration nodeConfiguration : nodes) {
@@ -158,20 +164,11 @@ public abstract class AbstractGraphLoader {
         if (!graphContext.isActivityRegistered(activityClass)) {
             cause.append(activityClass);
             Class<?> clazz = Class.forName(activityClass);
-            if (applicationContext != null && !applicationContext.getBeansOfType(Activity.class).isEmpty()) {
-                Map<String, Activity> candidates = applicationContext.getBeansOfType(Activity.class);
-                Optional<Activity> activityOptional = candidates.values().stream()
-                        .filter(candidate -> clazz.isAssignableFrom(candidate.getClass()))
-                        .findFirst();
-                if (activityOptional.isPresent()) {
-                    activity = activityOptional.get();
-                }
+            if (Actor.class.isAssignableFrom(clazz)) {
+                // Actor case works in spring context only.
+                activity = processActorCase(clazz);
             } else {
-                try {
-                    activity = (Activity) clazz.getDeclaredConstructor().newInstance();
-                } catch (Exception e) {
-                    throw new GraphLoadException(e);
-                }
+                activity = processLocalCase(clazz);
             }
             graphContext.registerActivity(activity);
         } else {
@@ -191,6 +188,37 @@ public abstract class AbstractGraphLoader {
         staticNodes.add(node);
         node.setIntervals(nodeConfiguration.getIntervals());
         knowNodes.put(node.getNodeName(), node);
+    }
+
+    private Activity processLocalCase(final Class<?> clazz) throws GraphLoadException {
+        if (applicationContext != null && !applicationContext.getBeansOfType(Activity.class).isEmpty()) {
+            Map<String, Activity> candidates = applicationContext.getBeansOfType(Activity.class);
+            Optional<Activity> activityOptional = candidates.values().stream()
+                    .filter(candidate -> clazz.isAssignableFrom(candidate.getClass()))
+                    .findFirst();
+            if (activityOptional.isPresent()) {
+                return activityOptional.get();
+            }
+        } else {
+            try {
+                return (Activity) clazz.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                throw new GraphLoadException(e);
+            }
+        }
+        throw new GraphLoadException(String.format("Fail to initiate or locate the activity %s",
+                clazz.getName()));
+    }
+
+    private <T> ActorActivity<T> processActorCase(final Class<?> clazz) {
+        /**
+         * Load the actor from the spring context, typically the actor is a proxy object that can be used
+         * to communicate with a remote server, for example a RPC client.
+         */
+        @SuppressWarnings("unchecked")
+        Actor<T> actor = (Actor<T>) applicationContext.getBean(clazz);
+        ActorActivity<T> activity = new ActorActivity<T>(actor);
+        return activity;
     }
 
     private void trackNodes(final Map<String, Node> knowNodes, final StepPair pair) {

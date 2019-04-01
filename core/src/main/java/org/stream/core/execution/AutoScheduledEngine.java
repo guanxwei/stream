@@ -71,15 +71,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord,
             final ResourceType resourceType) {
-
-        String taskId = start(graphName, graphContext, null);
-        Resource taskResource = Resource.builder()
-                .value(taskId)
-                .resourceReference(TASK_REFERENCE)
-                .build();
-        ResourceTank tank = new ResourceTank();
-        tank.addResource(taskResource);
-        return tank;
+        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
     }
 
     /**
@@ -113,7 +105,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord,
             final ResourceType resourceType) {
-        return execute(graphContext, graphName, autoRecord, resourceType);
+        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
     }
 
     /**

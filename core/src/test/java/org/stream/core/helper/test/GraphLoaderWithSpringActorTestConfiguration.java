@@ -5,20 +5,26 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.exception.GraphLoadException;
-import org.stream.core.execution.DefaultEngine;
+import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.test.base.SpringActivity;
+import org.stream.core.test.base.SyncTaskExecutor;
 import org.stream.core.test.base.TestActor;
+import org.stream.extension.pattern.RetryPattern;
+import org.stream.extension.pattern.defaults.EqualTimeIntervalPattern;
+import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.utils.UUIDTaskIDGenerator;
 
 @Configuration
-public class GraphLoaderWithSpringTestConfiguration {
+public class GraphLoaderWithSpringActorTestConfiguration {
 
     @Resource
     private ApplicationContext applicationContext;
@@ -59,8 +65,23 @@ public class GraphLoaderWithSpringTestConfiguration {
     }
 
     @Bean
+    public RetryPattern retryPattern() {
+        return new EqualTimeIntervalPattern();
+    }
+
+    @Bean
+    public TaskPersister taskPersister() {
+        return Mockito.mock(TaskPersister.class);
+    }
+
+    @Bean
     public Engine engine() {
-        DefaultEngine defaultEngine = new DefaultEngine();
+        AutoScheduledEngine defaultEngine = new AutoScheduledEngine();
+        defaultEngine.setGraphContext(graphContext());
+        defaultEngine.setApplication("testApplication");
+        defaultEngine.setTaskIDGenerator(new UUIDTaskIDGenerator());
+        defaultEngine.setTaskPersister(taskPersister());
+        defaultEngine.setTaskExecutor(new SyncTaskExecutor(taskPersister(), retryPattern(), graphContext()));
         return defaultEngine;
     }
 }

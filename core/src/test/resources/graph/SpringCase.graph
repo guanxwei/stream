@@ -3,10 +3,16 @@
   "resourceType":"OBJECT",
   "startNode":"node1",
   "defaultErrorNode":"node1",
+  "primaryResourceType":"java.lang.String",
   "nodes":[
     {
       "nodeName":"node1",
-      "activityClass":"org.stream.core.test.base.SpringActivity"
+      "activityClass":"org.stream.core.test.base.SpringActivity",
+      "successNode":"node2"
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"org.stream.core.test.base.TestActor"
     }
   ]
 }

@@ -21,7 +21,7 @@ public abstract class AsyncActivity extends Activity {
      * we will be no longer able to achieve the work flow resources by using the methods in {@link WorkFlowContext}.
      * To make these AsyncActivitys be able to retrieve resources from the work-flow or attach back
      * resources to the work-flow instance, work-flow engine will help invoke these method to link-up
-     * the work flow resource tank with the async-activity.
+     * the work flow resource tank with the asynchronous-activity.
      * Basically, this method may potentially delay the GC to collect unneeded objects.
      *
      * @param resourceTank The father work-flow instance's resource tank.

@@ -3,6 +3,7 @@ package org.stream.core.component;
 import java.util.List;
 
 import org.stream.core.execution.Engine;
+import org.stream.core.helper.GraphConfiguration;
 import org.stream.core.resource.ResourceType;
 
 import lombok.Data;
@@ -47,7 +48,12 @@ public class Graph {
     private Node defaultErrorNode;
 
     /**
-     * Original deiniftion of the graph.
+     * Original definition of the graph.
      */
     private String originalDefinition;
+
+    /**
+     * Please refer to {@link GraphConfiguration#getPrimaryResourceType()}
+     */
+    private String primaryResourceType;
 }

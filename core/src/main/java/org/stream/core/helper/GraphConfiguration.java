@@ -1,5 +1,7 @@
 package org.stream.core.helper;
 
+import org.stream.core.execution.AutoScheduledEngine;
+
 import lombok.Data;
 
 /**
@@ -19,4 +21,10 @@ public class GraphConfiguration {
     private NodeConfiguration[] nodes;
 
     private String defaultErrorNode;
+
+    /**
+     * {@link AutoScheduledEngine} used only attributes indicates the type of input primary resource's type, the underlying
+     * Serializing framework will use it to serialize the resource when communicate with the remote actors.
+     */
+    private String primaryResourceType;
 }

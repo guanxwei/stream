@@ -8,13 +8,15 @@ import org.stream.extension.io.StreamTransferData;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Special activity containing a {@link actor} instance to do the real work.
  * @author hzweiguanxiong
  *
  */
-public abstract class ActorActivity<T> extends Activity {
+@Slf4j
+public class ActorActivity<T> extends Activity {
 
     @Setter @Getter
     private Actor<T> actor;
@@ -37,12 +39,17 @@ public abstract class ActorActivity<T> extends Activity {
 
         StreamTransferData streamTransferData = null;
         try {
-            streamTransferData = actor.call(prepareRequest());
+            Resource primary = WorkFlowContext.getPrimary();
+            String className = Node.CURRENT.get().getGraph().getPrimaryResourceType();
+            @SuppressWarnings("unchecked")
+            Class<T> clazz = (Class<T>) Class.forName(className);
+            streamTransferData = actor.call(primary.resolveValue(clazz));
             Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
             StreamTransferData.merge(contextData, streamTransferData);
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
+            log.error("Fail to call actor [{}]", actor.getClass().getName());
             Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
             streamTransferData = StreamTransferData.failed();
@@ -50,6 +57,4 @@ public abstract class ActorActivity<T> extends Activity {
             return ActivityResult.UNKNOWN;
         }
     }
-
-    protected abstract T prepareRequest();
 }

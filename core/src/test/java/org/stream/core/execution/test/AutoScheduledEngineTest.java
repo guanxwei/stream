@@ -3,6 +3,7 @@ package org.stream.core.execution.test;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -71,7 +72,11 @@ public class AutoScheduledEngineTest {
 
     @Test
     public void testNormal() throws Exception {
-        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule1", false, ResourceType.OBJECT);
+        Resource primary = Resource.builder()
+                .value("test")
+                .resourceReference(RandomStringUtils.randomAlphabetic(10))
+                .build();
+        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule1", primary, false, ResourceType.OBJECT);
         Resource resource = tank.resolve(AutoScheduledEngine.TASK_REFERENCE);
 
         Assert.assertNotNull(resource);
@@ -88,8 +93,12 @@ public class AutoScheduledEngineTest {
 
     @Test
     public void testSuspend() throws Exception  {
+        Resource primary = Resource.builder()
+                .value("test")
+                .resourceReference(RandomStringUtils.randomAlphabetic(10))
+                .build();
         Mockito.when(taskPersister.tryLock(Mockito.anyString())).thenReturn(true);
-        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule2", false, ResourceType.OBJECT);
+        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule2", primary, false, ResourceType.OBJECT);
 
         Resource resource = tank.resolve(AutoScheduledEngine.TASK_REFERENCE);
 
