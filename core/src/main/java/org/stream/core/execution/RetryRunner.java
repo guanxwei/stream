@@ -4,6 +4,7 @@ import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
 import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
+import org.stream.extension.executors.ThreadPoolTaskExecutor;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
@@ -24,14 +25,14 @@ import lombok.extern.slf4j.Slf4j;
  * Herd framework will treat suspend activity result as failed result once max retry times reaches.
  * Herd framework will invoke {@link RetryPattern} to deduce the next time point the work-flow will be retried.
  *
- * Herd provides two default implemented retry patterns, for detail please refer to {@link EqualTimeIntervalPattern} &
+ * Herd provides two default implemented retry patterns, for detail please refer to {@link EqualTimeIntervalPattern} and
  * {@link ScheduledTimeIntervalPattern}.
  *
- * Users can also use their own retry pattern by implements interface {@link RetryPattern} and set the {@link AutoScheduledEngine#setRetryPattern(RetryPattern)}
- * as their implementation.
+ * Users can also use their own retry pattern by implements interface {@link RetryPattern} and initiate it with the 
+ * {@link ThreadPoolTaskExecutor} as their implementation.
  *
  * Update 20180920, users can also set retry interval by adding configuration to the nodes in graphs, for detail please refer to
- * {@link NodeConfiguration#getIntervals()}.
+ * {@link NodeConfiguration}.
  */
 @Slf4j
 public class RetryRunner implements Runnable {
@@ -204,7 +205,7 @@ public class RetryRunner implements Runnable {
     /**
      * Get time window depends on the current pattern and the times have tried.
      * @param time Times that have been tried.
-     * @param pattern Retry pattern.
+     * @param retryPattern Retry pattern.
      * @return Next time window
      */
     public static int getTime(final RetryPattern retryPattern, final int time) {

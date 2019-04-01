@@ -268,6 +268,7 @@ public final class WorkFlowContext {
      * Helper method to resolve resource value directly from the work flow context.
      * @param reference Resource reference.
      * @param clazz Resource's real type.
+     * @param <T> target class.
      * @return The value of the target resource.
      */
     public static <T> T resolve(final String reference, final Class<T> clazz) {

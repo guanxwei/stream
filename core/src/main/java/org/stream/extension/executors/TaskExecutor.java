@@ -18,7 +18,7 @@ public interface TaskExecutor {
      * @param graph Graph that containing the procedure definition information.
      * @param primaryResource Primary resource to be used for the work flow instance.
      * @param task Task to be executed.
-     * @return
+     * @return A future may contains the execution result.
      */
     Future<?> submit(final Graph graph, final Resource primaryResource, final Task task);
 

@@ -42,7 +42,6 @@ public interface TaskPersister {
     /**
      * Try to lock the task Id to avoid contention.
      * @param taskId Task id to be locked.
-     * @param withInsert {@code true} insert new task in the db, otherwise update task in db.
      * @return Manipulation result.
      */
     boolean tryLock(final String taskId);

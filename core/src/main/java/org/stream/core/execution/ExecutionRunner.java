@@ -35,6 +35,7 @@ public class ExecutionRunner implements Runnable {
      * @param primaryResource Primary resource of this execution task.
      * @param task Stream execution task.
      * @param taskPersister Task persister.
+     * @param dataResource A pointer the input task resource.
      */
     public ExecutionRunner(final Graph graph, final RetryPattern pattern, final GraphContext graphContext,
             final Resource primaryResource, final Task task, final TaskPersister taskPersister, final Resource dataResource) {

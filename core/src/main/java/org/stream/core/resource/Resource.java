@@ -84,6 +84,7 @@ public class Resource {
     /**
      * Helper method to retrieve value type safely.
      * @param clazz Value's type
+     * @param <T> target class.
      * @return {@link #value} is {@link #value}'s type inherits from the parameter class.
      */
     public <T> T resolveValue(final Class<T> clazz) {

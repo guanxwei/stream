@@ -1,5 +1,6 @@
 package org.stream.core.execution;
 
+import org.stream.core.component.Node;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 import org.stream.core.resource.ResourceType;

@@ -12,7 +12,7 @@ import java.util.StringTokenizer;
 
 /**
  * Utility class providing some useful methods to process Json text.
- * Uses the jackson framework to parse & jsonfy the inputs.
+ * Uses the jackson framework to parse and jsonfy the inputs.
  *
  */
 

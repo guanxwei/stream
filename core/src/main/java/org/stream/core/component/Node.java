@@ -18,8 +18,8 @@ import lombok.Data;
  * Stream work flow framework provides a mechanism to help customers
  * leverage from concurrent processing. Customer can make a node as asynchronous just by adding
  * it the to the target node as it's asyncDependencies. AsyncDependencies nodes will be executed
- * parallel when executing the target node.</br>
- * <p> For example <p> </br>
+ * parallel when executing the target node.
+ * <p> For example <p>
  * <code>
  *     {
           "graphName":"ComprehensiveWithAsyncNodeCase",

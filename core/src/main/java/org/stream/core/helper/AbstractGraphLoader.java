@@ -35,8 +35,11 @@ import com.google.gson.Gson;
 import lombok.Data;
 
 /**
- * Abstract class for {@link LocalGraphLoader} and {@link DynamicGraphLoader}, providing some
- * useful common used methods.
+ * Abstract of stream graph loader. Define the basic procedure to load a graph the input resource,
+ * a resource may refer to a local file or even a remote HTTP page. Implementations only have to implement
+ * the method {@link #loadInputStream(String)}, which load the graph as input stream from the input resource.
+ * Other standard work will all be done by the pre-defined methods.
+ *
  * @author weiguanxiong
  *
  */

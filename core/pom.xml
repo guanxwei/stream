@@ -12,6 +12,7 @@
     <description>A tiny java library help manage complex work procedures, execute actions, . etc.</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.version>11</project.build.version>
     </properties>
 
     <licenses>
@@ -204,7 +205,6 @@
     </dependencies>
     <build>
         <plugins>
-        <!-- 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -215,6 +215,13 @@
                     <encoding>UTF-8</encoding>
                     <docencoding>UTF-8</docencoding>
                     <additionalparam>-Xdoclint:none</additionalparam>
+                    <detectJavaApiLink>false</detectJavaApiLink>
+                    <offlineLinks>
+                        <offlineLink>
+                            <url>https://docs.oracle.com/javase/${project.build.version}/docs/api/</url>
+                            <location>${project.basedir}</location>
+                        </offlineLink>
+                    </offlineLinks>
                 </configuration>
                 <executions>
                     <execution>
@@ -225,15 +232,29 @@
                     </execution>
                 </executions>
             </plugin>
-             -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <generateBackupPoms>false</generateBackupPoms>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <release>11</release>
+                    <release>${project.build.version}</release>
                     <encoding>UTF-8</encoding>
                 </configuration>
+                <dependencies>
+                <dependency>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm</artifactId>
+                    <version>6.1</version> <!--update dependency for Java 10 compatibility-->
+                </dependency>
+            </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -322,21 +343,6 @@
             -->
         </plugins>
     </build>
-    <!-- 
-    <reporting>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.1.0</version>
-          <configuration>
-            <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
-            <show>public</show>
-          </configuration>
-        </plugin>
-      </plugins>
-    </reporting>
-     -->
   <version>1.0.1</version>
   <profiles>
         <profile>

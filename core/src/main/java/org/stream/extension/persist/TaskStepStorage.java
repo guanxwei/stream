@@ -6,7 +6,7 @@ import org.stream.extension.meta.TaskStep;
 
 /**
  * Task step data access layer object provides data access methods like
- * saving a new task step in db, query task steps by task id & .etc.
+ * saving a new task step in db, query task steps by task id .etc.
  * @author hzweiguanxiong
  *
  */

@@ -1,5 +1,6 @@
 package org.stream.core.component;
 
+import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 
@@ -17,7 +18,7 @@ public abstract class AsyncActivity extends Activity {
     /**
      * Link-up the execution work-flow instance's resource tank with this activity instance.
      * Since AsyncActivitys will be executed in separated threads,
-     * we will be no longer able to achieve the work flow resources by using the methods in {@linkplain WorkFlowContext}.
+     * we will be no longer able to achieve the work flow resources by using the methods in {@link WorkFlowContext}.
      * To make these AsyncActivitys be able to retrieve resources from the work-flow or attach back
      * resources to the work-flow instance, work-flow engine will help invoke these method to link-up
      * the work flow resource tank with the async-activity.

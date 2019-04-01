@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.component.Graph;
+import org.stream.core.component.Node;
 
 import lombok.Setter;
 
@@ -35,7 +36,7 @@ public class GraphContext {
     /**
      * Get an exist activity from the activity repository.
      * @param activityName The activity's name, it will default be the Activity's class name.
-     * @return Activity instance having name {@value activityName}
+     * @return Activity instance having name {@literal activityName} {@linkplain}
      */
     public Activity getActivity(final String activityName) {
         return activityRepository.getActivity(activityName);
