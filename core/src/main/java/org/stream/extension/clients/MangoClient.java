@@ -5,6 +5,7 @@ import java.util.Map;
 
 /**
  * Abstract of MangoDB client.
+ * Stream framework uses mango-db only to save work-flow process result, not any other purposes.
  * @author 魏冠雄
  *
  */

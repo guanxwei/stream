@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Thread pool based implement of {@link TaskExecutor}.
- * @author 魏冠雄
+ * @author weiguanxiong.
  *
  */
 @Slf4j
@@ -103,6 +103,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
         }
         return 0;
     }
+
     private void shutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             shuttingDown = true;

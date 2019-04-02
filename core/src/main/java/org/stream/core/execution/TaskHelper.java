@@ -223,7 +223,7 @@ public final class TaskHelper {
 
     /**
      * Retry the suspended work-flow instance locally after scheduled delay if possible.
-     * @param interval Time to delay in {@link TimeUnit#MILLISECONDS}, if it is less than 5000, herd framework will try to run it locally to speed up.
+     * @param interval Time to delay in {@link TimeUnit#MILLISECONDS}, if it is less than 5000, Stream framework will try to run it locally to speed up.
      * @param taskID Task id.
      * @param graphContext Graph context.
      * @param taskPersister Task persister.

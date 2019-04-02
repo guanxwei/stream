@@ -21,11 +21,11 @@ import lombok.extern.slf4j.Slf4j;
  *
  *
  * Updated 2018/09/12:
- * Herd updated the max retry times to 24, which means Herd framework will retry single one node at most 24 times and
- * Herd framework will treat suspend activity result as failed result once max retry times reaches.
- * Herd framework will invoke {@link RetryPattern} to deduce the next time point the work-flow will be retried.
+ * Stream updated the max retry times to 24, which means Stream framework will retry single one node at most 24 times and
+ * Stream framework will treat suspend activity result as failed result once max retry times reaches.
+ * Stream framework will invoke {@link RetryPattern} to deduce the next time point the work-flow will be retried.
  *
- * Herd provides two default implemented retry patterns, for detail please refer to {@link EqualTimeIntervalPattern} and
+ * Stream provides two default implemented retry patterns, for detail please refer to {@link EqualTimeIntervalPattern} and
  * {@link ScheduledTimeIntervalPattern}.
  *
  * Users can also use their own retry pattern by implements interface {@link RetryPattern} and initiate it with the 

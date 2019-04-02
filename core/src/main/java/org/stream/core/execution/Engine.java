@@ -27,7 +27,7 @@ public interface Engine {
             final ResourceType resourceType);
 
     /**
-     * Use the graph with name graphName in the graphContext and execute on it. Clients should provide an
+     * Use the graph with name <p>graphName</p> in the graphContext and execute on it. Clients should provide an
      * Resource instance so that the {@link Node} nodes in the graph can use it. The resource will be added to
      * the resource tank of the current thread. The work-flow will not be cleaned up automatically.
      * @param graphContext the graph Context from which the graph will be extracted.
@@ -44,7 +44,7 @@ public interface Engine {
             final ResourceType resourceType);
 
     /**
-     * Use the graph with name graphName in the graphContext and execute on it. Clients should provide an
+     * Use the graph with name <p>graphName</p> in the graphContext and execute on it. Clients should provide an
      * Resource instance so that the {@link Node} nodes in the graph can use it. The resource will be added to
      * the resource tank of the current thread. Once the engine finish the work, it will automatically clean the work-flow
      * instance.
