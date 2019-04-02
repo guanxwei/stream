@@ -159,11 +159,11 @@ public abstract class AbstractGraphLoader {
                     throws GraphLoadException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         checkNodeConfiguration(nodeConfiguration);
         String currentNodeName = nodeConfiguration.getNodeName();
-        String activityClass = nodeConfiguration.getActivityClass();
+        String providerClass = nodeConfiguration.getProviderClass();
         Activity activity = null;
-        if (!graphContext.isActivityRegistered(activityClass)) {
-            cause.append(activityClass);
-            Class<?> clazz = Class.forName(activityClass);
+        if (!graphContext.isActivityRegistered(providerClass)) {
+            cause.append(providerClass);
+            Class<?> clazz = Class.forName(providerClass);
             if (Actor.class.isAssignableFrom(clazz)) {
                 // Actor case works in spring context only.
                 activity = processActorCase(clazz);
@@ -172,7 +172,7 @@ public abstract class AbstractGraphLoader {
             }
             graphContext.registerActivity(activity);
         } else {
-            activity = graphContext.getActivity(activityClass);
+            activity = graphContext.getActivity(providerClass);
         }
 
         stepPairs.addAll(setUpNextSteps(nodeConfiguration, currentNodeName));
@@ -296,12 +296,12 @@ public abstract class AbstractGraphLoader {
 
     private void checkNodeConfiguration(final NodeConfiguration nodeConfiguration) throws GraphLoadException {
         String nodeName = nodeConfiguration.getNodeName();
-        String activityClass = nodeConfiguration.getActivityClass();
+        String providerClass = nodeConfiguration.getProviderClass();
         if (nodeName == null || nodeName.length() == 0) {
             throw new GraphLoadException("Node name is not specified!");
         }
-        if (activityClass == null || activityClass.length() == 0 || !activityClass.contains(".")) {
-            throw new GraphLoadException("Activity class name is not correct or not specified!");
+        if (providerClass == null || providerClass.length() == 0 || !providerClass.contains(".")) {
+            throw new GraphLoadException("Provider class name is not correct or not specified!");
         }
     }
 
