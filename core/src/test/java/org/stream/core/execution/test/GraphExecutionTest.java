@@ -17,7 +17,6 @@ import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.ResourceType;
 import org.stream.core.test.base.CascadeTestActivity;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -49,7 +48,7 @@ public class GraphExecutionTest {
         String path = "ComprehensiveCase.graph";
         paths.add(path);
         graphLoader.init();
-        engine.execute(graphContext, "test", false, ResourceType.OBJECT);
+        engine.execute(graphContext, "test", false);
         Exception e = WorkFlowContext.extractException();
         throw e;
     }
@@ -62,9 +61,8 @@ public class GraphExecutionTest {
         Resource primaryResource = Resource.builder()
                 .resourceReference("testprimary")
                 .value(null)
-                .resourceType(ResourceType.OBJECT)
                 .build();
-        engine.execute(graphContext, "comprehensive", primaryResource, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "comprehensive", primaryResource, false);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertNotNull(records);
         Assert.assertEquals(records.size(), 2);
@@ -84,9 +82,8 @@ public class GraphExecutionTest {
         Resource primaryResource = Resource.builder()
                 .resourceReference("testprimary")
                 .value(null)
-                .resourceType(ResourceType.OBJECT)
                 .build();
-        engine.execute(graphContext, "comprehensive", primaryResource, true, ResourceType.OBJECT);
+        engine.execute(graphContext, "comprehensive", primaryResource, true);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertEquals(records.size(), 5);
     }
@@ -103,9 +100,8 @@ public class GraphExecutionTest {
         Resource primaryResource = Resource.builder()
                 .resourceReference("testprimary")
                 .value(null)
-                .resourceType(ResourceType.PRIMITIVE)
                 .build();
-        engine.execute(graphContext, "cascade", primaryResource, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "cascade", primaryResource, false);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertEquals(records.size(), 2);
         Assert.assertEquals(records.get(0).getDescription(), "keep a cascade record");
@@ -120,7 +116,7 @@ public class GraphExecutionTest {
         String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false);
         Thread.sleep(1100);
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertEquals(records.size(), 2);
@@ -134,12 +130,14 @@ public class GraphExecutionTest {
         Assert.assertEquals(resource.getValue(), "asyncvalue");
     }
 
-    @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "The resourceType does not match the the specified one in the definition file")
+    @Test(expectedExceptions = {WorkFlowExecutionExeception.class},
+            expectedExceptionsMessageRegExp = "The resourceType does not match the the specified one in the definition file",
+            enabled = false)
     public void testResourceTypeMissMatch() throws Exception {
         String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false, ResourceType.SESSION);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false);
     }
 
     @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "The work-flow instance has been closed!")
@@ -147,7 +145,7 @@ public class GraphExecutionTest {
         String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false);
         WorkFlowContext.close(true);
         WorkFlowContext.getPrimary();
     }
@@ -157,7 +155,7 @@ public class GraphExecutionTest {
         String asyncPath = "ComprehensiveWithAsyncNodeCanceledCase.graph";
         paths.add(asyncPath);
         graphLoader.init();
-        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCanceledCase", null, false, ResourceType.OBJECT);
+        engine.execute(graphContext, "ComprehensiveWithAsyncNodeCanceledCase", null, false);
         Resource asyncTaskWrapper = WorkFlowContext.resolveResource("node4" + ResourceHelper.ASYNC_TASK_SUFFIX);
         // Make sure the async task has chance to start.
         Thread.sleep(1000);
@@ -177,9 +175,8 @@ public class GraphExecutionTest {
         Resource primaryResource = Resource.builder()
                 .resourceReference("testprimary")
                 .value(null)
-                .resourceType(ResourceType.OBJECT)
                 .build();
-        engine.executeOnce(graphContext, "comprehensive", primaryResource, true, ResourceType.OBJECT);
+        engine.executeOnce(graphContext, "comprehensive", primaryResource, true);
         Assert.assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
 
     }
@@ -196,11 +193,10 @@ public class GraphExecutionTest {
         Resource primaryResource = Resource.builder()
                 .resourceReference("testprimary")
                 .value(null)
-                .resourceType(ResourceType.PRIMITIVE)
                 .build();
-        ResourceTank resourceTank1 = engine.execute(graphContext, "cascade", primaryResource, false, ResourceType.OBJECT);
+        ResourceTank resourceTank1 = engine.execute(graphContext, "cascade", primaryResource, false);
         Assert.assertNotNull(WorkFlowContext.getPrimary());
-        ResourceTank resourceTank2 = engine.execute(graphContext, "cascade", null, false, ResourceType.OBJECT);
+        ResourceTank resourceTank2 = engine.execute(graphContext, "cascade", null, false);
         Assert.assertNotEquals(resourceTank1, resourceTank2);
         Assert.assertNull(WorkFlowContext.getPrimary());
     }
@@ -212,11 +208,11 @@ public class GraphExecutionTest {
         paths.add("ThrowExceptionSuccesor.graph");
         graphLoader.init();
         try {
-            engine.execute(graphContext, "ThrowException", null, true, ResourceType.OBJECT);
+            engine.execute(graphContext, "ThrowException", null, true);
         } catch (Exception e) {
             System.out.println(e.getClass().getSimpleName());
         }
-        engine.execute(graphContext, "ThrowExceptionSuccesor", null, true, ResourceType.OBJECT);
+        engine.execute(graphContext, "ThrowExceptionSuccesor", null, true);
     }
 
     @AfterMethod

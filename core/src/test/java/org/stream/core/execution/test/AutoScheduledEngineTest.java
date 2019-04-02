@@ -16,7 +16,6 @@ import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.ResourceType;
 import org.stream.extension.executors.MockExecutorService;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
 import org.stream.extension.meta.Task;
@@ -76,7 +75,7 @@ public class AutoScheduledEngineTest {
                 .value("test")
                 .resourceReference(RandomStringUtils.randomAlphabetic(10))
                 .build();
-        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule1", primary, false, ResourceType.OBJECT);
+        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule1", primary, false);
         Resource resource = tank.resolve(AutoScheduledEngine.TASK_REFERENCE);
 
         Assert.assertNotNull(resource);
@@ -98,7 +97,7 @@ public class AutoScheduledEngineTest {
                 .resourceReference(RandomStringUtils.randomAlphabetic(10))
                 .build();
         Mockito.when(taskPersister.tryLock(Mockito.anyString())).thenReturn(true);
-        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule2", primary, false, ResourceType.OBJECT);
+        ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule2", primary, false);
 
         Resource resource = tank.resolve(AutoScheduledEngine.TASK_REFERENCE);
 

@@ -7,7 +7,6 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.ResourceType;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -24,7 +23,7 @@ public class GraphLoaderWithSpringTest extends AbstractTestNGSpringContextTests 
     public void test() {
         String graphName = "springCase";
 
-        ResourceTank resourceTank = engine.execute(graphContext, graphName, false, ResourceType.OBJECT);
+        ResourceTank resourceTank = engine.execute(graphContext, graphName, false);
 
         org.stream.core.resource.Resource resource = resourceTank.resolve("springModule");
         SpringModule springModule = (SpringModule) resource.getValue();

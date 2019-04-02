@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.stream.core.execution.Engine;
 import org.stream.core.helper.GraphConfiguration;
-import org.stream.core.resource.ResourceType;
 
 import lombok.Data;
 
@@ -26,11 +25,6 @@ public class Graph {
      * The nodes that this graph contains, including default error handling node & start node & .etc.
      */
     private List<Node> nodes;
-
-    /**
-     * The resourceType of the graph nodes execute on, see {@link ResourceType}.
-     */
-    private ResourceType resourceType;
 
     /**
      * The entry point of the graph, the work flow execution engine will choose this node to execute first.

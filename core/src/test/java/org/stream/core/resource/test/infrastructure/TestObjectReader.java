@@ -5,7 +5,6 @@ import java.util.UUID;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceAuthority;
 import org.stream.core.resource.ResourceReader;
-import org.stream.core.resource.ResourceType;
 import org.stream.core.resource.ResourceURL;
 
 public class TestObjectReader implements ResourceReader {
@@ -16,7 +15,6 @@ public class TestObjectReader implements ResourceReader {
     public Resource read(ResourceURL resourceURL) {
         return Resource.builder()
                 .resourceReference(UUID.randomUUID().toString())
-                .resourceType(ResourceType.OBJECT)
                 .resourceURL(resourceURL)
                 .value(new TestObject(UUID.randomUUID().toString()))
                 .build();

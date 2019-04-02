@@ -6,7 +6,6 @@ import org.stream.core.resource.Cache;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceAuthority;
 import org.stream.core.resource.ResourceCatalog;
-import org.stream.core.resource.ResourceType;
 import org.stream.core.resource.ResourceURL;
 import org.stream.core.resource.sample.MemoryCache;
 import org.stream.core.resource.test.infrastructure.TestObject;
@@ -37,7 +36,6 @@ public class ROASubSystemTest {
     public void testCache() {
         this.cache = new MemoryCache();
         this.resource = Resource.builder()
-                .resourceType(ResourceType.OBJECT)
                 .resourceReference("test")
                 .resourceURL(resourceURL)
                 .build();

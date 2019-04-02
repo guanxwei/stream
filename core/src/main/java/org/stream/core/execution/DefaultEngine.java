@@ -15,7 +15,6 @@ import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.ResourceType;
 import org.stream.core.resource.TimeOut;
 import org.stream.extension.circuit.CircuitBreaker;
 import org.stream.extension.circuit.DefaultCircuitBreaker;
@@ -46,10 +45,9 @@ public class DefaultEngine implements Engine {
     @Override
     public ResourceTank execute(final GraphContext graphContext,
             final String graphName,
-            final boolean autoRecord,
-            final ResourceType resourceType) {
+            final boolean autoRecord) {
 
-        return start(graphContext, graphName, null, autoRecord, resourceType, false);
+        return start(graphContext, graphName, null, autoRecord, false);
     }
 
     /**
@@ -59,10 +57,9 @@ public class DefaultEngine implements Engine {
     public ResourceTank execute(final GraphContext graphContext,
             final String graphName,
             final Resource primaryResource,
-            final boolean autoRecord,
-            final ResourceType resourceType) {
+            final boolean autoRecord) {
 
-        return start(graphContext, graphName, primaryResource, autoRecord, resourceType, false);
+        return start(graphContext, graphName, primaryResource, autoRecord, false);
     }
 
     /**
@@ -72,10 +69,9 @@ public class DefaultEngine implements Engine {
     public ResourceTank executeOnce(final GraphContext graphContext,
             final String graphName,
             final Resource primaryResource,
-            final boolean autoRecord,
-            final ResourceType resourceType) {
+            final boolean autoRecord) {
 
-        return  start(graphContext, graphName, primaryResource, autoRecord, resourceType, true);
+        return  start(graphContext, graphName, primaryResource, autoRecord, true);
     }
 
     /**
@@ -84,10 +80,9 @@ public class DefaultEngine implements Engine {
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext,
             final String graphName,
-            final boolean autoRecord,
-            final ResourceType resourceType) {
+            final boolean autoRecord) {
 
-        return start(graphContext, graphName, null, autoRecord, resourceType, true);
+        return start(graphContext, graphName, null, autoRecord, true);
     }
 
     /**
@@ -109,11 +104,10 @@ public class DefaultEngine implements Engine {
             final String graphName,
             final Resource resource,
             final boolean autoRecord,
-            final ResourceType resourceType,
             final boolean autoClean) {
 
         // Deduce work-flow procedure definition graph.
-        Graph graph = deduceGraph(graphName, graphContext, resourceType);
+        Graph graph = deduceGraph(graphName, graphContext);
 
         // Pre-set work-flow context flags.
         boolean isWorkflowEntryGraph = false;
@@ -136,13 +130,10 @@ public class DefaultEngine implements Engine {
         return resourceTank;
     }
 
-    private Graph deduceGraph(final String graphName, final GraphContext graphContext, final ResourceType resourceType) {
+    private Graph deduceGraph(final String graphName, final GraphContext graphContext) {
         Graph graph = graphContext.getGraph(graphName);
         if (graph == null) {
             throw new WorkFlowExecutionExeception("Graph is not present! Please double check the graph name you provide.");
-        }
-        if (!graph.getResourceType().equals(resourceType)) {
-            throw new WorkFlowExecutionExeception("The resourceType does not match the the specified one in the definition file");
         }
         return graph;
     }
@@ -378,7 +369,6 @@ public class DefaultEngine implements Engine {
             FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
             Resource taskWrapper = Resource.builder()
                     .value(task)
-                    .resourceType(node.getGraph().getResourceType())
                     .resourceReference(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX)
                     .build();
             workFlow.attachResource(taskWrapper);

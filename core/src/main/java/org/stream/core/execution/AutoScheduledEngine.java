@@ -6,7 +6,6 @@ import org.stream.core.helper.Jackson;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.ResourceType;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
@@ -69,8 +68,7 @@ public class AutoScheduledEngine implements Engine {
      * {@inheritDoc}
      */
     @Override
-    public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord,
-            final ResourceType resourceType) {
+    public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
         throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
     }
 
@@ -79,7 +77,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final Resource primaryResource,
-            final boolean autoRecord, final ResourceType resourceType) {
+            final boolean autoRecord) {
         String taskId = start(graphName, graphContext, primaryResource.getValue());
         Resource taskResource = Resource.builder()
                 .value(taskId)
@@ -95,16 +93,15 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final Resource primaryResource,
-            final boolean autoRecord, final ResourceType resourceType) {
-        return execute(graphContext, graphName, primaryResource, autoRecord, resourceType);
+            final boolean autoRecord) {
+        return execute(graphContext, graphName, primaryResource, autoRecord);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord,
-            final ResourceType resourceType) {
+    public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
         throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
     }
 

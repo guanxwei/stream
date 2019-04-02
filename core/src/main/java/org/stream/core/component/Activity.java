@@ -1,7 +1,5 @@
 package org.stream.core.component;
 
-import org.stream.core.resource.ResourceType;
-
 /**
  * Encapsulation of customer specific activity, which will be performed in a specific {@link Node}.
  *
@@ -30,14 +28,5 @@ public abstract class Activity {
      */
     public Node getExecutionContext() {
         return Node.CURRENT.get();
-    }
-
-    /**
-     * Get the granted resource type of the graph. Basically, activities should follow the resource type limitation defined in graph definition file,
-     * if not unexpected exception may throw.
-     * @return The graph's granted primary resource type.
-     */
-    public ResourceType getGrandtedPrimaryResourceType() {
-        return Node.CURRENT.get().getGraph().getResourceType();
     }
 }

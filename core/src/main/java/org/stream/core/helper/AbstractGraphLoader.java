@@ -18,8 +18,8 @@ import javax.annotation.Resource;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
-import org.stream.core.component.ActorActivity;
 import org.stream.core.component.ActivityResult.Visitor;
+import org.stream.core.component.ActorActivity;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.exception.GraphLoadException;
@@ -29,7 +29,6 @@ import org.stream.core.execution.NextSteps;
 import org.stream.core.execution.NextSteps.NextStepType;
 import org.stream.core.execution.StepPair;
 import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
-import org.stream.core.resource.ResourceType;
 import org.stream.extension.io.Actor;
 
 import com.google.gson.Gson;
@@ -117,7 +116,6 @@ public abstract class AbstractGraphLoader {
             final Map<String, Node> knowNodes, final StringBuilder cause) throws GraphLoadException, ClassNotFoundException,
                     InstantiationException, IllegalAccessException, IOException {
         GraphConfiguration graphConfiguration = parseGraphConfiguration(buildStringfyInput(input), graph);
-        graph.setResourceType(ResourceType.valueOf(graphConfiguration.getResourceType()));
         graph.setPrimaryResourceType(graphConfiguration.getPrimaryResourceType());
         NodeConfiguration[] nodes = graphConfiguration.getNodes();
         List<Node> staticNodes = new ArrayList<Node>();

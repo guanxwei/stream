@@ -191,7 +191,6 @@ public final class TaskHelper {
             FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
             Resource taskWrapper = Resource.builder()
                     .value(task)
-                    .resourceType(node.getGraph().getResourceType())
                     .resourceReference(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX)
                     .build();
             workFlow.attachResource(taskWrapper);

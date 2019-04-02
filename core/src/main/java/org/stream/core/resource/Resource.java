@@ -22,8 +22,6 @@ public class Resource {
 
     private Object value;
 
-    private ResourceType resourceType;
-
     /**
      * Work-flow internal used reference to concrete resource.
      */
@@ -102,17 +100,11 @@ public class Resource {
      */
     public static class ResourceBuilder {
         private Object value;
-        private ResourceType resourceType;
         private String resourceReference;
         private ResourceURL resourceURL;
 
         public ResourceBuilder value(final Object value) {
             this.value = value;
-            return this;
-        }
-
-        public ResourceBuilder resourceType(final ResourceType resourceType) {
-            this.resourceType = resourceType;
             return this;
         }
 
@@ -129,7 +121,6 @@ public class Resource {
         public Resource build() {
             Resource resource = new Resource();
             resource.setResourceReference(this.resourceReference);
-            resource.setResourceType(this.resourceType);
             resource.setValue(this.value);
             resource.setResourceURL(this.resourceURL);
             return resource;

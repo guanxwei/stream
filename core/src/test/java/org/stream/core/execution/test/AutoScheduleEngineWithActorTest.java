@@ -10,7 +10,6 @@ import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.test.GraphLoaderWithSpringActorTestConfiguration;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.ResourceType;
 import org.stream.extension.persist.TaskPersister;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -36,7 +35,7 @@ public class AutoScheduleEngineWithActorTest extends AbstractTestNGSpringContext
                 .resourceReference(RandomStringUtils.randomAlphabetic(32))
                 .build();
         Mockito.when(taskPersister.tryLock(Mockito.anyString())).thenReturn(true);
-        ResourceTank resourceTank = engine.execute(graphContext, graphName, primary, false, ResourceType.OBJECT);
+        ResourceTank resourceTank = engine.execute(graphContext, graphName, primary, false);
 
         org.stream.core.resource.Resource resource = resourceTank.resolve("stream::autoschedule::task::reference");
 

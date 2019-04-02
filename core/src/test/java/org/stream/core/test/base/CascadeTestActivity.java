@@ -7,7 +7,6 @@ import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRecord;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.resource.ResourceType;
 
 import lombok.Setter;
 
@@ -24,7 +23,7 @@ public class CascadeTestActivity extends Activity {
                 .description("keep a cascade record")
                 .time(null)
                 .build());
-        engine.execute(graphContext, graphName, false, ResourceType.OBJECT);
+        engine.execute(graphContext, graphName, false);
 
         return ActivityResult.SUCCESS;
     }

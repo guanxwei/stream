@@ -13,7 +13,6 @@ import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
-import org.stream.core.resource.ResourceType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -68,14 +67,14 @@ public class DefaultEngineTest {
 
     @Test
     public void testExecute() {
-        defaultEngine.execute(graphContext, "comprehensive", false, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "comprehensive", false);
         Assert.assertNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
     }
 
     @Test
     public void testExecuteWithDefaultErrorProcess() {
-        defaultEngine.execute(graphContext, "defaultErrorNode", true, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "defaultErrorNode", true);
         Assert.assertNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
         // 创建workflow + 每次执行节点前（三个，默认error handle 也会被执行） + success test activity + TestActivity.
@@ -84,7 +83,7 @@ public class DefaultEngineTest {
 
     @Test(dependsOnMethods = "testExecute")
     public void testExecuteWithAutoRecord() {
-        defaultEngine.execute(graphContext, "comprehensive2", true, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "comprehensive2", true);
         Assert.assertNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
 
@@ -99,7 +98,7 @@ public class DefaultEngineTest {
         Resource primary = Resource.builder()
                 .resourceReference("testExecuteWithPrimary")
                 .build();
-        defaultEngine.execute(graphContext, "comprehensive", primary, false, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "comprehensive", primary, false);
         Assert.assertNotNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
         primary = WorkFlowContext.getPrimary();
@@ -112,7 +111,7 @@ public class DefaultEngineTest {
         Resource primary = Resource.builder()
                 .resourceReference("testExecuteWithPrimary")
                 .build();
-        defaultEngine.execute(graphContext, "comprehensive2", primary, true, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "comprehensive2", primary, true);
         Assert.assertNotNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
 
@@ -130,7 +129,7 @@ public class DefaultEngineTest {
         Resource primary = Resource.builder()
                 .resourceReference("testExecuteWithException")
                 .build();
-        defaultEngine.execute(graphContext, "ThrowException", primary, true, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "ThrowException", primary, true);
         Assert.assertNotNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
 
@@ -141,7 +140,7 @@ public class DefaultEngineTest {
 
     @Test(dependsOnMethods = "testExecuteWithException")
     public void testSuspend() {
-        defaultEngine.execute(graphContext, "comprehensive4", true, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "comprehensive4", true);
         Assert.assertNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
 
@@ -156,7 +155,7 @@ public class DefaultEngineTest {
         Resource primary = Resource.builder()
                 .resourceReference("testExecuteWithAsyncNode")
                 .build();
-        defaultEngine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", primary, false, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", primary, false);
         Assert.assertNotNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
 
@@ -179,7 +178,7 @@ public class DefaultEngineTest {
         Resource primary = Resource.builder()
                 .resourceReference("testExecuteWithAsyncNode")
                 .build();
-        defaultEngine.execute(graphContext, "checkCase", primary, false, ResourceType.OBJECT);
+        defaultEngine.execute(graphContext, "checkCase", primary, false);
         Thread.sleep(1000);
         Assert.assertNotNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));

@@ -3,7 +3,6 @@ package org.stream.core.execution;
 import org.stream.core.component.Node;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.ResourceType;
 
 /**
  * Abstract of work-flow engine, define APIs that all the implementations should provide.
@@ -18,13 +17,11 @@ public interface Engine {
      * @param graphContext the graph Context from which the graph will be extracted.
      * @param graphName The graph's name.
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
-     * @param resourceType Choose one from {@link ResourceType}, which should equal to the value set in the graph definition file.
      * @return New resource tank, which stores resources created during work-flow execution.
      */
     public ResourceTank execute(final GraphContext graphContext,
             final String graphName,
-            final boolean autoRecord,
-            final ResourceType resourceType);
+            final boolean autoRecord);
 
     /**
      * Use the graph with name <p>graphName</p> in the graphContext and execute on it. Clients should provide an
@@ -34,14 +31,12 @@ public interface Engine {
      * @param graphName The graph's name.
      * @param primaryResource resource clients sent to the work flow engine, will be added to the new created resource tank.
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
-     * @param resourceType Choose one from {@link ResourceType}, which should equal to the value set in the graph definition file.
      * @return New resource tank, which stores resources created during work-flow execution.
      */
     public ResourceTank execute(final GraphContext graphContext,
             final String graphName,
             final Resource primaryResource,
-            final boolean autoRecord,
-            final ResourceType resourceType);
+            final boolean autoRecord);
 
     /**
      * Use the graph with name <p>graphName</p> in the graphContext and execute on it. Clients should provide an
@@ -52,14 +47,12 @@ public interface Engine {
      * @param graphName the name of graph which will be executed on.
      * @param primaryResource resource clients sent to the work flow engine, will be added to the new created resource tank.
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
-     * @param resourceType Choose one from {@link ResourceType}, which should equal to the value set in the graph definition file.
      * @return New resource tank, which stores resources created during work-flow execution.
      */
     public ResourceTank executeOnce(final GraphContext graphContext,
             final String graphName,
             final Resource primaryResource,
-            final boolean autoRecord,
-            final ResourceType resourceType);
+            final boolean autoRecord);
 
     /**
      * Use the graph with name graphName in the graphContext and execute on it. Clients will not provide an
@@ -69,13 +62,11 @@ public interface Engine {
      * @param graphContext the graph Context from which the graph will be extracted.
      * @param graphName the name of graph which will be executed on.
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
-     * @param resourceType Choose one from {@link ResourceType}, which should equal to the value set in the graph definition file.
      * @return new resource tank, which stores some resource.
      */
     public ResourceTank executeOnce(final GraphContext graphContext,
             final String graphName,
-            final boolean autoRecord,
-            final ResourceType resourceType);
+            final boolean autoRecord);
 
     /**
      * Stop the engine, it needs lubrication! Clients should be very careful to invoke this method,

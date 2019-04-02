@@ -9,7 +9,6 @@ import org.stream.core.component.Node;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.LocalGraphLoader;
-import org.stream.core.resource.ResourceType;
 import org.stream.core.test.base.TestActivity;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -68,7 +67,6 @@ public class GraphLoadTest {
         Assert.assertEquals(graphLoader.getGraphContext().getGraphRegistered(), 1);
         Graph graph = graphLoader.getGraphContext().getGraph("testname");
         Assert.assertNotNull(graph);
-        Assert.assertEquals(graph.getResourceType(), ResourceType.OBJECT);
 
         Node startNode = graph.getStartNode();
         Assert.assertNotNull(startNode);
