@@ -60,6 +60,7 @@ public class ExecutionRunner implements Runnable {
         WorkFlowContext.attachPrimaryResource(primaryResource);
         Node node = graph.getStartNode();
 
+        ActivityResult activityResult = null;
         while (node != null && !WorkFlowContext.provide().isRebooting()
                 && taskPersister.tryLock(task.getTaskId())) {
 
@@ -74,11 +75,11 @@ public class ExecutionRunner implements Runnable {
             }
 
             log.trace("Execute graph [{}] at node [{}]", graph.getGraphName(), node.getNodeName());
-            ActivityResult activityResult = TaskHelper.perform(node);
+            activityResult = TaskHelper.perform(node);
             log.trace("Execution result [{}]", activityResult.name());
 
             if (activityResult.equals(ActivityResult.SUSPEND)) {
-                int interval = TaskHelper.suspend(task, node, primaryResource, taskPersister, pattern);
+                int interval = TaskHelper.suspend(task, node, taskPersister, pattern);
                 log.info("Task suspended, will try to run locally if possible");
                 TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, pattern);
                 log.info("Task [{}] suspended for interval [{}] at node [{}]", task.toString(), interval, Node.CURRENT.get().getNodeName());
@@ -99,7 +100,7 @@ public class ExecutionRunner implements Runnable {
             node = TaskHelper.traverse(activityResult, node);
         }
 
-        Resource dataResource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
-        TaskHelper.complete(task, (StreamTransferData) dataResource.getValue(), taskPersister);
+        TaskHelper.complete(task, WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class),
+                taskPersister, activityResult);
     }
 }

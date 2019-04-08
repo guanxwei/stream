@@ -98,17 +98,20 @@ public class RetryRunner implements Runnable {
                 .build());
 
         log.info("Retry workflow at node [{}]", node.getNodeName());
+        ActivityResult activityResult = null;
         while (node != null && !WorkFlowContext.provide().isRebooting()) {
             log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());
-            ActivityResult activityResult = doRetry(node, task, data);
-            if (activityResult == null) {
-                return;
+            activityResult = doRetry(node, task, data);
+            if (ActivityResult.SUSPEND.equals(activityResult)) {
+                break;
             }
 
             node = TaskHelper.traverse(activityResult, node);;
         }
 
-        TaskHelper.complete(task, data, taskPersister);
+        if (activityResult == ActivityResult.SUCCESS || activityResult == ActivityResult.FAIL) {
+            TaskHelper.complete(task, data, taskPersister, activityResult);
+        }
     }
 
     private ActivityResult doRetry(final Node node, final Task task, final StreamTransferData data) {
@@ -124,11 +127,11 @@ public class RetryRunner implements Runnable {
         ActivityResult activityResult = TaskHelper.perform(node);
 
         if (activityResult.equals(ActivityResult.SUSPEND)) {
-            suspend(task, node, data);
             if (task.getRetryTimes() == MAX_RETRY) {
                 activityResult = ActivityResult.FAIL;
             } else {
-                return null;
+                suspend(task, node, data);
+                return ActivityResult.SUSPEND;
             }
         }
 
@@ -156,15 +159,6 @@ public class RetryRunner implements Runnable {
 
     private void suspend(final Task task, final Node node, final StreamTransferData data) {
         // Persist workflow status to persistent layer.
-        task.setNodeName(node.getNodeName());
-        task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
-        task.setLastExcutionTime(System.currentTimeMillis());
-        task.setStatus("PendingOnRetry");
-        doSuspend(task, node, data);
-    }
-
-    private void doSuspend(final Task task, final Node node, final StreamTransferData data) {
-        int interval = 100;
         TaskStep taskStep = TaskStep.builder()
                 .createTime(System.currentTimeMillis())
                 .graphName(node.getGraph().getGraphName())
@@ -173,33 +167,35 @@ public class RetryRunner implements Runnable {
                 .status(StreamTransferDataStatus.SUSPEND)
                 .taskId(task.getTaskId())
                 .build();
-        if (task.getRetryTimes() == MAX_RETRY && task.getNodeName().equals(node.getNodeName())) {
+        task.setLastExcutionTime(System.currentTimeMillis());
+        if (task.getRetryTimes() == MAX_RETRY) {
             // Will not try any more.
-            task.setStatus("Completed");
             log.error("Max retry times reached for task [{}] at node [{}] in procedure [{}]", task.getTaskId(),
                     node.getNodeName(), node.getGraph().getGraphName());
-        } else if (task.getNodeName().equals(node.getNodeName()) && task.getRetryTimes() < MAX_RETRY) {
-            task.setRetryTimes(task.getRetryTimes() + 1);
-            interval = getTime(this.retryPattern, task.getRetryTimes());
-            if (node.getIntervals() != null && node.getNextRetryInterval(task.getRetryTimes()) > 0) {
-                interval = node.getNextRetryInterval(0);
-            }
-            task.setNextExecutionTime(task.getLastExcutionTime() + interval);
-            taskPersister.suspend(task, interval, taskStep);
-            TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
-            log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] seconds",
-                    task.getTaskId(), task.getRetryTimes(), interval);
+            return;
         } else {
-            // Recount.
-            task.setRetryTimes(0);
-            interval = getTime(this.retryPattern, 0);
-            if (node.getIntervals() != null && node.getNextRetryInterval(0) > 0) {
-                interval = node.getNextRetryInterval(0);
+            if (task.getNodeName().contentEquals(node.getNodeName())) {
+                task.setRetryTimes(task.getRetryTimes() + 1);
+            } else {
+                task.setRetryTimes(0);
             }
-            task.setNextExecutionTime(task.getLastExcutionTime() + interval);
-            taskPersister.suspend(task, interval, taskStep);
-            TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
         }
+        updateLastExecutionTimeAndSuspend(node, task, taskStep);
+    }
+
+    private void updateLastExecutionTimeAndSuspend(final Node node, final Task task, final TaskStep taskStep) {
+        int interval = getTime(this.retryPattern, task.getRetryTimes());
+        if (node.getIntervals() != null && node.getNextRetryInterval(task.getRetryTimes()) > 0) {
+            interval = node.getNextRetryInterval(0);
+        }
+        task.setNextExecutionTime(task.getLastExcutionTime() + interval);
+        task.setNodeName(node.getNodeName());
+        task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
+        task.setStatus("PendingOnRetry");
+        taskPersister.suspend(task, interval, taskStep);
+        TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
+        log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] seconds",
+                task.getTaskId(), task.getRetryTimes(), interval);
     }
 
     /**

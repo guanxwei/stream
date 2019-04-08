@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ThreadPoolTaskExecutor implements TaskExecutor {
 
-    private static int DEFAULT_POOL_SIZE = 100;
+    private static int DEFAULT_POOL_SIZE = 200;
 
     private volatile boolean shuttingDown = false;
 

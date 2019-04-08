@@ -21,40 +21,40 @@ import lombok.Data;
  * parallel when executing the target node.
  * <p> For example <p>
  * <code>
- *     {
-          "graphName":"ComprehensiveWithAsyncNodeCase",
-          "resourceType":"OBJECT",
-          "startNode":"node1",
-          "defaultErrorNode":"node3",
-          "nodes":[
-            {
-              "nodeName":"node1",
-              "activityClass":"org.stream.core.test.base.TestActivity",
-              "successNode":"node2",
-              "failNode":"node3",
-              "asyncDependencies": [
-                {
-                  "asyncNode":"node4"
-                }
-              ]
-            },
-            {
-              "nodeName":"node2",
-              "activityClass":"org.stream.core.test.base.SuccessTestActivity",
-              "failNode":"node3"
-            },
-            {
-              "nodeName":"node3",
-              "activityClass":"org.stream.core.test.base.FailTestActivity"
-            },
-            {
-              "nodeName":"node4",
-              "activityClass":"org.stream.core.test.base.AsyncTestActivity"
-            }
-          ]
-        }
+ *     <br>{
+          <br>"graphName":"ComprehensiveWithAsyncNodeCase",
+          <br>"resourceType":"OBJECT",
+          <br>"startNode":"node1",
+          <br>"defaultErrorNode":"node3",
+          <br>"nodes":[
+            <br>{
+              <br>"nodeName":"node1",
+              <br>"activityClass":"org.stream.core.test.base.TestActivity",
+              <br>"successNode":"node2",
+              <br>"failNode":"node3",
+              <br>"asyncDependencies": [
+                <br>{
+                  <br>"asyncNode":"node4"
+                <br>}
+              <br>]
+            <br>},
+            <br>{
+              <br>"nodeName":"node2",
+              <br>"activityClass":"org.stream.core.test.base.SuccessTestActivity",
+              <br>"failNode":"node3"
+            <br>},
+            <br>{
+              <br>"nodeName":"node3",
+              <br>"activityClass":"org.stream.core.test.base.FailTestActivity"
+            <br>},
+            <br>{
+              <br>"nodeName":"node4",
+              <br>"activityClass":"org.stream.core.test.base.AsyncTestActivity"
+            <br>}
+          <br>]
+        <br>}
  * </code>
- * The only difference between the normals nodes is that these nodes' activities should extend {@link AsyncActivity}.
+ * <br>The only difference between the normals nodes is that these nodes' activities should extend {@link AsyncActivity}.
  * For detail, please refer to the sample graph files located in the test resource folder.
  *
  * Nodes will be treated as singleton instances in single JVM context and can be shared in multiple graphs running in multiple threads

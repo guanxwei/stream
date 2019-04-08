@@ -5,7 +5,7 @@ import java.io.InputStream;
 import org.stream.core.exception.GraphLoadException;
 
 /**
- * Graph helper who is responsible to load graphs from specific graph definition files.
+ * Graph helper who is responsible to load graphs from specific graph definition files in local disk.
  * Basically a graph definition file should be named with suffix ".graph" and the file content
  * should be stored as standard json string of object {@link GraphConfiguration}.
  */

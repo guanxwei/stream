@@ -18,9 +18,32 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Encapsulation of an working flow instance reserving the work-flow meta-data. Clients can check the work-flow status at any time.
- * The work-flow is created when a work-flow engine is invoked to execute a graph, while the current thread does not have other working
- * work-flow instances.
+ * Encapsulation of a work procedure. A work-flow typically represents a complete working procedure that
+ * should be done as a unit, like a transaction in RDS world.
+ *
+ * Basically work-flow is created when a work-flow {@link Engine} is invoked to execute a graph,
+ * while the current thread does not have an existing work-flow instance. So the work-flows will be managed by the {@link Engine}s,
+ * users' code do not have to manage the life cycle of the work-flows, moreover work-flow is transparent to users' code.
+ * If users want to communicate with other code in the same work-flow, for example store something in the work-flow context
+ * so that they can be reused in the near future, they can invoke the methods provided by {@link WorkFlowContext},
+ * like {@link WorkFlowContext#attachResource(Resource)} then {@link WorkFlowContext} will help store the resources in the proper
+ * repositories and make sure that other code can reuse these resources.
+ *
+ * For the cases that sub-procedures are needed, {@link WorkFlow} provides a mechanism to support that, sub-procedures within
+ * an existing work-flow will be treated as it's children work-flows, the requests like resolve resource attached in the context
+ * will be delegated to the parent work-flow first then the current work-flow if they are not found. Sub work-flows will be unloaded
+ * once the sub procedure is done, the related resource attached in the sub work-flow will be cleaned too.
+ *
+ * Each work-flow has its unique primary resource and can not be changed once set. A primary resource is set at the time
+ * applications execute a graph through an {@link Engine}, for detail please refer to {@link Engine#execute(GraphContext, String, Resource, boolean)}
+ * or {@link Engine#executeOnce(GraphContext, String, Resource, boolean)}. The engines will help attached the primary resource to the
+ * work-flow instance the engine is using, the other code can visit the primary resource via calling {@link WorkFlowContext#getPrimary()}.
+ * So in most cases, the value of the primary resource should be the "request" or something like that who triggers the execution
+ * of the work-flow.
+ *
+ * After execution an instance of {@link ResourceTank} will be returned to the clients, this object contains all the resources
+ * attached to the work-flow, so if your want to check if something has happened, you can check if a resource is attached to
+ * the work-flow and the state of the resource fulfills your requirement.
  */
 public class WorkFlow {
 

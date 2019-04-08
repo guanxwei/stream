@@ -78,11 +78,8 @@ public final class TaskHelper {
     public static void updateTask(final Task task, final Node node, final String status) {
         task.setNodeName(node.getNodeName());
         task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
-        task.setRetryTimes(0);
         task.setStatus(status);
         task.setLastExcutionTime(System.currentTimeMillis());
-        // In case run into conflict with the backup scanner.
-        task.setNextExecutionTime(System.currentTimeMillis() + 1000);
     }
 
     /**
@@ -90,21 +87,16 @@ public final class TaskHelper {
      * to retry this procedure.
      * @param task Task to be suspended.
      * @param node Current working on node.
-     * @param primaryResource Primary resource that will be recovered by back-end runner.
      * @param taskPersister Task persister.
      * @param pattern Retry suspended cases pattern.
      *
      * @return Retry interval.
      */
-    public static int suspend(final Task task, final Node node, final Resource primaryResource, final TaskPersister taskPersister,
+    public static int suspend(final Task task, final Node node, final TaskPersister taskPersister,
             final RetryPattern pattern) {
         // Persist work-flow status to persistent layer.
         StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
-        task.setNodeName(node.getNodeName());
-        task.setJsonfiedPrimaryResource(primaryResource.toString());
-        task.setStatus("PendingOnRetry");
-        task.setRetryTimes(0);
-        task.setLastExcutionTime(System.currentTimeMillis());
+        TaskHelper.updateTask(task, node, "PendingOnRetry");
         // Let the back-end runners have chances to retry the suspended work-flow.;
         int interval = RetryRunner.getTime(pattern, 0);
         if (node.getIntervals() != null && node.getNextRetryInterval(0) > 0) {
@@ -129,9 +121,15 @@ public final class TaskHelper {
      * @param task Task to be marked.
      * @param data Data to be saved.
      * @param taskPersister Task persister.
+     * @param finalActivityResult Activity execution result of the last node.
      */
-    public static void complete(final Task task, final StreamTransferData data, final TaskPersister taskPersister) {
+    public static void complete(final Task task, final StreamTransferData data, final TaskPersister taskPersister,
+            final ActivityResult finalActivityResult) {
         task.setStatus("Completed");
+        if (finalActivityResult == ActivityResult.FAIL) {
+            task.setStatus("CompletedWithFailure");
+        }
+
         taskPersister.persist(task);
         taskPersister.complete(task);
     }

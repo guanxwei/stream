@@ -59,7 +59,7 @@ public abstract class AbstractGraphLoader {
     protected List<String> graphFilePaths;
 
     /**
-     * Load graph from the input source. A input source may be a local file or a remote http page.
+     * Load graph from the input source. A input source may be a local file or a remote http page or somewhere else.
      * Graph loader implementations should implement their own @{@link #loadInputStream(String)} so that
      * the graph can be loaded properly.
      * @param sourcePath Source path of the graph definition file is located. It can be located at the local disk 
@@ -330,7 +330,7 @@ public abstract class AbstractGraphLoader {
         List<AsyncPair> list = new LinkedList<>();
 
         /**
-         * Extract the async dependency nodes of the current node.
+         * Extract the asynchronous dependency nodes of the current node.
          */
         AsyncNodeConfiguration[] asyncDependencies = nodeConfiguration.getAsyncDependencies();
         if (asyncDependencies ==  null || asyncDependencies.length == 0) {

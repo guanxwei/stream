@@ -16,9 +16,12 @@ import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 
 /**
- * Encapsulation of work-flow context.
- * Help to create a new work-flow or provide existed work-flow, or even reboot the work-flow.
- * Also provides many convenient methods to manage the resources within the work-flow.
+ * Encapsulation of work-flow context. Each thread has it's own context attached to one work-flow with its
+ * child sub work-flows.
+ *
+ * A work-flow context is mainly used to create a new work-flow, provide existed work-flow, or even reboot the work-flow.
+ * Work-flow context also provides many convenient methods to manage the resources attached to the work-flow.
+ * The work-flow context is the only bridge between the user's code and the work-flow instance.
  */
 public final class WorkFlowContext {
 

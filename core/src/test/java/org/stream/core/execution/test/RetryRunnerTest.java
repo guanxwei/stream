@@ -189,7 +189,7 @@ public class RetryRunnerTest {
         content = task.toString();
         retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
-        Mockito.when(pattern.getTimeInterval(1)).thenReturn(10);
+        Mockito.when(pattern.getTimeInterval(0)).thenReturn(10);
 
         retryRunner.run();
 
@@ -199,7 +199,7 @@ public class RetryRunnerTest {
 
         Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor6.capture());
 
-        Assert.assertEquals(captor2.getValue().intValue(), 10);
+        Assert.assertEquals(captor2.getValue().intValue(), 10l);
         Task captured = captor1.getValue();
 
         Assert.assertEquals(captured.getNodeName(), "node5");
@@ -243,7 +243,7 @@ public class RetryRunnerTest {
         Mockito.verify(taskPersister).persist(captor4.capture());
 
         Assert.assertEquals(captor3.getValue(), captor4.getValue());
-        Assert.assertEquals(captor3.getValue().getStatus(), "Completed");
+        Assert.assertEquals(captor3.getValue().getStatus(), "CompletedWithFailure");
         WorkFlowContext.reboot();
     }
 

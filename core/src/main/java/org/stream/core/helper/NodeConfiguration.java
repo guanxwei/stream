@@ -53,7 +53,7 @@ public class NodeConfiguration {
     /**
      * Return the real provider class of this node.
      * Will use activity class if it is present, otherwise use actor class instead.
-     * @return
+     * @return Provider class name.
      */
     public String getProviderClass() {
         if (activityClass != null) {
