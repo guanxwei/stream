@@ -6,14 +6,16 @@ import org.stream.core.component.Node;
 import lombok.Setter;
 
 /**
- * Encapsulation of the next step information taken by the {@linkplain Engine}.
- * Each {@link Node} should provide enough information to the {@linkplain Engine} to help determine what to do
+ * Encapsulation of the next step information used by the {@linkplain Engine} to determine what to do
  * after completing the work in the current node. In the steam work-flow world, the "work" to be done means the
  * {@linkplain Node} to be executed on.
  *
- * This entity provides such functions to the {@link Engine},
- * it will tell the {@linkplain Engine} which {@linkplain Node} to retrieve and execute
- * based on the {@link ActivityResult} returned by the current {@linkplain Node}.
+ * The work-flow engines will choose the next node based on the execution result of current node and the node's
+ * next step configuration. Currently, stream framework supports 4 kinds of next step specification
+ * <p> SUCCESS the success next step will be chosen when the current node returns {@link ActivityResult#SUCCESS}
+ * <P> SUSPEND the success next step will be chosen when the current node returns {@link ActivityResult#SUSPEND}
+ * <p> UNKNOW the success next step will be chosen when the current node returns {@link ActivityResult#UNKNOWN}
+ * <p> FAIL the success next step will be chosen when the current node returns {@link ActivityResult#FAIL}
  *
  */
 public class NextSteps {

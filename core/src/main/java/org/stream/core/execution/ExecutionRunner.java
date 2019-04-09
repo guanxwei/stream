@@ -61,8 +61,7 @@ public class ExecutionRunner implements Runnable {
         Node node = graph.getStartNode();
 
         ActivityResult activityResult = null;
-        while (node != null && !WorkFlowContext.provide().isRebooting()
-                && taskPersister.tryLock(task.getTaskId())) {
+        while (node != null && taskPersister.tryLock(task.getTaskId())) {
 
             Node.CURRENT.set(node);
 

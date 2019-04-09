@@ -19,9 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Auto scheduled work-flow engine. This engine is mainly designed to support auto retry cases in distributed environments.
- * In distributed world, there are always more than one service arranged to complete one task, sometimes retry is also needed
- * to process temporary unavailable cases. It will be very difficult for developers to maintain the code without an efficient
- * tool to simplify the way managing the whole working procedure, because there are so many things ahead to be done like invoking
+ * In distributed world, multiple services will be arranged to complete one task, sometimes auto retry is also needed
+ * to process temporary unavailable cases. It's tricky for developers themselves to determine what to do based on the
+ * predecessor 
+ * , because there are so many things ahead to be done like invoking
  * next step after something is executed, retry the step if it failed in pre-set times.
  *
  * To help eliminate the effort solving such tricky problems, stream work-flow framework provides this lightly flow engine implementation.

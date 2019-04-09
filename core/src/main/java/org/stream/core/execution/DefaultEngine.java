@@ -314,7 +314,7 @@ public class DefaultEngine implements Engine {
     }
 
     /**
-     * Retrieve the next node to be executed based on the result the current node returned and the configuration for the current node.
+     * Retrieve the next node to be executed based on the result the current node returned and the configuration of the current node.
      * @param activityResult The result current node returned.
      * @param startNode the current node reference.
      * @return
@@ -351,8 +351,10 @@ public class DefaultEngine implements Engine {
     }
 
     /**
-     * Set up asynchronous tasks and submit them to executor, all the work-flow instances share one asynchronous task executor, so it is expectable to
-     * take some time to complete the task, sometimes when the traffic is busy it may take more time to complete the task than normal.
+     * Set up asynchronous tasks and submit them to executor.
+     * All the work-flow instances share one asynchronous task executor, so it is expectable to
+     * take some time to complete the task, sometimes when the traffic is busy it may take more
+     * time to complete the task than normal cases.
      * @param workFlow The asynchronous task belong to.
      * @param node The node that need submit asynchronous tasks.
      */

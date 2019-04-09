@@ -14,29 +14,49 @@ import org.stream.core.component.Graph;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
+import org.stream.extension.io.StreamTransferData;
+
+import com.mongodb.annotations.ThreadSafe;
 
 /**
- * Encapsulation of work-flow context. Each thread has it's own context attached to one work-flow with its
- * child sub work-flows.
+ * Encapsulation of work-flow execution context.
  *
  * A work-flow context is mainly used to create a new work-flow, provide existed work-flow, or even reboot the work-flow.
  * Work-flow context also provides many convenient methods to manage the resources attached to the work-flow.
  * The work-flow context is the only bridge between the user's code and the work-flow instance.
+ *
+ * Each thread has it's own context attached to one work-flow with its
+ * child sub work-flows, so the methods in this class are thread safe.
  */
+@ThreadSafe
 public final class WorkFlowContext {
 
     private WorkFlowContext() { }
 
+    // The thread specific work-flow instance.
     private static final ThreadLocal<WorkFlow> CURRENT = new ThreadLocal<WorkFlow>();
 
+    // All the live work-flow instances in the JVM.
     private static final ConcurrentHashMap<String, WorkFlow> WORKFLOWS = new ConcurrentHashMap<>();
 
     private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
+    /**
+     * A pre-defined work-flow resource reference to response code.
+     * The value of the response code resource should always be {@link Integer}.
+     */
     public static final String WORK_FLOW_RESPONSE_CODE_REFERENCE = "Stream::Workflow::ResponseCode::Reference";
 
+    /**
+     * A pre-defined work-flow resource reference to the response entity.
+     * The response entity could be any of user specific types.
+     */
     public static final String WORK_FLOW_RESPONSE_REFERENCE = "Stream::Workflow::Response::Reference";
 
+    /**
+     * A pre-defined work-flow resource reference to the transfer data.
+     * The type of the value of referenced resource is {@link StreamTransferData}.
+     */
     public static final String WORK_FLOW_TRANSTER_DATA_REFERENCE = "Stream::Workflow::Transfer::Data::Reference";
 
     /**

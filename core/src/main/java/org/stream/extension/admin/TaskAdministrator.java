@@ -1,5 +1,6 @@
 package org.stream.extension.admin;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -18,10 +19,9 @@ import lombok.extern.slf4j.Slf4j;
  * Abstract of stream {@link Task} administrator, providing some useful methods to check the task's status, intercept the
  * execution life cycle of specific tasks, etc.
  *
- * Typically, users will construct their back-end admin systems to manage their tasks, for example list all the step details
- * a task was posted through, restart a failed task in the near future.
- *
- * If this class is needed, please let the spring location scanner scan this package.
+ * Typically, users will construct their own back-end systems to manage their Stream tasks, for example list all the step details
+ * a task was posted through, restart a failed task in the near future. If this class is needed,
+ * please let the spring location scanner scan this package.
  * @author weiguanxiong.
  *
  */
@@ -77,6 +77,7 @@ public final class TaskAdministrator {
         task.setLastExcutionTime(System.currentTimeMillis());
         task.setNextExecutionTime(System.currentTimeMillis() + 100);
         taskStorage.update(task);
+
         return true;
     }
 }
