@@ -1,6 +1,5 @@
 package org.stream.extension.admin;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Resource;

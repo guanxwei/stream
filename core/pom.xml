@@ -12,7 +12,7 @@
     <description>A tiny java library help manage complex work procedures, execute actions, . etc.</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.version>11</project.build.version>
+        <project.build.version>8</project.build.version>
     </properties>
 
     <licenses>
@@ -283,7 +283,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- 
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -309,10 +308,9 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <keyname>63A26BA2CD856B4F</keyname>
+                    <keyname>669fdd7d5a7a8a06</keyname>
                 </configuration>
             </plugin>
-             
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
@@ -340,10 +338,9 @@
                     </dependency>
                 </dependencies>
             </plugin>
-            -->
         </plugins>
     </build>
-  <version>1.0.1</version>
+  <version>1.0.3</version>
   <profiles>
         <profile>
             <id>sonatype-oss-release</id>
