@@ -56,7 +56,7 @@ public final class TaskAdministrator {
     /**
      * Re-run the failed task if possible.
      * @param taskId Target task's id
-     * @throws StreamException
+     * @throws StreamException Exception thrown when the task is not found or task's status is not CompletedWithFailure.
      * @return <code>true</code> if the task's status if failed and re-ran successfully, otherwise <code>false</code>
      */
     public boolean reRunTask(final String taskId) throws StreamException {

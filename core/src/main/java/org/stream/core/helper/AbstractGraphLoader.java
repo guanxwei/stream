@@ -45,7 +45,7 @@ import lombok.Data;
  *
  */
 @Data
-public abstract class AbstractGraphLoader {
+public abstract class AbstractGraphLoader implements GraphLoader {
 
     private static final Gson GSON = new Gson();
 
@@ -59,14 +59,9 @@ public abstract class AbstractGraphLoader {
     protected List<String> graphFilePaths;
 
     /**
-     * Load graph from the input source. A input source may be a local file or a remote http page or somewhere else.
-     * Graph loader implementations should implement their own @{@link #loadInputStream(String)} so that
-     * the graph can be loaded properly.
-     * @param sourcePath Source path of the graph definition file is located. It can be located at the local disk 
-     *      or even can be located on remote server retrieved by HTTP apis.
-     * @return A graph loaded from the source path.
-     * @throws GraphLoadException Exception thrown when loading the graph.
+     * {@inheritDoc}
      */
+    @Override
     public Graph loadGraphFromSource(final String sourcePath) throws GraphLoadException {
         InputStream inputStream = loadInputStream(sourcePath);
         Graph graph = loadGraph(inputStream);
