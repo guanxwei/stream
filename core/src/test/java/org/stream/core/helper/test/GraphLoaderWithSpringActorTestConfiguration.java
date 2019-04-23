@@ -17,7 +17,7 @@ import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.test.base.SpringActivity;
 import org.stream.core.test.base.SyncTaskExecutor;
-import org.stream.core.test.base.TestActor;
+import org.stream.core.test.base.TestTower;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.pattern.defaults.EqualTimeIntervalPattern;
 import org.stream.extension.persist.TaskPersister;
@@ -40,8 +40,8 @@ public class GraphLoaderWithSpringActorTestConfiguration {
     }
 
     @Bean
-    public TestActor testActor() {
-        return new TestActor();
+    public TestTower testTower() {
+        return new TestTower();
     }
 
     @Bean

@@ -15,7 +15,7 @@ import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.test.base.SpringActivity;
-import org.stream.core.test.base.TestActor;
+import org.stream.core.test.base.TestTower;
 
 @Configuration
 public class GraphLoaderWithSpringTestConfiguration {
@@ -34,8 +34,8 @@ public class GraphLoaderWithSpringTestConfiguration {
     }
 
     @Bean
-    public TestActor testActor() {
-        return new TestActor();
+    public TestTower testTower() {
+        return new TestTower();
     }
 
     @Bean

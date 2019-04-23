@@ -3,32 +3,32 @@ package org.stream.core.component;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Resource;
-import org.stream.extension.io.Actor;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.io.Tower;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Special activity containing a {@link actor} instance to do the real work.
+ * Special activity containing a {@link Tower} instance to do the real work.
  *
  * Users should not use this class themselves, the framework will help construct a instance of this
- * type when the activityClass is implementation of {@link Actor} in graph definition.
+ * type when the activityClass is implementation of {@link Tower} in graph definition.
  * @author hzweiguanxiong
  *
  */
 @Slf4j
-public class ActorActivity<T> extends Activity {
+public class TowerActivity<T> extends Activity {
 
     @Setter @Getter
-    private Actor<T> actor;
+    private Tower<T> tower;
 
-    public ActorActivity(final Actor<T> actor) {
-        this.actor = actor;
+    public TowerActivity(final Tower<T> tower) {
+        this.tower = tower;
     }
 
-    public ActorActivity() {
+    public TowerActivity() {
         this(null);
     }
 
@@ -36,7 +36,7 @@ public class ActorActivity<T> extends Activity {
      * {@inheritDoc}
      */
     public ActivityResult act() {
-        if (actor == null) {
+        if (tower == null) {
             throw new WorkFlowExecutionExeception("Actor must be specified");
         }
 
@@ -46,13 +46,13 @@ public class ActorActivity<T> extends Activity {
             String className = Node.CURRENT.get().getGraph().getPrimaryResourceType();
             @SuppressWarnings("unchecked")
             Class<T> clazz = (Class<T>) Class.forName(className);
-            streamTransferData = actor.call(primary.resolveValue(clazz));
+            streamTransferData = tower.call(primary.resolveValue(clazz));
             Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
             StreamTransferData.merge(contextData, streamTransferData);
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
-            log.error("Fail to call actor [{}]", actor.getClass().getName());
+            log.error("Fail to call actor [{}]", tower.getClass().getName());
             Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
             streamTransferData = StreamTransferData.failed();

@@ -12,7 +12,7 @@
     },
     {
       "nodeName":"node2",
-      "actorClass":"org.stream.core.test.base.TestActor"
+      "actorClass":"org.stream.core.test.base.TestTower"
     }
   ]
 }

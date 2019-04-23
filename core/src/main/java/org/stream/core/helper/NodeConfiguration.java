@@ -3,7 +3,7 @@ package org.stream.core.helper;
 import java.util.List;
 
 import org.stream.core.component.Activity;
-import org.stream.extension.io.Actor;
+import org.stream.extension.io.Tower;
 
 import lombok.Data;
 import lombok.Getter;
@@ -36,7 +36,7 @@ public class NodeConfiguration {
     private List<Integer> intervals;
 
     /**
-     * Actor provider, basically should be a sub-class of {@link Actor}.
+     * Actor provider, basically should be a sub-class of {@link Tower}.
      */
     private String actorClass;
 

@@ -1,13 +1,13 @@
 package org.stream.extension.io;
 
-import org.stream.core.component.ActorActivity;
+import org.stream.core.component.TowerActivity;
 import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.extension.persist.TaskStepStorage;
 import org.stream.extension.persist.TaskStorage;
 
 /**
- * Abstract of "actors" which is used to communicate with the remote services by {@link AutoScheduledEngine}.
- * Every actor will be wrapped in a {@link ActorActivity} instance by the work-flow engine when loading the graph.
+ * Abstract of "towers" which are used to communicate with the remote services by {@link AutoScheduledEngine}.
+ * Every actor will be wrapped in a {@link TowerActivity} instance by the work-flow engine when loading the graph.
  *
  * Users should only use actor when below scenarios fulfill:
  * (1) Plenty of distributed services will be arranged cooperating doing one thing in the single procedure
@@ -21,7 +21,7 @@ import org.stream.extension.persist.TaskStorage;
  * @author hzweiguanxiong
  *
  */
-public interface Actor<T> {
+public interface Tower<T> {
 
     /**
      * Call the remote service to complete the sub-task. The Stream framework will use the response to decide what to do in the next step, and help

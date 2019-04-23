@@ -1,9 +1,9 @@
 package org.stream.core.test.base;
 
-import org.stream.extension.io.Actor;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.io.Tower;
 
-public class TestActor implements Actor<String> {
+public class TestTower implements Tower<String> {
 
     /**
      * {@inheritDoc}

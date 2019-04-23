@@ -19,9 +19,9 @@ import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.ActivityResult.Visitor;
-import org.stream.core.component.ActorActivity;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
+import org.stream.core.component.TowerActivity;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.AsyncPair;
 import org.stream.core.execution.GraphContext;
@@ -29,7 +29,7 @@ import org.stream.core.execution.NextSteps;
 import org.stream.core.execution.NextSteps.NextStepType;
 import org.stream.core.execution.StepPair;
 import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
-import org.stream.extension.io.Actor;
+import org.stream.extension.io.Tower;
 
 import com.google.gson.Gson;
 
@@ -157,7 +157,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         if (!graphContext.isActivityRegistered(providerClass)) {
             cause.append(providerClass);
             Class<?> clazz = Class.forName(providerClass);
-            if (Actor.class.isAssignableFrom(clazz)) {
+            if (Tower.class.isAssignableFrom(clazz)) {
                 // Actor case works in spring context only.
                 activity = processActorCase(clazz);
             } else {
@@ -203,14 +203,14 @@ public abstract class AbstractGraphLoader implements GraphLoader {
                 clazz.getName()));
     }
 
-    private <T> ActorActivity<T> processActorCase(final Class<?> clazz) {
+    private <T> TowerActivity<T> processActorCase(final Class<?> clazz) {
         /**
          * Load the actor from the spring context, typically the actor is a proxy object that can be used
          * to communicate with a remote server, for example a RPC client.
          */
         @SuppressWarnings("unchecked")
-        Actor<T> actor = (Actor<T>) applicationContext.getBean(clazz);
-        ActorActivity<T> activity = new ActorActivity<T>(actor);
+        Tower<T> actor = (Tower<T>) applicationContext.getBean(clazz);
+        TowerActivity<T> activity = new TowerActivity<T>(actor);
         return activity;
     }
 
