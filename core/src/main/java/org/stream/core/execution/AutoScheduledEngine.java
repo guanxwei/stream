@@ -166,6 +166,7 @@ public class AutoScheduledEngine implements Engine {
         Task task = Task.builder()
                 .application(application)
                 .graphName(graphName)
+                .initiatedTime(System.currentTimeMillis())
                 .jsonfiedPrimaryResource(primaryResource.toString())
                 .lastExcutionTime(System.currentTimeMillis())
                 .nextExecutionTime(System.currentTimeMillis())

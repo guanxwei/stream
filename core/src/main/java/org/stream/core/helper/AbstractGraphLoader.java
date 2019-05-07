@@ -39,7 +39,7 @@ import lombok.Data;
  * Abstract of stream graph loader. Define the basic procedure to load a graph the input resource,
  * a resource may refer to a local file or even a remote HTTP page. Implementations only have to implement
  * the method {@link #loadInputStream(String)}, which load the graph as input stream from the input resource.
- * Other standard work will all be done by the pre-defined methods.
+ * Other standard work will all be done by the pre-defined methods in this class.
  *
  * @author weiguanxiong
  *
@@ -134,9 +134,6 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         GraphConfiguration graphConfiguration = GSON.fromJson(compressedInputString, GraphConfiguration.class);
         checkGraphConfiguration(graphConfiguration);
         graph.setGraphName(graphConfiguration.getGraphName());
-        if (graphConfiguration.getResourceType() == null) {
-            throw new GraphLoadException("ResourceType is not specified!");
-        }
         return graphConfiguration;
     }
 

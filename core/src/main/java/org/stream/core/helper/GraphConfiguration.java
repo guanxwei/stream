@@ -1,5 +1,6 @@
 package org.stream.core.helper;
 
+import org.stream.core.component.ActivityResult;
 import org.stream.core.execution.AutoScheduledEngine;
 
 import lombok.Data;
@@ -12,14 +13,27 @@ import lombok.Data;
 @Data
 public class GraphConfiguration {
 
+    /**
+     * Graph name, after the graph is loaded, the application can use the graph by getting from the graph context using
+     * the graph name specified here.
+     */
     private String graphName;
 
-    private String resourceType;
-
+    /**
+     * The first node to be executed.
+     */
     private String startNode;
 
+    /**
+     * The nodes defined in the graph file.
+     */
     private NodeConfiguration[] nodes;
 
+    /**
+     * Default error handler node. If error node of the target node is not specified the workflow engine will
+     * try to execute this node(if specified) when the target node returns {@link ActivityResult#FAIL} or throws
+     * an exception.
+     */
     private String defaultErrorNode;
 
     /**

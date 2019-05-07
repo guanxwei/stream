@@ -58,6 +58,9 @@ public class Task implements Serializable {
     // In case underlying DAO framework needs.
     private long id;
 
+    // Time the task is initiated.
+    private long initiatedTime;
+
     /**
      * Parse {@linkplain Task} entity from Jsonfied string.
      * @param content Jsonfied string.
