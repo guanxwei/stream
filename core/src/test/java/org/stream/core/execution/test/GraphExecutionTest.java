@@ -70,8 +70,8 @@ public class GraphExecutionTest {
         Assert.assertEquals(primary.getResourceReference(), "testprimary");
         ExecutionRecord record1 = records.get(0);
         ExecutionRecord record2 = records.get(1);
-        Assert.assertEquals(record1.getDescription(), "keep a record");
-        Assert.assertEquals(record2.getDescription(), "keep a success record");
+        Assert.assertEquals(record1.getDescription(), "keep a record for TestActivity");
+        Assert.assertEquals(record2.getDescription(), "keep a success record for SuccessTestActivity");
     }
 
     @Test
@@ -105,7 +105,7 @@ public class GraphExecutionTest {
         List<ExecutionRecord> records = WorkFlowContext.getRecords();
         Assert.assertEquals(records.size(), 2);
         Assert.assertEquals(records.get(0).getDescription(), "keep a cascade record");
-        Assert.assertEquals(records.get(1).getDescription(), "keep a success record");
+        Assert.assertEquals(records.get(1).getDescription(), "keep a success record for SuccessTestActivity");
         primaryResource = WorkFlowContext.getPrimary();
         Assert.assertEquals(((Long)primaryResource.getValue()).longValue(), 100000);
     }

@@ -78,7 +78,7 @@ public class DefaultEngineTest {
         Assert.assertNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
         // 创建workflow + 每次执行节点前（三个，默认error handle 也会被执行） + success test activity + TestActivity.
-        assertEquals(WorkFlowContext.getRecords().size(), 6);
+        assertEquals(WorkFlowContext.getRecords().size(), 7);
     }
 
     @Test(dependsOnMethods = "testExecute")
@@ -147,7 +147,7 @@ public class DefaultEngineTest {
         Resource resource = WorkFlowContext.resolveResource("PrintRecordActivity");
         @SuppressWarnings("unchecked")
         List<ExecutionRecord> executionRecords = (List<ExecutionRecord>) resource.getValue();
-        Assert.assertEquals(executionRecords.size(), 7);
+        Assert.assertEquals(executionRecords.size(), 8);
     }
 
     @Test(dependsOnMethods = "testSuspend")

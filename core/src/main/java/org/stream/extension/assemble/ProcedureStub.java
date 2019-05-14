@@ -3,7 +3,6 @@ package org.stream.extension.assemble;
 import java.util.List;
 
 import org.stream.core.component.Activity;
-import org.stream.core.component.AsyncActivity;
 import org.stream.core.exception.StreamException;
 import org.stream.core.helper.NodeConfiguration;
 
@@ -20,6 +19,11 @@ import lombok.Getter;
  */
 public class ProcedureStub {
 
+    public static final int SUCCEED = 0;
+    public static final int FAILED = 1;
+    public static final int SUSPENED = 2;
+    public static final int CHECKED = 3;
+
     private Procedure procedure;
     private int index = -100;
     @Getter
@@ -28,7 +32,7 @@ public class ProcedureStub {
     @Getter
     private Activity action;
     @Getter
-    private List<Activity> dependencies;
+    private List<String> dependencies;
 
     public ProcedureStub(final Procedure procedure) {
         this.procedure = procedure;
@@ -46,25 +50,25 @@ public class ProcedureStub {
 
     protected ProcedureStub whenSucceeded() throws StreamException {
         check();
-        index = 0;
+        index = SUCCEED;
         return this;
     }
 
     protected ProcedureStub whenFailed() throws StreamException {
         check();
-        index = 1;
+        index = FAILED;
         return this;
     }
 
     protected ProcedureStub whenSuspended() throws StreamException {
         check();
-        index = 2;
+        index = SUSPENED;
         return this;
     }
 
     protected ProcedureStub whenChecked() throws StreamException {
         check();
-        index = 3;
+        index = CHECKED;
         return this;
     }
 
@@ -80,12 +84,7 @@ public class ProcedureStub {
         return this;
     }
 
-    public ProcedureStub dependsOn(final List<Activity> activities) throws StreamException {
-        for (Activity activity : activities) {
-            if (!(activity instanceof AsyncActivity)) {
-                throw new StreamException(String.format("Activity should be instance of [%s]", AsyncActivity.class.getSimpleName()));
-            }
-        }
+    public ProcedureStub dependsOn(final List<String> activities) throws StreamException {
         this.dependencies = activities;
         return this;
     }

@@ -48,6 +48,7 @@ public class Procedure {
     private Map<String, Activity> activities = new HashMap<String, Activity>();
     private Map<Activity, String> mapping = new HashMap<Activity, String>();
     private ApplicationContext applicationContext;
+    private String startNode;
 
     public static Procedure builder() {
         return new Procedure();
@@ -75,6 +76,7 @@ public class Procedure {
 
     public ProcedureStub startFrom(final String action) {
         this.startNodeSpecified = true;
+        this.startNode = action;
         return addAction(action);
     }
 
@@ -99,10 +101,15 @@ public class Procedure {
         graphLoader.setApplicationContext(applicationContext);
         graphLoader.setCircuitChecking(true);
         graphLoader.setGraphContext(graphContext);
-        return graphLoader.loadGraphFromSource(Jackson.json(graphConfiguration));
+        Graph graph = graphLoader.loadGraphFromSource(Jackson.json(graphConfiguration));
+        return graph;
     }
 
     protected void addStub(final ProcedureStub procedureStub) {
+        if (procedureStub.getAction() == null) {
+            // If the activity is specified, do nothing.
+            return;
+        }
         this.activities.put(currentAction, procedureStub.getAction());
         this.mapping.put(procedureStub.getAction(), currentAction);
         graphContext.registerActivity(procedureStub.getAction());
@@ -113,7 +120,7 @@ public class Procedure {
         GraphConfiguration graphConfiguration = new GraphConfiguration();
         graphConfiguration.setDefaultErrorNode(defaultErrorActivity.getActivityName());
         graphConfiguration.setGraphName(graphName);
-        graphConfiguration.setStartNode(retrieveNodeName(stubs.get(0)));
+        graphConfiguration.setStartNode(startNode);
         addNodes(graphConfiguration);
         return graphConfiguration;
     }
@@ -124,10 +131,10 @@ public class Procedure {
             NodeConfiguration nodeConfiguration = new NodeConfiguration();
             nodeConfiguration.setActivityClass(stub.getAction().getClass().getName());
             nodeConfiguration.setNodeName(retrieveNodeName(stub));
-            nodeConfiguration.setCheckNode(stub.getNextSteps()[3]);
-            nodeConfiguration.setFailNode(stub.getNextSteps()[1]);
-            nodeConfiguration.setSuccessNode(stub.getNextSteps()[0]);
-            nodeConfiguration.setSuspendNode(stub.getNextSteps()[2]);
+            nodeConfiguration.setSuccessNode(stub.getNextSteps()[ProcedureStub.SUCCEED]);
+            nodeConfiguration.setFailNode(stub.getNextSteps()[ProcedureStub.FAILED]);
+            nodeConfiguration.setSuspendNode(stub.getNextSteps()[ProcedureStub.SUSPENED]);
+            nodeConfiguration.setCheckNode(stub.getNextSteps()[ProcedureStub.CHECKED]);
             addAsyncDependency(nodeConfiguration, stub);
             nodeConfigurations.add(nodeConfiguration);
         });
@@ -144,7 +151,7 @@ public class Procedure {
         AtomicInteger counter = new AtomicInteger(0);
         stub.getDependencies().forEach(dependency -> {
             AsyncNodeConfiguration asyncNodeConfiguration = new AsyncNodeConfiguration();
-            asyncNodeConfiguration.setAsyncNode(retrieveNodeName(dependency));
+            asyncNodeConfiguration.setAsyncNode(dependency);
             asyncDependencies[counter.getAndIncrement()] = asyncNodeConfiguration;
         });
         nodeConfiguration.setAsyncDependencies(asyncDependencies);
