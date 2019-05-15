@@ -21,7 +21,7 @@ import org.stream.core.test.base.FailTestActivity;
 import org.stream.core.test.base.SuccessTestActivity;
 import org.stream.core.test.base.SuspendActivity;
 import org.stream.core.test.base.TestActivity;
-import org.stream.extension.assemble.Procedure;
+import org.stream.extension.assemble.ProcedureCompiler;
 import org.stream.extension.assemble.ProcedureCondition;
 
 @Configuration
@@ -71,7 +71,7 @@ public class SpringConfiguration {
     public Graph graph() throws GraphLoadException, StreamException {
         List<String> dependencies = new LinkedList<String>();
         dependencies.add("aysnc");
-        Graph graph = Procedure.builder()
+        Graph graph = ProcedureCompiler.builder()
             .withName("ProcedureSpringTest")
             .withContext(graphContext())
             .withSpringContext(applicationContext)
@@ -96,7 +96,7 @@ public class SpringConfiguration {
                     .when(ProcedureCondition.SUCCEED).then("successAction")
                     .when(ProcedureCondition.FAILED).then("errorProcess")
                 .done()
-            .build();
+            .compile();
         return graph;
     }
 

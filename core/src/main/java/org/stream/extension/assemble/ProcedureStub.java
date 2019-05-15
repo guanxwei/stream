@@ -9,7 +9,7 @@ import org.stream.core.helper.NodeConfiguration;
 import lombok.Getter;
 
 /**
- * A procedure stub that is used to temporally store the step configuration for a {@link Procedure}, each step in
+ * A procedure stub that is used to temporally store the step configuration for a {@link ProcedureCompiler}, each step in
  * a procedure contains the instruction that the engine should do when the step is reached.
  *
  * Technically, each stub will be eventually translated into the {@link NodeConfiguration} so that this information can be
@@ -24,7 +24,7 @@ public class ProcedureStub {
     public static final int SUSPENED = 2;
     public static final int CHECKED = 3;
 
-    private Procedure procedure;
+    private ProcedureCompiler procedureCompiler;
     private int index = -100;
     @Getter
     private String[] nextSteps = new String[16];
@@ -34,13 +34,13 @@ public class ProcedureStub {
     @Getter
     private List<String> dependencies;
 
-    public ProcedureStub(final Procedure procedure) {
-        this.procedure = procedure;
+    public ProcedureStub(final ProcedureCompiler procedureCompiler) {
+        this.procedureCompiler = procedureCompiler;
     }
 
-    public Procedure done() {
-        this.procedure.addStub(this);
-        return this.procedure;
+    public ProcedureCompiler done() {
+        this.procedureCompiler.addStub(this);
+        return this.procedureCompiler;
     }
 
     public ProcedureStub when(final ProcedureCondition procedureCondition) throws StreamException {

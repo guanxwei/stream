@@ -14,7 +14,7 @@ import org.stream.core.execution.GraphContext;
 import org.stream.core.test.base.PrintRecordActivity;
 import org.stream.core.test.base.SuspendActivity;
 import org.stream.core.test.base.TestActivity;
-import org.stream.extension.assemble.Procedure;
+import org.stream.extension.assemble.ProcedureCompiler;
 import org.stream.extension.assemble.ProcedureCondition;
 import org.testng.annotations.Test;
 
@@ -28,7 +28,7 @@ public class ProcedureTest {
         Activity activity1 = new TestActivity();
         Activity activity2 = new SuspendActivity();
         Activity activity3 = new PrintRecordActivity();
-        Graph graph = Procedure.builder()
+        Graph graph = ProcedureCompiler.builder()
                 .withName("ProcedureTest")
                 .withContext(graphContext)
                 .startFrom("startNode")
@@ -45,7 +45,7 @@ public class ProcedureTest {
                     .act(activity3)
                     .done()
                 .defaultErrorNode(activity3)
-                .build();
+                .compile();
         assertNotNull(graph);
         assertEquals(activityRepository.isActivityRegistered(activity3), true);
         assertEquals(activityRepository.isActivityRegistered(activity2), true);

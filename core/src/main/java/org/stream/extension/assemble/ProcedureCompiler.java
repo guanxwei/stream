@@ -24,12 +24,12 @@ import org.stream.core.helper.PlainTextGraphLoader;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Encapsulation of a procedure.
+ * Encapsulation of a procedure compiler.
  * A procedure is defined as a series of work to be done in one turn around. Stream work-flow framework
  * was initiated to define a procedure in graph definition file which is constructed of json string.
  * To make it more convenient for developers to cooperate with the stream framework using the
  * Java program language, stream provides the abstract of the way defining the work in Java object as
- * a procedure, developers can construct an instance of {@link Procedure} instead of writing a graph file
+ * a procedure, developers can construct an instance of {@link ProcedureCompiler} instead of writing a graph file
  * in the local file system. Eventually the procedure will be re-compiled into a {@link Graph}, users can use the
  * graph like the way they used to with a graph file.
  * 
@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class Procedure {
+public class ProcedureCompiler {
 
     private Activity defaultErrorActivity = new DefaultErrorHanlder();
     private GraphContext graphContext;
@@ -50,26 +50,26 @@ public class Procedure {
     private ApplicationContext applicationContext;
     private String startNode;
 
-    public static Procedure builder() {
-        return new Procedure();
+    public static ProcedureCompiler builder() {
+        return new ProcedureCompiler();
     }
 
-    public Procedure withSpringContext(final ApplicationContext applicationContext) {
+    public ProcedureCompiler withSpringContext(final ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         return this;
     }
 
-    public Procedure withContext(final GraphContext graphContext) {
+    public ProcedureCompiler withContext(final GraphContext graphContext) {
         this.graphContext = graphContext;
         return this;
     }
 
-    public Procedure withName(final String name) {
+    public ProcedureCompiler withName(final String name) {
         this.graphName = name;
         return this;
     }
 
-    public Procedure defaultErrorNode(final Activity activity) {
+    public ProcedureCompiler defaultErrorNode(final Activity activity) {
         this.defaultErrorActivity = activity;
         return this;
     }
@@ -91,7 +91,7 @@ public class Procedure {
      * @return
      * @throws GraphLoadException Graph load exception.
      */
-    public Graph build() throws GraphLoadException {
+    public Graph compile() throws GraphLoadException {
         if (!startNodeSpecified) {
             throw new GraphLoadException("Start action must be specified");
         }
