@@ -119,6 +119,9 @@ public class ProcedureCompiler {
     private GraphConfiguration translate() {
         GraphConfiguration graphConfiguration = new GraphConfiguration();
         graphConfiguration.setDefaultErrorNode(defaultErrorActivity.getActivityName());
+        if (mapping.containsKey(defaultErrorActivity)) {
+            graphConfiguration.setDefaultErrorNode(mapping.get(defaultErrorActivity));
+        }
         graphConfiguration.setGraphName(graphName);
         graphConfiguration.setStartNode(startNode);
         addNodes(graphConfiguration);
