@@ -34,6 +34,7 @@ import org.stream.extension.io.Tower;
 import com.google.gson.Gson;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract of stream graph loader. Define the basic procedure to load a graph the input resource,
@@ -45,6 +46,7 @@ import lombok.Data;
  *
  */
 @Data
+@Slf4j
 public abstract class AbstractGraphLoader implements GraphLoader {
 
     private static final Gson GSON = new Gson();
@@ -110,7 +112,9 @@ public abstract class AbstractGraphLoader implements GraphLoader {
     private void parse(final Graph graph, final InputStream input, final List<StepPair> stepPairs, final List<AsyncPair> asyncPairs,
             final Map<String, Node> knowNodes, final StringBuilder cause) throws GraphLoadException, ClassNotFoundException,
                     InstantiationException, IllegalAccessException, IOException {
-        GraphConfiguration graphConfiguration = parseGraphConfiguration(buildStringfyInput(input), graph);
+        String json = buildStringfyInput(input);
+        log.info("Graph definition [{}] parsed from the input source", json);
+        GraphConfiguration graphConfiguration = parseGraphConfiguration(json, graph);
         graph.setPrimaryResourceType(graphConfiguration.getPrimaryResourceType());
         NodeConfiguration[] nodes = graphConfiguration.getNodes();
         List<Node> staticNodes = new ArrayList<Node>();

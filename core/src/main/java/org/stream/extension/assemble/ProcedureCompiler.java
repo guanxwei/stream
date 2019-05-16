@@ -74,6 +74,10 @@ public class ProcedureCompiler {
         return this;
     }
 
+    public ProcedureCompiler defaultErrorNode(final String action) {
+        return defaultErrorNode(activities.get(action));
+    }
+
     public ProcedureStub startFrom(final String action) {
         this.startNodeSpecified = true;
         this.startNode = action;
@@ -107,7 +111,7 @@ public class ProcedureCompiler {
 
     protected void addStub(final ProcedureStub procedureStub) {
         if (procedureStub.getAction() == null) {
-            // If the activity is specified, do nothing.
+            // If the activity is not specified, do nothing.
             return;
         }
         this.activities.put(currentAction, procedureStub.getAction());
