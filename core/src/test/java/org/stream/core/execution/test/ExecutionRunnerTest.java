@@ -19,6 +19,7 @@ import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
@@ -84,7 +85,7 @@ public class ExecutionRunnerTest {
                 .jsonfiedPrimaryResource(primaryResource.toString())
                 .lastExcutionTime(System.currentTimeMillis())
                 .retryTimes(0)
-                .status("Initiated")
+                .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
         executionRunner = new ExecutionRunner(graph, pattern, graphContext, primaryResource, task, taskPersister, dataResource);
@@ -105,12 +106,12 @@ public class ExecutionRunnerTest {
 
         Task content = captor2.getValue();
         Assert.assertEquals(content.getNodeName(), "node4");
-        Assert.assertEquals(content.getStatus(), "Completed");
+        Assert.assertEquals(content.getStatus(), TaskStatus.COMPLETED.code());
 
         Mockito.verify(taskPersister).complete(task);
         Mockito.verify(taskPersister).persist(task);
 
-        Assert.assertEquals(task.getStatus(), "Completed");
+        Assert.assertEquals(task.getStatus(), TaskStatus.COMPLETED.code());
         WorkFlowContext.reboot();
     }
 
@@ -135,7 +136,7 @@ public class ExecutionRunnerTest {
                 .jsonfiedPrimaryResource(primaryResource.toString())
                 .lastExcutionTime(System.currentTimeMillis())
                 .retryTimes(0)
-                .status("Initiated")
+                .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
         executionRunner = new ExecutionRunner(graph, pattern, graphContext, primaryResource, task, taskPersister, dataResource);
@@ -155,7 +156,7 @@ public class ExecutionRunnerTest {
 
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
-        Assert.assertEquals(captured.getStatus(), "PendingOnRetry");
+        Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
         WorkFlowContext.reboot();
     }
 
@@ -180,7 +181,7 @@ public class ExecutionRunnerTest {
                 .jsonfiedPrimaryResource(primaryResource.toString())
                 .lastExcutionTime(System.currentTimeMillis())
                 .retryTimes(0)
-                .status("Initiated")
+                .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
         executionRunner = new ExecutionRunner(graph, pattern, graphContext, primaryResource, task, taskPersister, dataResource);
@@ -201,7 +202,7 @@ public class ExecutionRunnerTest {
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
         Assert.assertEquals(captor4.getValue().getJsonfiedTransferData(), streamTransferData.toString());
-        Assert.assertEquals(captured.getStatus(), "PendingOnRetry");
+        Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
         WorkFlowContext.reboot();
     }
 }

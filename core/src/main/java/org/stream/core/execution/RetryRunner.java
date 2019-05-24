@@ -8,6 +8,7 @@ import org.stream.extension.executors.ThreadPoolTaskExecutor;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.pattern.defaults.EqualTimeIntervalPattern;
@@ -67,15 +68,8 @@ public class RetryRunner implements Runnable {
 
         log.info("Begin to process stuck task [{}]", content);
         Task task = Task.parse(content);
-        if (task.getStatus().equals("Completed")) {
+        if (task.getStatus() == TaskStatus.COMPLETED.code()) {
             taskPersister.complete(task);
-            return;
-        }
-
-        if (!taskPersister.tryLock(task.getTaskId())) {
-            //Some one else is being processing the task, quit.
-            log.info("Fail to grab lock for task [{}]", content);
-
             return;
         }
 
@@ -99,7 +93,7 @@ public class RetryRunner implements Runnable {
 
         log.info("Retry workflow at node [{}]", node.getNodeName());
         ActivityResult activityResult = null;
-        while (node != null && !WorkFlowContext.provide().isRebooting()) {
+        while (node != null && taskPersister.tryLock(task.getTaskId())) {
             log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());
             activityResult = doRetry(node, task, data);
             if (ActivityResult.SUSPEND.equals(activityResult)) {
@@ -143,7 +137,7 @@ public class RetryRunner implements Runnable {
                 .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
                 .taskId(task.getTaskId())
                 .build();
-        TaskHelper.updateTask(task, node, "Executing");
+        TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
         taskPersister.setHub(task.getTaskId(), task, false, taskStep);
 
         return activityResult;
@@ -191,7 +185,7 @@ public class RetryRunner implements Runnable {
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
         task.setNodeName(node.getNodeName());
         task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
-        task.setStatus("PendingOnRetry");
+        task.setStatus(TaskStatus.PENDING.code());
         taskPersister.suspend(task, interval, taskStep);
         TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
         log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] seconds",

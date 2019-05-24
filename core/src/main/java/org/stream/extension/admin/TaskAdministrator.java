@@ -7,6 +7,7 @@ import javax.annotation.Resource;
 import org.apache.commons.collections.CollectionUtils;
 import org.stream.core.exception.StreamException;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.persist.TaskPersister;
 import org.stream.extension.persist.TaskStepStorage;
@@ -66,12 +67,12 @@ public final class TaskAdministrator {
             throw new StreamException("Task not existed");
         }
 
-        if (!task.getStatus().contentEquals("CompletedWithFailure")) {
+        if (task.getStatus() != TaskStatus.FAILED.code()) {
             log.info("Trying to re run uncompleted task [{}]", taskId);
             throw new StreamException("Task is not completed, it will be automatically re-run in the near future");
         }
 
-        task.setStatus("Executing");
+        task.setStatus(TaskStatus.PENDING.code());
         task.setRetryTimes(0);
         task.setLastExcutionTime(System.currentTimeMillis());
         task.setNextExecutionTime(System.currentTimeMillis() + 100);

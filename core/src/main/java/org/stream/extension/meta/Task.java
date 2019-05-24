@@ -32,7 +32,7 @@ public class Task implements Serializable {
     private String taskId;
 
     // Task status
-    private String status;
+    private int status;
 
     // Graph name.
     private String graphName;

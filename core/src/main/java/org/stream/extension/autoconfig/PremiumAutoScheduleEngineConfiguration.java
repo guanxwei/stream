@@ -160,7 +160,7 @@ public class PremiumAutoScheduleEngineConfiguration {
         MemoryEventCenter eventCenter = new MemoryEventCenter();
         eventCenter.setKafkaClient(kafkaClient());
         eventCenter.setTopic(environment.getProperty("fast.stream.kafka.topic"));
-        eventCenter.registerListener(TaskCompleteEvent.class, mongodbBasedEventCompleteListener());
+        //eventCenter.registerListener(TaskCompleteEvent.class, mongodbBasedEventCompleteListener());
 
         eventCenter.init();
         return eventCenter;
@@ -174,7 +174,7 @@ public class PremiumAutoScheduleEngineConfiguration {
         return mangoDBBasedTaskCompleteListener;
     }
 
-    @Bean
+    //@Bean
     public MongoClient mongoClient() throws Exception {
         MongoClientImpl mongoClientImpl = new MongoClientImpl();
         String servers = environment.getProperty("fast.stream.mongo.servers");

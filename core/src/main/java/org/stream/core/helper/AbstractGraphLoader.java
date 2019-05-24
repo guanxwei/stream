@@ -15,6 +15,7 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
@@ -37,10 +38,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Abstract of stream graph loader. Define the basic procedure to load a graph the input resource,
- * a resource may refer to a local file or even a remote HTTP page. Implementations only have to implement
- * the method {@link #loadInputStream(String)}, which load the graph as input stream from the input resource.
- * Other standard work will all be done by the pre-defined methods in this class.
+ * Abstract of stream graph loader. Define the basic procedure to load a graph from the input resource.
+ * Implementations only have to implement the method {@link #loadInputStream(String)},
+ * which load the graph as input stream from the input resource.
  *
  * @author weiguanxiong
  *
@@ -329,7 +329,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
          * Extract the asynchronous dependency nodes of the current node.
          */
         AsyncNodeConfiguration[] asyncDependencies = nodeConfiguration.getAsyncDependencies();
-        if (asyncDependencies ==  null || asyncDependencies.length == 0) {
+        if (ArrayUtils.isEmpty(asyncDependencies)) {
             return list;
         }
 

@@ -9,6 +9,7 @@ import org.stream.core.resource.ResourceTank;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.persist.TaskPersister;
 import org.stream.extension.utils.TaskIDGenerator;
@@ -172,7 +173,7 @@ public class AutoScheduledEngine implements Engine {
                 .nextExecutionTime(System.currentTimeMillis())
                 .nodeName(graph.getStartNode().getNodeName())
                 .retryTimes(0)
-                .status("Initiated")
+                .status(TaskStatus.INITIATED.code())
                 .taskId(taskId)
                 .build();
         TaskStep taskStep = TaskStep.builder()
@@ -180,7 +181,7 @@ public class AutoScheduledEngine implements Engine {
                 .graphName(graphName)
                 .nodeName(graph.getStartNode().getNodeName())
                 .jsonfiedTransferData(data.toString())
-                .status("Initiated")
+                .status(TaskStatus.INITIATED.type())
                 .taskId(taskId)
                 .build();
         taskPersister.setHub(taskId, task, true, taskStep);

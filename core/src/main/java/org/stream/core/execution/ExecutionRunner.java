@@ -7,6 +7,7 @@ import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
@@ -86,7 +87,7 @@ public class ExecutionRunner implements Runnable {
             }
 
             StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
-            TaskHelper.updateTask(task, node, "Executing");
+            TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
             TaskStep taskStep = TaskStep.builder()
                     .createTime(System.currentTimeMillis())
                     .graphName(graph.getGraphName())

@@ -19,6 +19,7 @@ import org.stream.core.resource.ResourceTank;
 import org.stream.extension.executors.MockExecutorService;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.pattern.defaults.EqualTimeIntervalPattern;
@@ -83,7 +84,7 @@ public class AutoScheduledEngineTest {
 
         Mockito.verify(taskPersister).complete(captor.capture());
 
-        Assert.assertEquals(captor.getValue().getStatus(), "Completed");
+        Assert.assertEquals(captor.getValue().getStatus(), TaskStatus.COMPLETED.code());
         Assert.assertEquals(captor.getValue().getNodeName(), "node4");
         Assert.assertEquals(captor.getValue().getGraphName(), "autoSchedule1");
 
@@ -107,7 +108,7 @@ public class AutoScheduledEngineTest {
         ArgumentCaptor<TaskStep> captor3 = ArgumentCaptor.forClass(TaskStep.class);
         Mockito.verify(taskPersister).suspend(captor.capture(), captor2.capture(), captor3.capture());
 
-        Assert.assertEquals(captor.getValue().getStatus(), "PendingOnRetry");
+        Assert.assertEquals(captor.getValue().getStatus(), TaskStatus.PENDING.code());
         Assert.assertEquals(captor.getValue().getNodeName(), "node5");
         Assert.assertEquals(captor.getValue().getGraphName(), "autoSchedule2");
 

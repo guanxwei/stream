@@ -17,6 +17,7 @@ import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
@@ -74,7 +75,7 @@ public class RetryRunnerTest {
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
-                .status("Completed")
+                .status(TaskStatus.COMPLETED.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
@@ -95,7 +96,7 @@ public class RetryRunnerTest {
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
-                .status("PendingOnRetry")
+                .status(TaskStatus.PENDING.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
@@ -117,7 +118,7 @@ public class RetryRunnerTest {
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node100")
                 .retryTimes(3)
-                .status("PendingOnRetry")
+                .status(TaskStatus.PENDING.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
@@ -140,7 +141,7 @@ public class RetryRunnerTest {
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
-                .status("PendingOnRetry")
+                .status(TaskStatus.PENDING.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
@@ -164,13 +165,13 @@ public class RetryRunnerTest {
 
         Task content = captor2.getValue();
         Assert.assertEquals(content.getNodeName(), "node4");
-        Assert.assertEquals(content.getStatus(), "Completed");
+        Assert.assertEquals(content.getStatus(), TaskStatus.COMPLETED.code());
 
         Mockito.verify(taskPersister).complete(captor4.capture());
         Mockito.verify(taskPersister).persist(captor5.capture());
 
         Assert.assertEquals(captor4.getValue(), captor5.getValue());
-        Assert.assertEquals(captor4.getValue().getStatus(), "Completed");
+        Assert.assertEquals(captor4.getValue().getStatus(), TaskStatus.COMPLETED.code());
         WorkFlowContext.reboot();
     }
 
@@ -182,7 +183,7 @@ public class RetryRunnerTest {
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
-                .status("PendingOnRetry")
+                .status(TaskStatus.PENDING.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
@@ -204,7 +205,7 @@ public class RetryRunnerTest {
 
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
-        Assert.assertEquals(captured.getStatus(), "PendingOnRetry");
+        Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
         WorkFlowContext.reboot();
     }
 
@@ -217,7 +218,7 @@ public class RetryRunnerTest {
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(24)
-                .status("PendingOnRetry")
+                .status(TaskStatus.PENDING.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
@@ -243,7 +244,7 @@ public class RetryRunnerTest {
         Mockito.verify(taskPersister).persist(captor4.capture());
 
         Assert.assertEquals(captor3.getValue(), captor4.getValue());
-        Assert.assertEquals(captor3.getValue().getStatus(), "CompletedWithFailure");
+        Assert.assertEquals(captor3.getValue().getStatus(), TaskStatus.FAILED.code());
         WorkFlowContext.reboot();
     }
 
@@ -256,7 +257,7 @@ public class RetryRunnerTest {
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(5)
-                .status("PendingOnRetry")
+                .status(TaskStatus.PENDING.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
@@ -280,7 +281,7 @@ public class RetryRunnerTest {
 
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
-        Assert.assertEquals(captured.getStatus(), "PendingOnRetry");
+        Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
         WorkFlowContext.reboot();
     }
 }

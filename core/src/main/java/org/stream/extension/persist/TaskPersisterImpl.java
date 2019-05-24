@@ -3,7 +3,6 @@ package org.stream.extension.persist;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -42,6 +41,9 @@ public class TaskPersisterImpl implements TaskPersister {
 
     @Setter
     private RedisService redisService;
+
+    @Setter
+    private DelayQueue delayQueue;
 
     private String application;
 
@@ -93,7 +95,7 @@ public class TaskPersisterImpl implements TaskPersister {
         try {
             switch (type) {
             case 1:
-                result = redisService.zrange(getQueueName(RETRY_KEY, application, queue), Double.valueOf("0"),
+                result = delayQueue.getItems(getQueueName(RETRY_KEY, application, queue), Double.valueOf("0"),
                         System.currentTimeMillis());
                 break;
             case 2:
@@ -124,7 +126,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean tryLock(final String taskId) {
-        boolean result = redisService.setnx(taskId + "_lock", HOST_NAME) == 1L;
+        boolean result = redisService.setnx(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis()) == 1L;
         if (result) {
             // No body else grabs the lock, we are the winner of contest;
             // Mark as locked.
@@ -132,32 +134,22 @@ public class TaskPersisterImpl implements TaskPersister {
             return true;
         } else if (isLegibleOwner(taskId)) {
             // Retry within the legible time window, return true directly and refresh the lock time.
-            markAsLocked(taskId);
+            redisService.set(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis());
             return true;
         } else {
             // Someone else owns the lock, we should check if it has expired.
-            String time = redisService.get(taskId + "_locktime");
-            long realTime = Long.parseLong(time);
+            long lockTime = parseLock(redisService.get(taskId + "_lock"));
             long now = System.currentTimeMillis();
             /** 
              * If the lock was hold longer then 10 seconds, we would think that the previous owner has crashed.
              * In most cases a remote call should be done in at most 3 seconds, here set the lock as triple the
              * most used timeout * 3 + 1 seconds.
              */
-            if (now - realTime >= LOCK_EXPIRE_TIME) {
+            if (now - lockTime >= LOCK_EXPIRE_TIME) {
                 /**
                  * The task has been locked too long, release the lock so as other contenders have chances to retry the work-flow.
                  */
-                try {
-                    // In case we disrupt other new contender retry the work, sleep for a while.
-                    Thread.sleep(new Random(10).nextInt());
-                    if (time.equals(redisService.get(taskId + "_locktime"))) {
-                        // If it is still the previous lock owner, release the lock.
-                        redisService.del(taskId + "_lock");
-                    }
-                } catch (InterruptedException e) {
-                    log.error("Errpr", e);
-                }
+                redisService.del(taskId + "_lock");
             }
             return false;
         }
@@ -169,7 +161,6 @@ public class TaskPersisterImpl implements TaskPersister {
         redisService.rpush(getQueueName(BACKUP_KEY, application, taskId), taskId);
         // Remove the task from the retry queue.
         redisService.zdel(getQueueName(RETRY_KEY, application, taskId), taskId);
-        redisService.set(taskId + "_locktime", String.valueOf(System.currentTimeMillis()));
     }
 
     /**
@@ -187,9 +178,6 @@ public class TaskPersisterImpl implements TaskPersister {
     public boolean setHub(final String taskId, final Task content, final boolean withInsert, final TaskStep taskStep) {
         // Refresh lock time.
         if (isLegibleOwner(taskId)) {
-            redisService.set(taskId + "_lock", HOST_NAME);
-            markAsLocked(taskId);
-
             if (withInsert) {
                 return taskStepStorage.insert(taskStep) && taskStorage.persist(content);
             } else {
@@ -202,17 +190,24 @@ public class TaskPersisterImpl implements TaskPersister {
     }
 
     private boolean isLegibleOwner(final String taskId) {
-        String owner = redisService.get(taskId + "_lock");
-        String lockTime = redisService.get(taskId + "_locktime");
-        if (owner == null) {
+        String ownerInfo = redisService.get(taskId + "_lock");
+        if (ownerInfo == null) {
             return true;
         }
 
-        if (owner.equals(HOST_NAME) && Long.valueOf(lockTime) + LOCK_EXPIRE_TIME > System.currentTimeMillis()) {
+        if (ownerInfo.startsWith(HOST_NAME)) {
             return true;
         }
 
         return false;
+    }
+
+    private long parseLock(final String ownerInfo) {
+        if (ownerInfo == null) {
+            return 0L;
+        }
+        String[] infos = ownerInfo.split("_");
+        return Long.valueOf(infos[1]);
     }
 
     /**
@@ -247,8 +242,8 @@ public class TaskPersisterImpl implements TaskPersister {
             // To make sure Unit test cases can be run quickly.
             score = 5;
         }
-        redisService.lrem(getQueueName(BACKUP_KEY, application, task.getTaskId()), 0, task.getTaskId());
         redisService.zadd(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
+        redisService.lrem(getQueueName(BACKUP_KEY, application, task.getTaskId()), 0, task.getTaskId());
         redisService.del(task.getTaskId() + "_lock");
         log.info("Task updated to [{}]", task.toString());
     }

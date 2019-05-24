@@ -16,6 +16,7 @@ import org.stream.core.resource.ResourceTank;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
@@ -75,7 +76,7 @@ public final class TaskHelper {
      * @param node Current working on node.
      * @param status Execution status.
      */
-    public static void updateTask(final Task task, final Node node, final String status) {
+    public static void updateTask(final Task task, final Node node, final int status) {
         task.setNodeName(node.getNodeName());
         task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
         task.setStatus(status);
@@ -96,7 +97,7 @@ public final class TaskHelper {
             final RetryPattern pattern) {
         // Persist work-flow status to persistent layer.
         StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
-        TaskHelper.updateTask(task, node, "PendingOnRetry");
+        TaskHelper.updateTask(task, node, TaskStatus.PENDING.code());
         // Let the back-end runners have chances to retry the suspended work-flow.;
         int interval = RetryRunner.getTime(pattern, 0);
         if (node.getIntervals() != null && node.getNextRetryInterval(0) > 0) {
@@ -125,9 +126,9 @@ public final class TaskHelper {
      */
     public static void complete(final Task task, final StreamTransferData data, final TaskPersister taskPersister,
             final ActivityResult finalActivityResult) {
-        task.setStatus("Completed");
+        task.setStatus(TaskStatus.COMPLETED.code());
         if (finalActivityResult == ActivityResult.FAIL) {
-            task.setStatus("CompletedWithFailure");
+            task.setStatus(TaskStatus.FAILED.code());
         }
 
         taskPersister.persist(task);
