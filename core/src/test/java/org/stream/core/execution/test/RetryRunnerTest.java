@@ -150,7 +150,6 @@ public class RetryRunnerTest {
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
 
         retryRunner.run();
-        ArgumentCaptor<String> captor1 = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Task> captor2 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Boolean> captor3 = ArgumentCaptor.forClass(Boolean.class);
         ArgumentCaptor<Task> captor4 = ArgumentCaptor.forClass(Task.class);
