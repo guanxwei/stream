@@ -1,6 +1,7 @@
 package org.stream.core.execution;
 
 import org.stream.core.component.Graph;
+import org.stream.core.exception.DuplicateTaskException;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.helper.Jackson;
 import org.stream.core.resource.Resource;
@@ -127,14 +128,18 @@ public class AutoScheduledEngine implements Engine {
     private String start(final String graphName, final GraphContext graphContext, final Object resource) {
 
         initiateContextIfNotPresent(graphContext);
-        String taskId = taskIDGenerator.generateTaskID();
-
-        log.info("Begin to process the incoming request [{}] with task id [{}]", Jackson.json(resource), taskId);
-
         Resource primaryResource = Resource.builder()
                 .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
                 .value(resource)
                 .build();
+
+        /**
+         * Give a chance to the application to generate the task id based on their input resource.
+         * So that applications can realize idempotency strategy.
+         */
+        String taskId = taskIDGenerator.generateTaskID(primaryResource);
+
+        log.info("Begin to process the incoming request [{}] with task id [{}]", Jackson.json(resource), taskId);
 
         Graph graph = graphContext.getGraph(graphName);
 
@@ -164,6 +169,11 @@ public class AutoScheduledEngine implements Engine {
         if (graph == null) {
             throw new WorkFlowExecutionExeception("Graph not existes! Please double check！");
         }
+
+        if (taskPersister.get(taskId) != null) {
+            throw new DuplicateTaskException();
+        }
+
         Task task = Task.builder()
                 .application(application)
                 .graphName(graphName)
@@ -184,7 +194,7 @@ public class AutoScheduledEngine implements Engine {
                 .status(TaskStatus.INITIATED.type())
                 .taskId(taskId)
                 .build();
-        taskPersister.setHub(taskId, task, true, taskStep);
+        taskPersister.initiateOrUpdateTask(task, true, taskStep);
         return task;
     }
 }

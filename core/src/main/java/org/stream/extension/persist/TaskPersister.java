@@ -57,13 +57,12 @@ public interface TaskPersister {
      * Grab the distribute lock of the task so that only one runner can process the task.
      * If the target task is not initiated yet in db, create a new record in the db table;
      * if it is initiated, update the task status. A new task step record will always be added.
-     * @param taskId Task id.
-     * @param content Passby content.
+     * @param task Task to initiated or updated.
      * @param withInsert {@code true} insert new task in the db, otherwise update task in db.
      * @param taskStep Task step detail.
      * @return Manipulation result.
      */
-    boolean setHub(final String taskId, final Task content, final boolean withInsert, final TaskStep taskStep);
+    boolean initiateOrUpdateTask(final Task task, final boolean withInsert, final TaskStep taskStep);
 
     /**
      * Remove the hub since the job is completely done.

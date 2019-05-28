@@ -96,7 +96,7 @@ public class ExecutionRunner implements Runnable {
                     .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
                     .taskId(task.getTaskId())
                     .build();
-            taskPersister.setHub(task.getTaskId(), task, false, taskStep);
+            taskPersister.initiateOrUpdateTask(task, false, taskStep);
             node = TaskHelper.traverse(activityResult, node);
         }
 

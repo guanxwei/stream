@@ -157,11 +157,11 @@ public class RetryRunnerTest {
         ArgumentCaptor<Task> captor5 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
 
-        Mockito.verify(taskPersister).setHub(captor1.capture(), captor2.capture(), captor3.capture(),
+        Mockito.verify(taskPersister).initiateOrUpdateTask(captor2.capture(), captor3.capture(),
                 captor6.capture());
 
         Assert.assertEquals(captor3.getValue().booleanValue(), false);
-        Assert.assertEquals(captor1.getValue(), task.getTaskId());
+        //Assert.assertEquals(captor1.getValue(), task.getTaskId());
 
         Task content = captor2.getValue();
         Assert.assertEquals(content.getNodeName(), "node4");

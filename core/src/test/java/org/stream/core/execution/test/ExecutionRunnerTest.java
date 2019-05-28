@@ -93,16 +93,14 @@ public class ExecutionRunnerTest {
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         executionRunner.run();
 
-        ArgumentCaptor<String> captor1 = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Task> captor2 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Boolean> captor3 = ArgumentCaptor.forClass(Boolean.class);
         ArgumentCaptor<TaskStep> captor4 = ArgumentCaptor.forClass(TaskStep.class);
 
-        Mockito.verify(taskPersister).setHub(captor1.capture(), captor2.capture(), captor3.capture(),
+        Mockito.verify(taskPersister).initiateOrUpdateTask(captor2.capture(), captor3.capture(),
                 captor4.capture());
 
         Assert.assertEquals(captor3.getValue().booleanValue(), false);
-        Assert.assertEquals(captor1.getValue(), task.getTaskId());
 
         Task content = captor2.getValue();
         Assert.assertEquals(content.getNodeName(), "node4");

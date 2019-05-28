@@ -138,7 +138,7 @@ public class RetryRunner implements Runnable {
                 .taskId(task.getTaskId())
                 .build();
         TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
-        taskPersister.setHub(task.getTaskId(), task, false, taskStep);
+        taskPersister.initiateOrUpdateTask(task, false, taskStep);
 
         return activityResult;
     }

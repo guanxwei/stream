@@ -43,7 +43,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private GraphContext graphContext;
 
-    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(32);
+    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
 
     public ThreadPoolTaskExecutor(final TaskPersister taskPersister, final RetryPattern retryPattern, final GraphContext graphContext) {
         this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext);
@@ -71,8 +71,8 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      * Initiation method to prepare back-end workers to process pending on retry work-flow instances.
      */
     private void init() {
-        initiate(1, 100);
-        initiate(2, 2500);
+        initiate(1, 1000);
+        initiate(2, 5000);
         initiate(3, 30000);
         shutDownHook();
     }
@@ -90,7 +90,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
                         process(contents);
                     }
                 }
-            }, 0, time, TimeUnit.SECONDS);
+            }, 0, time, TimeUnit.MILLISECONDS);
         }
     }
 

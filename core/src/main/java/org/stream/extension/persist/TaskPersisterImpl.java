@@ -30,6 +30,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TaskPersisterImpl implements TaskPersister {
 
+    private static final String HOST_NAME = RandomStringUtils.randomAlphabetic(32);
+    // Lock expire time in milliseconds.
+    private static final long LOCK_EXPIRE_TIME = 6 * 1000;
+    public static final int DEFAULT_QUEUES = 8;
+    public static final String RETRY_KEY = "stream_auto_scheduled_retry_set_";
+    public static final String BACKUP_KEY = "stream_auto_scheduled_backup_set_";
+
     @Setter
     private TaskStorage messageQueueBasedTaskStorage;
 
@@ -45,19 +52,13 @@ public class TaskPersisterImpl implements TaskPersister {
     @Setter
     private DelayQueue delayQueue;
 
-    private String application;
+    @Setter
+    private FifoQueue fifoQueue;
 
     @Setter
     private boolean debug = false;
 
-    private static final String HOST_NAME = RandomStringUtils.randomAlphabetic(32);
-
-    // Lock expire time in milliseconds.
-    private static final long LOCK_EXPIRE_TIME = 10 * 1000;
-
-    public static final int DEFAULT_QUEUES = 8;
-    public static final String RETRY_KEY = "stream_auto_scheduled_retry_set_";
-    public static final String BACKUP_KEY = "stream_auto_scheduled_backup_set_";
+    private String application;
 
     /**
      * {@inheritDoc}
@@ -95,11 +96,10 @@ public class TaskPersisterImpl implements TaskPersister {
         try {
             switch (type) {
             case 1:
-                result = delayQueue.getItems(getQueueName(RETRY_KEY, application, queue), Double.valueOf("0"),
-                        System.currentTimeMillis());
+                result = delayQueue.getItems(getQueueName(RETRY_KEY, application, queue), System.currentTimeMillis());
                 break;
             case 2:
-                result = redisService.lrange(getQueueName(BACKUP_KEY, application, queue), 0, 10);
+                result = fifoQueue.pop(getQueueName(BACKUP_KEY, application, queue), 10);
                 break;
             case 3:
                 List<Task> tasks = taskStorage.queryStuckTasks();
@@ -141,26 +141,23 @@ public class TaskPersisterImpl implements TaskPersister {
             long lockTime = parseLock(redisService.get(taskId + "_lock"));
             long now = System.currentTimeMillis();
             /** 
-             * If the lock was hold longer then 10 seconds, we would think that the previous owner has crashed.
-             * In most cases a remote call should be done in at most 3 seconds, here set the lock as triple the
-             * most used timeout * 3 + 1 seconds.
+             * If the lock was hold longer then 6 seconds, we would think that the previous owner has crashed.
+             * In most cases a remote call should be done in at most 3 seconds, here set the lock as double the
+             * most used timeout * 2 seconds.
              */
             if (now - lockTime >= LOCK_EXPIRE_TIME) {
                 /**
                  * The task has been locked too long, release the lock so as other contenders have chances to retry the work-flow.
                  */
-                redisService.del(taskId + "_lock");
+                releaseLock(taskId);
             }
             return false;
         }
     }
 
     private void markAsLocked(final String taskId) {
-        redisService.lrem(getQueueName(BACKUP_KEY, application, taskId), 0, taskId);
-        // Add the task id at the tail of the back up queue.
-        redisService.rpush(getQueueName(BACKUP_KEY, application, taskId), taskId);
-        // Remove the task from the retry queue.
-        redisService.zdel(getQueueName(RETRY_KEY, application, taskId), taskId);
+        fifoQueue.push(getQueueName(BACKUP_KEY, application, taskId), taskId);
+        delayQueue.deleteItem(getQueueName(RETRY_KEY, application, taskId), taskId);
     }
 
     /**
@@ -175,18 +172,17 @@ public class TaskPersisterImpl implements TaskPersister {
      * {@inheritDoc}
      */
     @Override
-    public boolean setHub(final String taskId, final Task content, final boolean withInsert, final TaskStep taskStep) {
+    public boolean initiateOrUpdateTask(final Task task, final boolean withInsert, final TaskStep taskStep) {
         // Refresh lock time.
-        if (isLegibleOwner(taskId)) {
+        if (isLegibleOwner(task.getTaskId())) {
             if (withInsert) {
-                return taskStepStorage.insert(taskStep) && taskStorage.persist(content);
+                return taskStepStorage.insert(taskStep) && taskStorage.persist(task);
             } else {
-                return taskStepStorage.insert(taskStep) && taskStorage.update(content);
+                return taskStepStorage.insert(taskStep) && taskStorage.update(task);
             }
         } else {
             throw new WorkFlowExecutionExeception("Lock has been grabed by other processors, give up execution");
         }
-
     }
 
     private boolean isLegibleOwner(final String taskId) {
@@ -217,8 +213,8 @@ public class TaskPersisterImpl implements TaskPersister {
     public boolean removeHub(final String taskId) {
         assert application != null;
 
-        redisService.zdel(getQueueName(RETRY_KEY, application, taskId), taskId);
-        return redisService.lrem(getQueueName(BACKUP_KEY, application, taskId), 0, taskId);
+        delayQueue.deleteItem(getQueueName(RETRY_KEY, application, taskId), taskId);
+        return fifoQueue.remove(getQueueName(BACKUP_KEY, application, taskId), taskId);
     }
 
     /**
@@ -242,9 +238,9 @@ public class TaskPersisterImpl implements TaskPersister {
             // To make sure Unit test cases can be run quickly.
             score = 5;
         }
-        redisService.zadd(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
-        redisService.lrem(getQueueName(BACKUP_KEY, application, task.getTaskId()), 0, task.getTaskId());
-        redisService.del(task.getTaskId() + "_lock");
+        delayQueue.enqueue(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
+        fifoQueue.remove(getQueueName(BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
+        releaseLock(task.getTaskId());
         log.info("Task updated to [{}]", task.toString());
     }
 
@@ -253,10 +249,9 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public void complete(final Task task) {
-        redisService.del(task.getTaskId());
-        redisService.del(task.getTaskId() + "_lock");
-        redisService.zdel(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId());
-        redisService.lrem(getQueueName(BACKUP_KEY, application, task.getTaskId()), 1, task.getTaskId());
+        delayQueue.deleteItem(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId());
+        fifoQueue.remove(getQueueName(BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
+        releaseLock(task.getTaskId());
     }
 
     /**

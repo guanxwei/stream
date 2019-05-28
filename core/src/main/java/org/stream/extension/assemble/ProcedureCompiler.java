@@ -92,8 +92,8 @@ public class ProcedureCompiler {
 
     /**
      * Build a graph based on the configuration.
-     * @return
      * @throws GraphLoadException Graph load exception.
+     * @return Compiled graph.
      */
     public Graph compile() throws GraphLoadException {
         if (!startNodeSpecified) {
