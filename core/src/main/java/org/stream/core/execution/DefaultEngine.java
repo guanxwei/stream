@@ -364,8 +364,14 @@ public class DefaultEngine implements Engine {
                 AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
                 String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
                 asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
-                ActivityResult activityResult = async.perform();
-                asyncActivity.cleanUp();
+                ActivityResult activityResult = ActivityResult.FAIL;
+                try {
+                    activityResult = async.perform();
+                } catch (Exception e) {
+                    log.warn(async.getNodeName() + " async task failed for workflow [{}]", workFlow.getWorkFlowId());
+                } finally {
+                    asyncActivity.cleanUp();
+                }
                 return activityResult;
             };
             FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);

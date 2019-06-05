@@ -39,8 +39,18 @@ public final class WorkFlowContext {
     // All the live work-flow instances in the JVM.
     private static final ConcurrentHashMap<String, WorkFlow> WORKFLOWS = new ConcurrentHashMap<>();
 
-    private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS =
-            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    // Asynchronous task execution pool.
+    private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS;
+
+    // In case users want to define the pool size according to requirement.
+    static {
+        if (System.getProperty("stream.async.pool.size") == null) {
+            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+        } else {
+            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(
+                    Integer.parseInt(System.getProperty("stream.async.pool.size")));
+        }
+    }
 
     /**
      * A pre-defined work-flow resource reference to response code.
