@@ -204,14 +204,13 @@ public abstract class AbstractGraphLoader implements GraphLoader {
                 clazz.getName()));
     }
 
-    private <T> TowerActivity<T> processActorCase(final Class<?> clazz) {
+    private TowerActivity processActorCase(final Class<?> clazz) {
         /**
          * Load the actor from the spring context, typically the actor is a proxy object that can be used
          * to communicate with a remote server, for example a RPC client.
          */
-        @SuppressWarnings("unchecked")
-        Tower<T> actor = (Tower<T>) applicationContext.getBean(clazz);
-        TowerActivity<T> activity = new TowerActivity<T>(actor);
+        Tower actor = (Tower) applicationContext.getBean(clazz);
+        TowerActivity activity = new TowerActivity(actor);
         return activity;
     }
 

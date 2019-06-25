@@ -1,5 +1,7 @@
 package org.stream.core.component;
 
+import java.io.Serializable;
+
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Resource;
@@ -19,12 +21,12 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class TowerActivity<T> extends Activity {
+public class TowerActivity extends Activity {
 
     @Setter @Getter
-    private Tower<T> tower;
+    private Tower tower;
 
-    public TowerActivity(final Tower<T> tower) {
+    public TowerActivity(final Tower tower) {
         this.tower = tower;
     }
 
@@ -42,13 +44,12 @@ public class TowerActivity<T> extends Activity {
 
         StreamTransferData streamTransferData = null;
         try {
-            Resource primary = WorkFlowContext.getPrimary();
-            String className = Node.CURRENT.get().getGraph().getPrimaryResourceType();
-            @SuppressWarnings("unchecked")
-            Class<T> clazz = (Class<T>) Class.forName(className);
-            streamTransferData = tower.call(primary.resolveValue(clazz));
             Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
+            Resource primary = WorkFlowContext.getPrimary();
+            StreamTransferData request = StreamTransferData.succeed(contextData.getObjects());
+            request.add("primary", (Serializable) primary.getValue());
+            streamTransferData = tower.call(request);
             StreamTransferData.merge(contextData, streamTransferData);
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {

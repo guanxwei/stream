@@ -5,6 +5,7 @@ import org.stream.core.component.Node;
 import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
+import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
@@ -132,9 +133,9 @@ public class RetryRunner implements Runnable {
         TaskStep taskStep = TaskStep.builder()
                 .createTime(System.currentTimeMillis())
                 .graphName(node.getGraph().getGraphName())
-                .jsonfiedTransferData(data.toString())
                 .nodeName(node.getNodeName())
                 .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
+                .streamTransferData(HessianIOSerializer.encode(data))
                 .taskId(task.getTaskId())
                 .build();
         TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
@@ -156,9 +157,9 @@ public class RetryRunner implements Runnable {
         TaskStep taskStep = TaskStep.builder()
                 .createTime(System.currentTimeMillis())
                 .graphName(node.getGraph().getGraphName())
-                .jsonfiedTransferData(data.toString())
                 .nodeName(node.getNodeName())
                 .status(StreamTransferDataStatus.SUSPEND)
+                .streamTransferData(HessianIOSerializer.encode(data))
                 .taskId(task.getTaskId())
                 .build();
         task.setLastExcutionTime(System.currentTimeMillis());

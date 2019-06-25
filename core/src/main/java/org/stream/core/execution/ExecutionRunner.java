@@ -4,6 +4,7 @@ import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.resource.Resource;
+import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
@@ -91,9 +92,9 @@ public class ExecutionRunner implements Runnable {
             TaskStep taskStep = TaskStep.builder()
                     .createTime(System.currentTimeMillis())
                     .graphName(graph.getGraphName())
-                    .jsonfiedTransferData(data.toString())
                     .nodeName(node.getNodeName())
                     .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
+                    .streamTransferData(HessianIOSerializer.encode(data))
                     .taskId(task.getTaskId())
                     .build();
             taskPersister.initiateOrUpdateTask(task, false, taskStep);

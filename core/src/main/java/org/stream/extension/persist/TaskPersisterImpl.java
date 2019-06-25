@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.util.CollectionUtils;
 import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStep;
@@ -260,7 +261,7 @@ public class TaskPersisterImpl implements TaskPersister {
     @Override
     public StreamTransferData retrieveData(final String taskId) {
         TaskStep taskStep = taskStepStorage.getLatestStep(taskId);
-        return StreamTransferData.parse(taskStep.getJsonfiedTransferData());
+        return HessianIOSerializer.decode(taskStep.getStreamTransferData(), StreamTransferData.class);
     }
 
     /**

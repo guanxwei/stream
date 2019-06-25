@@ -1,5 +1,7 @@
 package org.stream.core.execution;
 
+import java.io.Serializable;
+
 import org.stream.core.component.Graph;
 import org.stream.core.exception.DuplicateTaskException;
 import org.stream.core.exception.WorkFlowExecutionExeception;
@@ -8,6 +10,7 @@ import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
 import org.stream.extension.executors.TaskExecutor;
+import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
@@ -127,6 +130,10 @@ public class AutoScheduledEngine implements Engine {
 
     private String start(final String graphName, final GraphContext graphContext, final Object resource) {
 
+        if (!(resource instanceof Serializable)) {
+            throw new WorkFlowExecutionExeception("Primary resource should be serializable when you are using auto schedule engine");
+        }
+
         initiateContextIfNotPresent(graphContext);
         Resource primaryResource = Resource.builder()
                 .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
@@ -143,12 +150,15 @@ public class AutoScheduledEngine implements Engine {
 
         Graph graph = graphContext.getGraph(graphName);
 
-        Task task = initiateTask(taskId, graphName, primaryResource, new StreamTransferData());
+        try {
+            Task task = initiateTask(taskId, graphName, primaryResource, new StreamTransferData());
+            log.info("New task [{}] initiated", task.toString());
+            taskExecutor.submit(graph, primaryResource, task);
+            log.info("Task [{}] submited", taskId);
+        } catch (Exception e) {
+            throw new WorkFlowExecutionExeception(e);
+        }
 
-        log.info("New task [{}] initiated", task.toString());
-        taskExecutor.submit(graph, primaryResource, task);
-
-        log.info("Task [{}] submited", taskId);
         return taskId;
     }
 
@@ -164,7 +174,7 @@ public class AutoScheduledEngine implements Engine {
     }
 
     private Task initiateTask(final String taskId, final String graphName, final Resource primaryResource,
-            final StreamTransferData data) {
+            final StreamTransferData data) throws Exception {
         Graph graph = graphContext.getGraph(graphName);
         if (graph == null) {
             throw new WorkFlowExecutionExeception("Graph not existes! Please double check！");
@@ -190,8 +200,8 @@ public class AutoScheduledEngine implements Engine {
                 .createTime(System.currentTimeMillis())
                 .graphName(graphName)
                 .nodeName(graph.getStartNode().getNodeName())
-                .jsonfiedTransferData(data.toString())
                 .status(TaskStatus.INITIATED.type())
+                .streamTransferData(HessianIOSerializer.encode(data))
                 .taskId(taskId)
                 .build();
         taskPersister.initiateOrUpdateTask(task, true, taskStep);

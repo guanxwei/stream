@@ -4,9 +4,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,20 +16,18 @@ public class StreamTransferData implements Serializable {
 
     private static final long serialVersionUID = -3946269022445783584L;
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     @Getter @Setter
     private String activityResult;
 
     @Getter @Setter
-    private Map<String, Object> objects = new HashMap<>();
+    private Map<String, Serializable> objects = new HashMap<>();
 
     /**
      * Get object via key.
      * @param key Key.
      * @return Object if exists.
      */
-    public Object get(final String key) {
+    public Serializable get(final String key) {
         return objects.get(key);
     }
 
@@ -41,7 +36,7 @@ public class StreamTransferData implements Serializable {
      * @param key Object's key.
      * @param object Object to be saved.
      */
-    public void set(final String key, final Object object) {
+    public void set(final String key, final Serializable object) {
         objects.put(key, object);
     }
 
@@ -51,34 +46,15 @@ public class StreamTransferData implements Serializable {
      * @param object Object to be saved.
      * @return this reference.
      */
-    public StreamTransferData add(final String key, final Object object) {
+    public StreamTransferData add(final String key, final Serializable object) {
         set(key, object);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString() {
-        try {
-            return OBJECT_MAPPER.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public <T> T as(final String key, final Class<T> clazz) {
+        assert Serializable.class.isAssignableFrom(clazz);
 
-    /**
-     * Parse {@link StreamTransferData} from the input Jsonfied string.
-     * @param content Jsonfied string.
-     * @return Parsed {@link StreamTransferData} entity.
-     */
-    public static StreamTransferData parse(final String content) {
-        try {
-            return OBJECT_MAPPER.readValue(content, StreamTransferData.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return clazz.cast(get(key));
     }
 
     /**
@@ -90,7 +66,7 @@ public class StreamTransferData implements Serializable {
         target.objects.putAll(source.getObjects());
     }
 
-    private static StreamTransferData status(final String status, final Map<String, Object> values) {
+    private static StreamTransferData status(final String status, final Map<String, Serializable> values) {
         StreamTransferData streamTransferData = new StreamTransferData();
         streamTransferData.setActivityResult(status);
         if (values != null) {
@@ -99,7 +75,7 @@ public class StreamTransferData implements Serializable {
         return streamTransferData;
     }
 
-    public static StreamTransferData succeed(final Map<String, Object> values) {
+    public static StreamTransferData succeed(final Map<String, Serializable> values) {
         return status(Result.SUCCESS, values);
     }
 
@@ -107,7 +83,7 @@ public class StreamTransferData implements Serializable {
         return status(Result.SUCCESS, null);
     }
 
-    public static StreamTransferData failed(final Map<String, Object> values) {
+    public static StreamTransferData failed(final Map<String, Serializable> values) {
         return status(Result.FAIL, values);
     }
 
@@ -115,7 +91,7 @@ public class StreamTransferData implements Serializable {
         return status(Result.FAIL, null);
     }
 
-    public static StreamTransferData suspend(final Map<String, Object> values) {
+    public static StreamTransferData suspend(final Map<String, Serializable> values) {
         return status(Result.SUSPEND, values);
     }
 
@@ -123,7 +99,7 @@ public class StreamTransferData implements Serializable {
         return status(Result.SUSPEND, null);
     }
 
-    public static StreamTransferData retry(final Map<String, Object> values) {
+    public static StreamTransferData retry(final Map<String, Serializable> values) {
         return status(Result.UNKNOWN, values);
     }
 

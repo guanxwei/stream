@@ -21,7 +21,7 @@ public class TaskStep {
     private String nodeName;
 
     // Jsonfied string represent of data transfered between services.
-    private String jsonfiedTransferData;
+    private byte[] streamTransferData;
 
     // Create time.
     private long createTime;

@@ -17,6 +17,7 @@ import org.stream.core.execution.TaskHelper;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
+import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
@@ -199,7 +200,8 @@ public class ExecutionRunnerTest {
 
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
-        Assert.assertEquals(captor4.getValue().getJsonfiedTransferData(), streamTransferData.toString());
+        Assert.assertEquals(captor4.getValue().getStreamTransferData(), HessianIOSerializer.encode(streamTransferData));
+
         Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
         WorkFlowContext.reboot();
     }

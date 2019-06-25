@@ -13,6 +13,7 @@ import org.stream.core.component.Node;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
+import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
@@ -107,9 +108,9 @@ public final class TaskHelper {
         TaskStep taskStep = TaskStep.builder()
                 .createTime(System.currentTimeMillis())
                 .graphName(node.getGraph().getGraphName())
-                .jsonfiedTransferData(data.toString())
                 .nodeName(node.getNodeName())
                 .status(StreamTransferDataStatus.SUSPEND)
+                .streamTransferData(HessianIOSerializer.encode(data))
                 .taskId(task.getTaskId())
                 .build();
         taskPersister.suspend(task, interval, taskStep);

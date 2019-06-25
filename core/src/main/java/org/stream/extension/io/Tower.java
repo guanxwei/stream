@@ -21,7 +21,7 @@ import org.stream.extension.persist.TaskStorage;
  * @author hzweiguanxiong
  *
  */
-public interface Tower<T> {
+public interface Tower {
 
     /**
      * Call the remote service to complete the sub-task. The Stream framework will use the response to decide what to do in the next step, and help
@@ -29,5 +29,5 @@ public interface Tower<T> {
      * @param request Request to be sent to the remote service.
      * @return Stream framework defined transfer data.
      */
-    StreamTransferData call(final T request);
+    StreamTransferData call(final StreamTransferData request);
 }
