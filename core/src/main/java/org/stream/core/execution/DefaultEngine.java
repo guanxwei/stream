@@ -213,6 +213,7 @@ public class DefaultEngine implements Engine {
         }
         workFlow.setPrimaryResourceReference(null);
         workFlow.getRecords().clear();
+        workFlow.getAsyncTaksReferences().clear();
         workFlow.setResourceTank(new ResourceTank());
     }
 

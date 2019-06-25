@@ -48,6 +48,9 @@ public class NodeConfiguration {
     public static class AsyncNodeConfiguration {
         @Setter @Getter
         private String asyncNode;
+
+        @Setter @Getter
+        private long timeout;
     }
 
     /**
