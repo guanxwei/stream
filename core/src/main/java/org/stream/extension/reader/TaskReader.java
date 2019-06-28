@@ -1,23 +1,22 @@
 package org.stream.extension.reader;
 
-import org.stream.core.resource.Resource;
+import org.stream.core.resource.AbstractResourceReader;
 import org.stream.core.resource.ResourceAuthority;
-import org.stream.core.resource.ResourceReader;
 import org.stream.core.resource.ResourceURL;
 import org.stream.extension.meta.Task;
+import org.stream.extension.persist.TaskStorage;
 
 import lombok.Setter;
-import redis.clients.jedis.Jedis;
 
 /**
  * ROA bases framework used reader to read {@link Task} from somewhere.
  * @author hzweiguanxiong
  *
  */
-public class TaskReader implements ResourceReader {
+public class TaskReader extends AbstractResourceReader {
 
     @Setter
-    private Jedis jedis;
+    private TaskStorage taskStorage;
 
     private ResourceAuthority taskResourceAuthority = new ResourceAuthority("TaskReader", Task.class);
 
@@ -25,23 +24,18 @@ public class TaskReader implements ResourceReader {
      * {@inheritDoc}
      */
     @Override
-    public Resource read(final ResourceURL resourceURL) {
-        String key = resourceURL.getPath();
-        String content = jedis.get(key);
-        Resource taskResource = Resource.builder()
-                .resourceReference(key)
-                .resourceURL(resourceURL)
-                .value(Task.parse(content))
-                .build();
-        return taskResource;
+    public ResourceAuthority resolve() {
+        return this.taskResourceAuthority;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ResourceAuthority resolve() {
-        return this.taskResourceAuthority;
+    protected Object doRead(final ResourceURL resourceURL) {
+        String key = resourceURL.getPath();
+        Task task = taskStorage.query(key);
+        return task;
     }
 
 }

@@ -1,4 +1,4 @@
-package org.stream.extension.circuit;
+package org.stream.extension.state;
 
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;

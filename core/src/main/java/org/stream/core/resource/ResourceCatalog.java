@@ -47,19 +47,23 @@ public class ResourceCatalog {
      * @throws ResourceReadingExecption ResourceReadingExecption.
      */
     public Resource readResource(final ResourceURL resourceURL) throws ResourceReadingExecption {
+        Resource result = null;
         if (resourceURL == null || resourceURL.getResourceAuthority() == null) {
             throw new ResourceReadingExecption("ResourceURL should not be null!");
+        }
+        if (cache != null && (result = cache.get(resourceURL)) != null) {
+            return result;
         }
         ResourceReader reader = resolve(resourceURL);
         if (reader == null) {
             throw new ResourceReadingExecption(String.format("There is no reader registered for this resourceURL represented resource authority [%s]",
                     resourceURL.getResourceAuthority().getValue()));
         }
-        Resource resource = reader.read(resourceURL);
+        result = reader.read(resourceURL);
         if (cache != null) {
-            cache.put(resourceURL, resource);
+            cache.put(resourceURL, result);
         }
-        return resource;
+        return result;
     }
 
     /**

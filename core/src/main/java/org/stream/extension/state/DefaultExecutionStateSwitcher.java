@@ -1,4 +1,4 @@
-package org.stream.extension.circuit;
+package org.stream.extension.state;
 
 import java.util.HashSet;
 import java.util.Set;

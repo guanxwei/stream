@@ -22,7 +22,11 @@ public class ResourceTank {
      * @param resource Resource to added to the tank.
      */
     public void addResource(final Resource resource) {
-        resources.put(resource.getResourceReference(), resource);
+        if (resource.getResourceURL() != null) {
+            resources.put(resource.getResourceURL().getPath(), resource);
+        } else {
+            resources.put(resource.getResourceReference(), resource);
+        }
     }
 
     /**

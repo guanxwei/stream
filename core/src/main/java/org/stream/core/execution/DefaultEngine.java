@@ -16,8 +16,8 @@ import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 import org.stream.core.resource.TimeOut;
-import org.stream.extension.circuit.DefaultExecutionStateSwitcher;
-import org.stream.extension.circuit.ExecutionStateSwitcher;
+import org.stream.extension.state.DefaultExecutionStateSwitcher;
+import org.stream.extension.state.ExecutionStateSwitcher;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
