@@ -16,8 +16,8 @@ import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 import org.stream.core.resource.TimeOut;
-import org.stream.extension.circuit.CircuitBreaker;
-import org.stream.extension.circuit.DefaultCircuitBreaker;
+import org.stream.extension.circuit.DefaultExecutionStateSwitcher;
+import org.stream.extension.circuit.ExecutionStateSwitcher;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class DefaultEngine implements Engine {
     }
 
     @Setter
-    private CircuitBreaker circuitBreaker = new DefaultCircuitBreaker();
+    private ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
 
     /**
      * {@inheritDoc}
@@ -273,8 +273,8 @@ public class DefaultEngine implements Engine {
 
             Node temp = executionNode;
             executionNode = traverse(activityResult, executionNode);
-            if (circuitBreaker.isOpen(temp, executionNode, activityResult)) {
-                executionNode = circuitBreaker.open(graph, temp);
+            if (executionStateSwitcher.isOpen(temp, executionNode, activityResult)) {
+                executionNode = executionStateSwitcher.open(graph, temp);
             }
         }
     }
@@ -399,7 +399,7 @@ public class DefaultEngine implements Engine {
             // Make the work-flow reusable.
             ENTRANCE_TAG.set(0);
             context.setChildren(new LinkedList<>());
-            circuitBreaker.clear();
+            executionStateSwitcher.clear();
         }
         clearRelationship(context);
         if (autoClean && isWorkflowEntryGraph) {

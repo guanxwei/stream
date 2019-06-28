@@ -141,8 +141,8 @@ public class AutoScheduledEngine implements Engine {
                 .build();
 
         /**
-         * Give a chance to the application to generate the task id based on their input resource.
-         * So that applications can realize idempotency strategy.
+         * Give a chance to the application to generate the task id according to the input primary resource
+         * to implement idempotency mechanism and so on.
          */
         String taskId = taskIDGenerator.generateTaskID(primaryResource);
 

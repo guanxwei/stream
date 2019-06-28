@@ -5,11 +5,12 @@ import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 
 /**
- * Circuit breaker to check if the work flow should be terminated, and if yes take actions to terminate the work flow.
+ * A execution state used to check the state of the running work-flow instances,
+ * terminate abnormal workflows.
  * @author 魏冠雄
  *
  */
-public interface CircuitBreaker {
+public interface ExecutionStateSwitcher {
 
     /**
      * Determine if the work flow is out of control.

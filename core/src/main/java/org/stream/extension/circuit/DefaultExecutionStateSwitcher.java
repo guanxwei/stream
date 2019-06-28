@@ -8,16 +8,16 @@ import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 
 /**
- * Default implement of {@link CircuitBreaker}.
+ * Default implement of {@link ExecutionStateSwitcher}.
  *
- * DefaultCircuitBreaker will try to trace the execution step by saving execution pair information in the thread local,
+ * DefaultExecutionStateSwitcher will try to trace the execution step by saving execution pair information in the thread local,
  * where a execution pair is constructed by a previous node's name and a next node's name.
  * If the breaker find that a execution pair equals with the incoming pair, true will be returned by method {@link #isOpen(Node, Node, ActivityResult)}
  * otherwise false will be returned.
  * @author weiguanxiong
  *
  */
-public class DefaultCircuitBreaker implements CircuitBreaker {
+public class DefaultExecutionStateSwitcher implements ExecutionStateSwitcher {
 
     private ThreadLocal<Set<String>> pairs = new ThreadLocal<>();
 
