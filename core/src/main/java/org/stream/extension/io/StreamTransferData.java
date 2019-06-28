@@ -51,10 +51,28 @@ public class StreamTransferData implements Serializable {
         return this;
     }
 
+    /**
+     * Get the value as cast it the target class.
+     * @param <T> Target class type.
+     * @param key Key reference to the value.
+     * @param clazz
+     * @return
+     */
     public <T> T as(final String key, final Class<T> clazz) {
         assert Serializable.class.isAssignableFrom(clazz);
 
         return clazz.cast(get(key));
+    }
+
+    public <T> T getPrimary(final String key) {
+        String className = as("primaryClass", String.class);
+        try {
+            @SuppressWarnings("unchecked")
+            Class<T> clazz = (Class<T>) Class.forName(className);
+            return as("primary", clazz);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 
     /**

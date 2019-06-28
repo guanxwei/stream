@@ -49,6 +49,7 @@ public class TowerActivity extends Activity {
             Resource primary = WorkFlowContext.getPrimary();
             StreamTransferData request = StreamTransferData.succeed(contextData.getObjects());
             request.add("primary", (Serializable) primary.getValue());
+            request.add("primaryClass", primary.getValue().getClass().getName());
             streamTransferData = tower.call(request);
             StreamTransferData.merge(contextData, streamTransferData);
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
