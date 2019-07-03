@@ -31,4 +31,5 @@ public class TaskStep {
 
     // Database unique key in case needed.
     private long id;
+
 }

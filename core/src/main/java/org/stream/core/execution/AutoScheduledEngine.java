@@ -190,7 +190,7 @@ public class AutoScheduledEngine implements Engine {
                 .initiatedTime(System.currentTimeMillis())
                 .jsonfiedPrimaryResource(primaryResource.toString())
                 .lastExcutionTime(System.currentTimeMillis())
-                .nextExecutionTime(System.currentTimeMillis())
+                .nextExecutionTime(System.currentTimeMillis() + 5 * 1000)
                 .nodeName(graph.getStartNode().getNodeName())
                 .retryTimes(0)
                 .status(TaskStatus.INITIATED.code())
