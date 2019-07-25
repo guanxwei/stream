@@ -111,6 +111,8 @@ public class RetryRunner implements Runnable {
 
     private ActivityResult doRetry(final Node node, final Task task, final StreamTransferData data) {
 
+        Node.CURRENT.set(node);
+
         /**
          * Before executing the activity, we'd check if the node contains asynchronous dependency nodes,
          * if yes, we should construct some asynchronous tasks then turn back to the normal procedure.
