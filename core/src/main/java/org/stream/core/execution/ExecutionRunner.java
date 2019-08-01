@@ -76,7 +76,7 @@ public class ExecutionRunner implements Runnable {
             }
 
             log.trace("Execute graph [{}] at node [{}]", graph.getGraphName(), node.getNodeName());
-            activityResult = TaskHelper.perform(node);
+            activityResult = TaskHelper.perform(node, ActivityResult.SUSPEND);
             log.trace("Execution result [{}]", activityResult.name());
 
             if (activityResult.equals(ActivityResult.SUSPEND)) {

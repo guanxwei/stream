@@ -4,6 +4,8 @@ import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 
+import lombok.Getter;
+
 /**
  * Encapsulation of asynchronous stream work flow activities.
  *
@@ -14,6 +16,11 @@ public abstract class AsyncActivity extends Activity {
     private ThreadLocal<ResourceTank> resources = new ThreadLocal<ResourceTank>();
 
     private ThreadLocal<String> primaryResourceReference = new ThreadLocal<String>();
+
+    @Getter
+    private ThreadLocal<Node> node = new ThreadLocal<Node>();
+    @Getter
+    private ThreadLocal<Node> host = new ThreadLocal<Node>();
 
     /**
      * Link-up the execution work-flow instance's resource tank with this activity instance.
@@ -71,5 +78,21 @@ public abstract class AsyncActivity extends Activity {
     public void cleanUp() {
         resources.set(null);
         primaryResourceReference.set(null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node getExecutionContext() {
+        return node.get();
+    }
+
+    /**
+     * Get the host node that triggers this asynchronous task.
+     * @return
+     */
+    public Node getTriggerNode() {
+        return host.get();
     }
 }

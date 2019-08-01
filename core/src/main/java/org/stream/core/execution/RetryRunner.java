@@ -121,7 +121,7 @@ public class RetryRunner implements Runnable {
             TaskHelper.setUpAsyncTasks(WorkFlowContext.provide(), node);
         }
 
-        ActivityResult activityResult = TaskHelper.perform(node);
+        ActivityResult activityResult = TaskHelper.perform(node, ActivityResult.SUSPEND);
 
         if (activityResult.equals(ActivityResult.SUSPEND)) {
             if (task.getRetryTimes() == MAX_RETRY) {

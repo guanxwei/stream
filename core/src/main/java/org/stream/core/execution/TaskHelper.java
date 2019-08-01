@@ -60,13 +60,13 @@ public final class TaskHelper {
      * @param node Host node.
      * @return Execution result.
      */
-    public static ActivityResult perform(final Node node) {
+    public static ActivityResult perform(final Node node, final ActivityResult defaultResult) {
         ActivityResult activityResult = null;
         try {
             activityResult = node.perform();
         } catch (Exception e) {
             log.warn("Fail to execute graph [{}] at node [{}]", node.getGraph().getGraphName(), node.getNodeName());
-            activityResult = ActivityResult.SUSPEND;
+            activityResult = defaultResult;
         }
         return activityResult;
     }
@@ -184,8 +184,16 @@ public final class TaskHelper {
                 AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
                 String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
                 asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
-                ActivityResult activityResult = async.perform();
-                asyncActivity.cleanUp();
+                asyncActivity.getNode().set(async);
+                asyncActivity.getHost().set(node);
+                ActivityResult activityResult = ActivityResult.FAIL;
+                try {
+                    activityResult = async.perform();
+                } catch (Exception e) {
+                    log.warn(async.getNodeName() + " async task failed for workflow [{}]", workFlow.getWorkFlowId());
+                } finally {
+                    asyncActivity.cleanUp();
+                }
                 return activityResult;
             };
             FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);

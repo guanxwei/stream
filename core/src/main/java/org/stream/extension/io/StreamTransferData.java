@@ -64,7 +64,7 @@ public class StreamTransferData implements Serializable {
         return clazz.cast(get(key));
     }
 
-    public <T> T getPrimary(final String key) {
+    public <T> T getPrimary() {
         String className = as("primaryClass", String.class);
         try {
             @SuppressWarnings("unchecked")

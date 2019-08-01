@@ -2,17 +2,13 @@ package org.stream.core.execution;
 
 import java.util.Calendar;
 import java.util.LinkedList;
-import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
 
 import org.apache.commons.lang3.StringUtils;
 import org.stream.core.component.ActivityResult;
-import org.stream.core.component.AsyncActivity;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
-import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 import org.stream.core.resource.TimeOut;
@@ -262,17 +258,17 @@ public class DefaultEngine implements Engine {
              * if yes, we should construct some asynchronous tasks then turn back to the normal procedure.
              */
             if (executionNode.getAsyncDependencies() != null) {
-                setUpAsyncTasks(workFlow, executionNode);
+                TaskHelper.setUpAsyncTasks(workFlow, executionNode);
             }
 
-            ActivityResult activityResult = doExexute(executionNode);
+            ActivityResult activityResult = TaskHelper.perform(executionNode, ActivityResult.FAIL);
 
             if (ActivityResult.SUSPEND.equals(activityResult)) {
                 activityResult = processSuspendCase(activityResult, workFlow);
             }
 
             Node temp = executionNode;
-            executionNode = traverse(activityResult, executionNode);
+            executionNode = TaskHelper.traverse(activityResult, executionNode);
             if (executionStateSwitcher.isOpen(temp, executionNode, activityResult)) {
                 executionNode = executionStateSwitcher.open(graph, temp);
             }
@@ -281,15 +277,6 @@ public class DefaultEngine implements Engine {
 
     private boolean isStuckInDeadLoop(final Node next, final Node previous) {
         return next.equals(previous);
-    }
-
-    private ActivityResult doExexute(final Node executionNode) {
-        try {
-            return executionNode.perform();
-        } catch (Exception e) {
-            WorkFlowContext.markException(e);
-            return ActivityResult.FAIL;
-        }
     }
 
     private ActivityResult processSuspendCase(final ActivityResult activityResult, final WorkFlow workFlow) {
@@ -312,78 +299,6 @@ public class DefaultEngine implements Engine {
         }
 
         return ActivityResult.SUSPEND;
-    }
-
-    /**
-     * Retrieve the next node to be executed based on the result the current node returned and the configuration of the current node.
-     * @param activityResult The result current node returned.
-     * @param startNode the current node reference.
-     * @return
-     */
-    private Node traverse(final ActivityResult activityResult, final Node startNode) {
-
-        if (activityResult == null) {
-            return null;
-        }
-
-        return activityResult.accept(new ActivityResult.Visitor<Node>() {
-
-            @Override
-            public Node success() {
-                return startNode.getNext().onSuccess();
-            }
-
-            @Override
-            public Node fail() {
-                // 如果没有配置fail节点，默认使用default error node处理.循环 Default error 处理完只能返回success，否者会陷入死.
-                return startNode.getNext().onFail() == null ? startNode.getGraph().getDefaultErrorNode() : startNode.getNext().onFail();
-            }
-
-            @Override
-            public Node suspend() {
-                return startNode.getNext().onSuspend();
-            }
-
-            @Override
-            public Node check() {
-                return startNode.getNext().onCheck();
-            }
-        });
-    }
-
-    /**
-     * Set up asynchronous tasks and submit them to executor.
-     * All the work-flow instances share one asynchronous task executor, so it is expectable to
-     * take some time to complete the task, sometimes when the traffic is busy it may take more
-     * time to complete the task than normal cases.
-     * @param workFlow The asynchronous task belong to.
-     * @param node The node that need submit asynchronous tasks.
-     */
-    private void setUpAsyncTasks(final WorkFlow workFlow, final Node node) {
-        node.getAsyncDependencies().forEach(async -> {
-            Callable<ActivityResult> job = () -> {
-                AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
-                String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
-                asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
-                ActivityResult activityResult = ActivityResult.FAIL;
-                try {
-                    activityResult = async.perform();
-                } catch (Exception e) {
-                    log.warn(async.getNodeName() + " async task failed for workflow [{}]", workFlow.getWorkFlowId());
-                } finally {
-                    asyncActivity.cleanUp();
-                }
-                return activityResult;
-            };
-            FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
-            Resource taskWrapper = Resource.builder()
-                    .value(task)
-                    .resourceReference(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX)
-                    .build();
-            workFlow.attachResource(taskWrapper);
-            workFlow.addAsyncTasks(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX);
-            WorkFlowContext.submit(task);
-        });
     }
 
     /**
