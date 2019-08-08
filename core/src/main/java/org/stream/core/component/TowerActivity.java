@@ -59,7 +59,7 @@ public class TowerActivity extends Activity {
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
             streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);
-            return ActivityResult.UNKNOWN;
+            return ActivityResult.SUSPEND;
         }
     }
 }
