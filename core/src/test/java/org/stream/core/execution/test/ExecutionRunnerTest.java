@@ -1,5 +1,7 @@
 package org.stream.core.execution.test;
 
+import static org.testng.Assert.assertFalse;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -111,7 +113,8 @@ public class ExecutionRunnerTest {
         Mockito.verify(taskPersister).persist(task);
 
         Assert.assertEquals(task.getStatus(), TaskStatus.COMPLETED.code());
-        WorkFlowContext.reboot();
+
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
     }
 
     @Test(dependsOnMethods = "testNormalCase")
@@ -156,7 +159,8 @@ public class ExecutionRunnerTest {
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
         Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
-        WorkFlowContext.reboot();
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
+
     }
 
     @Test(dependsOnMethods = "testSuspendCase")
@@ -203,6 +207,7 @@ public class ExecutionRunnerTest {
         Assert.assertEquals(captor4.getValue().getStreamTransferData(), HessianIOSerializer.encode(streamTransferData));
 
         Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
-        WorkFlowContext.reboot();
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
+
     }
 }

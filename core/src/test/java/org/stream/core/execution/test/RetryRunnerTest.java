@@ -1,5 +1,7 @@
 package org.stream.core.execution.test;
 
+import static org.testng.Assert.assertFalse;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -85,6 +87,7 @@ public class RetryRunnerTest {
 
        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
        Mockito.verify(taskPersister).complete(captor.capture());
+       assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
 
     }
 
@@ -108,6 +111,8 @@ public class RetryRunnerTest {
         retryRunner.run();
         ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
         Mockito.verify(taskPersister, Mockito.times(0)).complete(captor.capture());
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
+
     }
 
     @Test
@@ -130,6 +135,7 @@ public class RetryRunnerTest {
 
        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
        Mockito.verify(taskPersister).complete(captor.capture());
+       assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
 
     }
 
@@ -171,7 +177,7 @@ public class RetryRunnerTest {
 
         Assert.assertEquals(captor4.getValue(), captor5.getValue());
         Assert.assertEquals(captor4.getValue().getStatus(), TaskStatus.COMPLETED.code());
-        WorkFlowContext.reboot();
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
     }
 
     @Test
@@ -205,7 +211,7 @@ public class RetryRunnerTest {
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
         Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
-        WorkFlowContext.reboot();
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
     }
 
     @Test
@@ -244,7 +250,7 @@ public class RetryRunnerTest {
 
         Assert.assertEquals(captor3.getValue(), captor4.getValue());
         Assert.assertEquals(captor3.getValue().getStatus(), TaskStatus.FAILED.code());
-        WorkFlowContext.reboot();
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
     }
 
     @Test
@@ -281,6 +287,6 @@ public class RetryRunnerTest {
         Assert.assertEquals(captured.getNodeName(), "node5");
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
         Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
-        WorkFlowContext.reboot();
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
     }
 }

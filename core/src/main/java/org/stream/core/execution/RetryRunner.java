@@ -107,6 +107,7 @@ public class RetryRunner implements Runnable {
         if (activityResult == ActivityResult.SUCCESS || activityResult == ActivityResult.FAIL) {
             TaskHelper.complete(task, data, taskPersister, activityResult);
         }
+        WorkFlowContext.reboot();
     }
 
     private ActivityResult doRetry(final Node node, final Task task, final StreamTransferData data) {

@@ -84,6 +84,7 @@ public class ExecutionRunner implements Runnable {
                 log.info("Task suspended, will try to run locally if possible");
                 TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, pattern);
                 log.info("Task [{}] suspended for interval [{}] at node [{}]", task.toString(), interval, Node.CURRENT.get().getNodeName());
+                WorkFlowContext.reboot();
                 return;
             }
 
@@ -103,5 +104,7 @@ public class ExecutionRunner implements Runnable {
 
         TaskHelper.complete(task, WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class),
                 taskPersister, activityResult);
+        WorkFlowContext.reboot();
+
     }
 }
