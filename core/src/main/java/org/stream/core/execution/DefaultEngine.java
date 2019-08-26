@@ -4,6 +4,7 @@ import java.util.Calendar;
 import java.util.LinkedList;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
@@ -11,7 +12,6 @@ import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
-import org.stream.core.resource.TimeOut;
 import org.stream.extension.state.DefaultExecutionStateSwitcher;
 import org.stream.extension.state.ExecutionStateSwitcher;
 
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Default implementation of {@linkplain Engine}.
- * All the work will be executed in single host and if any exception happends, retry procedure will not be applied.
+ * All the work will be executed in single host and if any exception is thrown, retry procedure will not be applied.
  *
  */
 @Slf4j
@@ -242,7 +242,7 @@ public class DefaultEngine implements Engine {
                 break;
             }
 
-            // 设置当前执行节点索引.
+            // Set the current working node reference.
             Node.CURRENT.set(executionNode);
 
             if (autoRecord) {
@@ -264,7 +264,7 @@ public class DefaultEngine implements Engine {
             ActivityResult activityResult = TaskHelper.perform(executionNode, ActivityResult.FAIL);
 
             if (ActivityResult.SUSPEND.equals(activityResult)) {
-                activityResult = processSuspendCase(activityResult, workFlow);
+                activityResult = processSuspendCase(activityResult, workFlow, executionNode);
             }
 
             Node temp = executionNode;
@@ -279,26 +279,22 @@ public class DefaultEngine implements Engine {
         return next.equals(previous);
     }
 
-    private ActivityResult processSuspendCase(final ActivityResult activityResult, final WorkFlow workFlow) {
+    private ActivityResult processSuspendCase(final ActivityResult activityResult, final WorkFlow workFlow,
+            final Node node) {
 
         /**
          * Since the previous node return Suspend result, work-flow should suspend and wait for some time to invoke the next node.
          * Waiting time is specified by the activity himself, stored in the resource tank with a standard resource reference WAITING_TIME.
          */
-        Resource timeOut = workFlow.resolveResource(TimeOut.TIME_OUT_REFERENCE);
-        Long interval = timeOut.resolveValue(Long.class);
-        try {
-            Thread.sleep(interval.longValue());
-            return ActivityResult.SUCCESS;
-        } catch (InterruptedException interruptedException) {
-            ExecutionRecord record = ExecutionRecord.builder()
-                    .time(Calendar.getInstance().getTime())
-                    .description(String.format("Thread was interupted due to [%s]", interruptedException.getMessage()))
-                    .build();
-            workFlow.keepRecord(record);
+        if (!CollectionUtils.isEmpty(node.getIntervals())) {
+            try {
+                Thread.sleep(node.getIntervals().get(0));
+            } catch (Exception e) {
+                log.warn("Thread interrupted", e);
+            }
         }
 
-        return ActivityResult.SUSPEND;
+        return ActivityResult.SUCCESS;
     }
 
     /**

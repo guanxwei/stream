@@ -27,7 +27,6 @@
       "activityClass":"org.stream.core.test.base.PrintRecordActivity",
       "failNode":"node3"
     },
-
     {
       "nodeName":"node3",
       "activityClass":"org.stream.core.test.base.FailTestActivity"
