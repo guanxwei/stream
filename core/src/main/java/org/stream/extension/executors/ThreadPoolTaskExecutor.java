@@ -132,8 +132,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      */
     @Override
     public Future<?> submit(final Graph graph, final Resource primaryResource,
-            final Task task) {
-        StreamTransferData data = new StreamTransferData();
+            final Task task, final StreamTransferData data) {
         Resource dataResource = Resource.builder()
                 .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
                 .value(data)

@@ -150,11 +150,13 @@ public class AutoScheduledEngine implements Engine {
         Graph graph = graphContext.getGraph(graphName);
 
         try {
-            Task task = initiateTask(taskId, graphName, primaryResource, new StreamTransferData());
+            StreamTransferData data = new StreamTransferData();
+            Task task = initiateTask(taskId, graphName, primaryResource, data);
             log.info("New task [{}] initiated", task.toString());
-            taskExecutor.submit(graph, primaryResource, task);
+            taskExecutor.submit(graph, primaryResource, task, data);
             log.info("Task [{}] submited", taskId);
         } catch (Exception e) {
+            e.printStackTrace(System.out);
             throw new WorkFlowExecutionExeception(e);
         }
 
@@ -195,6 +197,8 @@ public class AutoScheduledEngine implements Engine {
                 .status(TaskStatus.INITIATED.code())
                 .taskId(taskId)
                 .build();
+        data.add("primary", (Serializable) primaryResource.getValue());
+        data.add("primaryClass", primaryResource.getValue().getClass().getName());
         TaskStep taskStep = TaskStep.builder()
                 .createTime(System.currentTimeMillis())
                 .graphName(graphName)

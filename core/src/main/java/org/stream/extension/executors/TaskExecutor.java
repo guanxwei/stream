@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 
 import org.stream.core.component.Graph;
 import org.stream.core.resource.Resource;
+import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 
 /**
@@ -18,9 +19,11 @@ public interface TaskExecutor {
      * @param graph Graph that containing the procedure definition information.
      * @param primaryResource Primary resource to be used for the work flow instance.
      * @param task Task to be executed.
+     * @param data Stream transfer with initiate information.
      * @return A future may contains the execution result.
      */
-    Future<?> submit(final Graph graph, final Resource primaryResource, final Task task);
+    Future<?> submit(final Graph graph, final Resource primaryResource, final Task task,
+            final StreamTransferData data);
 
     /**
      * Get active task number that being executed by the work flow engine.
