@@ -2,6 +2,8 @@ package org.stream.extension.persist;
 
 import java.util.Collection;
 
+import org.stream.extension.clients.RedisClient;
+
 import lombok.Setter;
 
 /**
@@ -14,16 +16,16 @@ import lombok.Setter;
 public class RedisBasedFifoQueue implements FifoQueue {
 
     @Setter
-    private RedisService redisService;
+    private RedisClient redisClient;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void push(final String queueName, final String item) {
-        redisService.lrem(queueName, 0, item);
+        redisClient.lrem(queueName, 0, item);
         // Add the task id at the tail of the back up queue.
-        redisService.rpush(queueName, item);
+        redisClient.rpush(queueName, item);
     }
 
     /**
@@ -31,7 +33,7 @@ public class RedisBasedFifoQueue implements FifoQueue {
      */
     @Override
     public boolean remove(final String queueName, final String item) {
-        return redisService.lrem(queueName, 0, item);
+        return redisClient.lrem(queueName, 0, item);
     }
 
     /**
@@ -39,6 +41,6 @@ public class RedisBasedFifoQueue implements FifoQueue {
      */
     @Override
     public Collection<String> pop(final String queueName, final int end) {
-        return redisService.lrange(queueName, 0, end);
+        return redisClient.lrange(queueName, 0, end);
     }
 }

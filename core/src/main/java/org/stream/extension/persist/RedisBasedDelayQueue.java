@@ -2,36 +2,38 @@ package org.stream.extension.persist;
 
 import java.util.Collection;
 
+import org.stream.extension.clients.RedisClient;
+
 import lombok.Setter;
 
 /**
  * A redis based implementation of distributed delay queue.
- * @author weigu
+ * @author weiguanxiong
  *
  */
 public class RedisBasedDelayQueue implements DelayQueue {
 
     @Setter
-    private RedisService redisService;
+    private RedisClient redisClient;
 
     /**
      * {@inheritDoc}
      */
     public Collection<String> getItems(final String queueName, final double end) {
-        return redisService.zrange(queueName, 0d, end);
+        return redisClient.zrange(queueName, 0d, end);
     }
 
     /**
      * {@inheritDoc}
      */
     public void deleteItem(final String queueName, final String item) {
-        redisService.zdel(queueName, item);
+        redisClient.zdel(queueName, item);
     }
 
     /**
      * {@inheritDoc}
      */
     public void enqueue(final String queueName, final String item, final double delayTime) {
-        redisService.zadd(queueName, item, delayTime);
+        redisClient.zadd(queueName, item, delayTime);
     }
 }
