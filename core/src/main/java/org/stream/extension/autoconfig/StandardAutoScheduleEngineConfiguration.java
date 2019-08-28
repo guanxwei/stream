@@ -21,6 +21,7 @@ import org.stream.extension.clients.KafkaClient;
 import org.stream.extension.clients.KafkaClientImpl;
 import org.stream.extension.clients.MongoClient;
 import org.stream.extension.clients.MongoClientImpl;
+import org.stream.extension.clients.RedisClient;
 import org.stream.extension.events.EventCenter;
 import org.stream.extension.events.Listener;
 import org.stream.extension.events.MangoDBBasedTaskCompleteListener;
@@ -82,7 +83,7 @@ public class StandardAutoScheduleEngineConfiguration {
     public TaskPersister taskPersister() throws Exception {
         TaskPersisterImpl taskPersisterImpl = new TaskPersisterImpl();
         taskPersisterImpl.setApplication(environment.getProperty("application"));
-        taskPersisterImpl.setRedisService(redisService());
+        taskPersisterImpl.setRedisClient(redisService());
         taskPersisterImpl.setMessageQueueBasedTaskStorage(messageQueueBasedTaskStorage());
         taskPersisterImpl.setTaskStepStorage(taskStepStorage);
         taskPersisterImpl.setTaskStorage(taskStorage);
@@ -91,7 +92,7 @@ public class StandardAutoScheduleEngineConfiguration {
     }
 
     @Bean
-    public RedisService redisService() {
+    public RedisClient redisService() {
         String redisNodes = environment.getProperty("fast.stream.redisclustuer.nodes");
         int timeout = environment.getProperty("fast.stream.redisclustuer.timetout", Integer.class);
         int maxRetryTimes = environment.getProperty("fast.stream.redisclustuer.maxRetryTimes", Integer.class);

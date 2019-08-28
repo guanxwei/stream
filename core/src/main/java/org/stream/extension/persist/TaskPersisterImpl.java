@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.util.CollectionUtils;
 import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.extension.clients.RedisClient;
 import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
@@ -48,7 +49,7 @@ public class TaskPersisterImpl implements TaskPersister {
     private TaskStepStorage taskStepStorage;
 
     @Setter
-    private RedisService redisService;
+    private RedisClient redisClient;
 
     @Setter
     private DelayQueue delayQueue;
@@ -127,7 +128,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean tryLock(final String taskId) {
-        boolean result = redisService.setnx(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis()) == 1L;
+        boolean result = redisClient.setnx(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis()) == 1L;
         if (result) {
             // No body else grabs the lock, we are the winner of contest;
             // Mark as locked.
@@ -135,11 +136,11 @@ public class TaskPersisterImpl implements TaskPersister {
             return true;
         } else if (isLegibleOwner(taskId)) {
             // Retry within the legible time window, return true directly and refresh the lock time.
-            redisService.set(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis());
+            redisClient.set(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis());
             return true;
         } else {
             // Someone else owns the lock, we should check if it has expired.
-            long lockTime = parseLock(redisService.get(taskId + "_lock"));
+            long lockTime = parseLock(redisClient.get(taskId + "_lock"));
             long now = System.currentTimeMillis();
             /** 
              * If the lock was hold longer then 6 seconds, we would think that the previous owner has crashed.
@@ -166,7 +167,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean releaseLock(final String taskId) {
-        return redisService.del(taskId + "_lock");
+        return redisClient.del(taskId + "_lock");
     }
 
     /**
@@ -187,7 +188,7 @@ public class TaskPersisterImpl implements TaskPersister {
     }
 
     private boolean isLegibleOwner(final String taskId) {
-        String ownerInfo = redisService.get(taskId + "_lock");
+        String ownerInfo = redisClient.get(taskId + "_lock");
         if (ownerInfo == null) {
             return true;
         }
