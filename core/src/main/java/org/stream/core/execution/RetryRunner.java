@@ -96,6 +96,7 @@ public class RetryRunner implements Runnable {
         ActivityResult activityResult = null;
         while (node != null && taskPersister.tryLock(task.getTaskId())) {
             log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());
+
             activityResult = doRetry(node, task, data);
             if (ActivityResult.SUSPEND.equals(activityResult)) {
                 break;
@@ -183,8 +184,12 @@ public class RetryRunner implements Runnable {
 
     private void updateLastExecutionTimeAndSuspend(final Node node, final Task task, final TaskStep taskStep) {
         int interval = getTime(this.retryPattern, task.getRetryTimes());
-        if (node.getIntervals() != null && node.getNextRetryInterval(task.getRetryTimes()) > 0) {
-            interval = node.getNextRetryInterval(0);
+        if (node.getIntervals() != null) {
+            if (node.getIntervals().size() > task.getRetryTimes()) {
+                interval = node.getIntervals().get(task.getRetryTimes());
+            } else {
+                interval = node.getIntervals().get(node.getIntervals().size() - 1);
+            }
         }
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
         task.setNodeName(node.getNodeName());
@@ -193,7 +198,7 @@ public class RetryRunner implements Runnable {
         taskPersister.suspend(task, interval, taskStep);
         TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
         log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] seconds",
-                task.getTaskId(), task.getRetryTimes(), interval);
+                task.getTaskId(), node.getNodeName(), task.getRetryTimes(), interval);
     }
 
     /**

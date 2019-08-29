@@ -152,11 +152,10 @@ public class AutoScheduledEngine implements Engine {
         try {
             StreamTransferData data = new StreamTransferData();
             Task task = initiateTask(taskId, graphName, primaryResource, data);
-            log.info("New task [{}] initiated", task.toString());
+            log.info("New task [{}] initiated", task.getTaskId());
             taskExecutor.submit(graph, primaryResource, task, data);
             log.info("Task [{}] submited", taskId);
         } catch (Exception e) {
-            e.printStackTrace(System.out);
             throw new WorkFlowExecutionExeception(e);
         }
 

@@ -243,7 +243,6 @@ public class TaskPersisterImpl implements TaskPersister {
         delayQueue.enqueue(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
         fifoQueue.remove(getQueueName(BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
         releaseLock(task.getTaskId());
-        log.info("Task updated to [{}]", task.toString());
     }
 
     /**

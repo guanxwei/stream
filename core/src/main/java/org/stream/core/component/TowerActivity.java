@@ -1,7 +1,5 @@
 package org.stream.core.component;
 
-import java.io.Serializable;
-
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Resource;
@@ -46,11 +44,7 @@ public class TowerActivity extends Activity {
         try {
             Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
-            Resource primary = WorkFlowContext.getPrimary();
-            StreamTransferData request = StreamTransferData.succeed(contextData.getObjects());
-            request.add("primary", (Serializable) primary.getValue());
-            request.add("primaryClass", primary.getValue().getClass().getName());
-            streamTransferData = tower.call(request);
+            streamTransferData = tower.call(contextData);
             StreamTransferData.merge(contextData, streamTransferData);
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
@@ -59,6 +53,7 @@ public class TowerActivity extends Activity {
             StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
             streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);
+            e.printStackTrace();
             return ActivityResult.SUSPEND;
         }
     }

@@ -97,7 +97,8 @@ public final class TaskHelper {
     public static int suspend(final Task task, final Node node, final TaskPersister taskPersister,
             final RetryPattern pattern) {
         // Persist work-flow status to persistent layer.
-        StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
+        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE,
+                StreamTransferData.class);
         TaskHelper.updateTask(task, node, TaskStatus.PENDING.code());
         // Let the back-end runners have chances to retry the suspended work-flow.;
         int interval = RetryRunner.getTime(pattern, 0);
