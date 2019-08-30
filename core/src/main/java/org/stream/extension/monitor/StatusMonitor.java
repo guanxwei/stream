@@ -1,8 +1,8 @@
 package org.stream.extension.monitor;
 
 import org.stream.extension.executors.TaskExecutor;
+import org.stream.extension.persist.QueueHelper;
 import org.stream.extension.persist.RedisService;
-import org.stream.extension.persist.TaskPersisterImpl;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -51,9 +51,9 @@ public class StatusMonitor {
      */
     public long getSuspendedTaks(final String application) {
         long sum = 0;
-        for (int i = 0; i < TaskPersisterImpl.DEFAULT_QUEUES; i++) {
+        for (int i = 0; i < QueueHelper.DEFAULT_QUEUES; i++) {
             StringBuilder sb = new StringBuilder();
-            sb.append(TaskPersisterImpl.RETRY_KEY).append(application).append("_").append(i);
+            sb.append(QueueHelper.RETRY_KEY).append(application).append("_").append(i);
             String queue = sb.toString();
             sum += redisService.getListSize(queue);
         }

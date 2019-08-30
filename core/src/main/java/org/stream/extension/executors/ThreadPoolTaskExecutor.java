@@ -19,6 +19,7 @@ import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.pattern.RetryPattern;
+import org.stream.extension.persist.QueueHelper;
 import org.stream.extension.persist.TaskPersister;
 
 import lombok.extern.slf4j.Slf4j;
@@ -85,8 +86,10 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
                 if (!shuttingDown) {
                     List<String> contents = new LinkedList<>();
                     contents.addAll(taskPersister.getPendingList(type, queue));
-                    log.info("Pending tasks [{}] loaded for type [{}]", Jackson.json(contents), type);
                     if (!contents.isEmpty()) {
+                        log.info("Pending tasks [{}] loaded for type [{}] from queue [{}]", Jackson.json(contents), type,
+                                QueueHelper.getQueueNameFromIndex(QueueHelper.getPrefix(type),
+                                        taskPersister.getApplication(), queue));
                         process(contents);
                     }
                 }

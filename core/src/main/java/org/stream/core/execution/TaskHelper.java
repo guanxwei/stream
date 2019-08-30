@@ -58,6 +58,7 @@ public final class TaskHelper {
     /**
      * Execute the task on the node.
      * @param node Host node.
+     * @param defaultResult Default result that will be return if the node throws any exception.
      * @return Execution result.
      */
     public static ActivityResult perform(final Node node, final ActivityResult defaultResult) {

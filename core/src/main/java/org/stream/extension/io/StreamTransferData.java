@@ -55,8 +55,8 @@ public class StreamTransferData implements Serializable {
      * Get the value as cast it the target class.
      * @param <T> Target class type.
      * @param key Key reference to the value.
-     * @param clazz
-     * @return
+     * @param clazz Valuable class.
+     * @return The value mapping the key.
      */
     public <T> T as(final String key, final Class<T> clazz) {
         assert Serializable.class.isAssignableFrom(clazz);

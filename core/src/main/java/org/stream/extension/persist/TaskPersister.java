@@ -116,4 +116,10 @@ public interface TaskPersister {
      * @return Queues the tasks are persisted
      */
     int getQueues();
+
+    /**
+     * Get the application name, the application's name should be unique.
+     * @return Application name.
+     */
+    String getApplication();
 }

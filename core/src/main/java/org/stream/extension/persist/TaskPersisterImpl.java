@@ -14,6 +14,7 @@ import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStep;
 
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,9 +36,6 @@ public class TaskPersisterImpl implements TaskPersister {
     private static final String HOST_NAME = RandomStringUtils.randomAlphabetic(32);
     // Lock expire time in milliseconds.
     private static final long LOCK_EXPIRE_TIME = 6 * 1000;
-    public static final int DEFAULT_QUEUES = 8;
-    public static final String RETRY_KEY = "stream_auto_scheduled_retry_set_";
-    public static final String BACKUP_KEY = "stream_auto_scheduled_backup_set_";
 
     @Setter
     private TaskStorage messageQueueBasedTaskStorage;
@@ -60,6 +58,7 @@ public class TaskPersisterImpl implements TaskPersister {
     @Setter
     private boolean debug = false;
 
+    @Getter
     private String application;
 
     /**
@@ -98,10 +97,10 @@ public class TaskPersisterImpl implements TaskPersister {
         try {
             switch (type) {
             case 1:
-                result = delayQueue.getItems(getQueueName(RETRY_KEY, application, queue), System.currentTimeMillis());
+                result = delayQueue.getItems(QueueHelper.getQueueNameFromIndex(QueueHelper.RETRY_KEY, application, queue), System.currentTimeMillis());
                 break;
             case 2:
-                result = fifoQueue.pop(getQueueName(BACKUP_KEY, application, queue), 10);
+                result = fifoQueue.pop(QueueHelper.getQueueNameFromIndex(QueueHelper.BACKUP_KEY, application, queue), 10);
                 break;
             case 3:
                 List<Task> tasks = taskStorage.queryStuckTasks();
@@ -158,8 +157,8 @@ public class TaskPersisterImpl implements TaskPersister {
     }
 
     private void markAsLocked(final String taskId) {
-        fifoQueue.push(getQueueName(BACKUP_KEY, application, taskId), taskId);
-        delayQueue.deleteItem(getQueueName(RETRY_KEY, application, taskId), taskId);
+        fifoQueue.push(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
+        delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);
     }
 
     /**
@@ -215,8 +214,8 @@ public class TaskPersisterImpl implements TaskPersister {
     public boolean removeHub(final String taskId) {
         assert application != null;
 
-        delayQueue.deleteItem(getQueueName(RETRY_KEY, application, taskId), taskId);
-        return fifoQueue.remove(getQueueName(BACKUP_KEY, application, taskId), taskId);
+        delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);
+        return fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
     }
 
     /**
@@ -240,8 +239,9 @@ public class TaskPersisterImpl implements TaskPersister {
             // To make sure Unit test cases can be run quickly.
             score = 5;
         }
-        delayQueue.enqueue(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
-        fifoQueue.remove(getQueueName(BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
+        delayQueue.enqueue(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
+        log.info("Task [{}] pushed to delay queue [{}]", QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()));
+        fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
         releaseLock(task.getTaskId());
     }
 
@@ -250,8 +250,8 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public void complete(final Task task) {
-        delayQueue.deleteItem(getQueueName(RETRY_KEY, application, task.getTaskId()), task.getTaskId());
-        fifoQueue.remove(getQueueName(BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
+        delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()), task.getTaskId());
+        fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
         releaseLock(task.getTaskId());
     }
 
@@ -277,20 +277,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public int getQueues() {
-        return DEFAULT_QUEUES;
+        return QueueHelper.DEFAULT_QUEUES;
     }
 
-    private String getQueueName(final String prefix, final String application, final String taskID) {
-        int hashcode = taskID.hashCode();
-        int queue = hashcode % DEFAULT_QUEUES;
-        StringBuilder sb = new StringBuilder();
-        sb.append(prefix).append(application).append("_").append(queue);
-        return sb.toString();
-    }
-
-    private String getQueueName(final String prefix, final String application, final int queue) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(prefix).append(application).append("_").append(queue);
-        return sb.toString();
-    }
 }

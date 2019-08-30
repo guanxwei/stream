@@ -19,6 +19,7 @@ public abstract class AsyncActivity extends Activity {
 
     @Getter
     private ThreadLocal<Node> node = new ThreadLocal<Node>();
+
     @Getter
     private ThreadLocal<Node> host = new ThreadLocal<Node>();
 
@@ -90,7 +91,7 @@ public abstract class AsyncActivity extends Activity {
 
     /**
      * Get the host node that triggers this asynchronous task.
-     * @return
+     * @return The trigger node.
      */
     public Node getTriggerNode() {
         return host.get();
