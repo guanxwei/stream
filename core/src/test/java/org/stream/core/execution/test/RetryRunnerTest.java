@@ -81,9 +81,9 @@ public class RetryRunnerTest {
                 .taskId(UUID.randomUUID().toString())
                 .build();
 
-        content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
-        retryRunner.run();
+       content = task.toString();
+       retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+       retryRunner.run();
 
        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
        Mockito.verify(taskPersister).complete(captor.capture());

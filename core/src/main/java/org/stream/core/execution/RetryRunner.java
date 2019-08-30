@@ -1,5 +1,7 @@
 package org.stream.core.execution;
 
+import java.io.Serializable;
+
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
 import org.stream.core.helper.NodeConfiguration;
@@ -83,8 +85,8 @@ public class RetryRunner implements Runnable {
             return;
         }
 
-        Resource primaryResource = preparePrimaryResource(task);
         StreamTransferData data = taskPersister.retrieveData(task.getTaskId());
+        Resource primaryResource = preparePrimaryResource(data);
 
         TaskHelper.prepare(task.getGraphName(), primaryResource, graphContext);
         WorkFlowContext.attachResource(Resource.builder()
@@ -148,10 +150,13 @@ public class RetryRunner implements Runnable {
         return activityResult;
     }
 
-    private Resource preparePrimaryResource(final Task task) {
-        String primaryResourceString = task.getJsonfiedPrimaryResource();
-        if (primaryResourceString != null) {
-            return Resource.parse(primaryResourceString);
+    private Resource preparePrimaryResource(final StreamTransferData streamTransferData) {
+        Serializable primary = streamTransferData.get("primary");
+        if (primary != null) {
+            return Resource.builder()
+                    .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
+                    .value(primary)
+                    .build();
         }
         return null;
     }
@@ -193,7 +198,6 @@ public class RetryRunner implements Runnable {
         }
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
         task.setNodeName(node.getNodeName());
-        task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
         task.setStatus(TaskStatus.PENDING.code());
         taskPersister.suspend(task, interval, taskStep);
         TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);

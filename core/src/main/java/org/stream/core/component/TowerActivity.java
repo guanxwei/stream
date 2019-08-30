@@ -40,20 +40,16 @@ public class TowerActivity extends Activity {
             throw new WorkFlowExecutionExeception("Actor must be specified");
         }
 
-        StreamTransferData streamTransferData = null;
+        Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
+        StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
         try {
-            Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
-            StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
-            streamTransferData = tower.call(contextData);
+            StreamTransferData streamTransferData = tower.call(contextData);
             StreamTransferData.merge(contextData, streamTransferData);
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
             log.error("Fail to call actor [{}]", tower.getClass().getName());
-            Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
-            StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
-            streamTransferData = StreamTransferData.failed();
+            StreamTransferData streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);
-            e.printStackTrace();
             return ActivityResult.SUSPEND;
         }
     }

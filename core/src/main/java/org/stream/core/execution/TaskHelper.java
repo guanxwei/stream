@@ -66,6 +66,7 @@ public final class TaskHelper {
             activityResult = node.perform();
         } catch (Exception e) {
             log.warn("Fail to execute graph [{}] at node [{}]", node.getGraph().getGraphName(), node.getNodeName());
+            e.printStackTrace();
             activityResult = defaultResult;
         }
         return activityResult;
@@ -79,7 +80,6 @@ public final class TaskHelper {
      */
     public static void updateTask(final Task task, final Node node, final int status) {
         task.setNodeName(node.getNodeName());
-        task.setJsonfiedPrimaryResource(WorkFlowContext.getPrimary().toString());
         task.setStatus(status);
         task.setLastExcutionTime(System.currentTimeMillis());
     }
