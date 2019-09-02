@@ -1,5 +1,8 @@
 package org.stream.core.component;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Resource;
@@ -45,11 +48,19 @@ public class TowerActivity extends Activity {
         try {
             StreamTransferData streamTransferData = tower.call(contextData);
             StreamTransferData.merge(contextData, streamTransferData);
+            contextData.getObjects().remove("errorMessge");
+            contextData.getObjects().remove("erroStack");
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
             log.error("Fail to call actor [{}]", tower.getClass().getName());
             StreamTransferData streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);
+            contextData.add("errorMessage", e.getMessage());
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw, true);
+            e.printStackTrace(pw);
+            String stack = sw.getBuffer().toString();
+            contextData.add("erroStack", stack);
             return ActivityResult.SUSPEND;
         }
     }
