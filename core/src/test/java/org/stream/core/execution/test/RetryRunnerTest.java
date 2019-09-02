@@ -15,6 +15,7 @@ import org.stream.core.component.ActivityRepository;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.RetryRunner;
 import org.stream.core.execution.WorkFlowContext;
+import org.stream.core.helper.Jackson;
 import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
@@ -67,13 +68,14 @@ public class RetryRunnerTest {
                 .value("resource")
                 .build();
         Mockito.when(taskPersister.retrieveData(Mockito.anyString())).thenReturn(data);
+        data.add("primaryClass", String.class.getName());
     }
 
     @Test
     public void testCompleteCase() {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
@@ -95,7 +97,7 @@ public class RetryRunnerTest {
     public void testLockNotAbtainedCase() {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
@@ -119,7 +121,7 @@ public class RetryRunnerTest {
     public void testNodeNotfoundCase() {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node100")
                 .retryTimes(3)
@@ -143,7 +145,7 @@ public class RetryRunnerTest {
     public void testNodeNormalCase() {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
@@ -184,7 +186,7 @@ public class RetryRunnerTest {
     public void testSuspendCase() {
         Task task = Task.builder()
                 .graphName("autoSchedule2")
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
@@ -219,7 +221,7 @@ public class RetryRunnerTest {
         taskPersister = Mockito.mock(TaskPersister.class);
         Task task = Task.builder()
                 .graphName("autoSchedule2")
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(24)
@@ -258,7 +260,7 @@ public class RetryRunnerTest {
         taskPersister = Mockito.mock(TaskPersister.class);
         Task task = Task.builder()
                 .graphName("autoSchedule2")
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(5)

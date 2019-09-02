@@ -281,12 +281,12 @@
                     <useDefaultDelimiters>true</useDefaultDelimiters>
                 </configuration>
                 <executions>
-                        <execution>
-                            <id>attach-sources</id>
-                            <phase>verify</phase>
-                            <goals>
-                                <goal>jar-no-fork</goal>
-                            </goals>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -315,13 +315,11 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <keyname>669fdd7d5a7a8a06</keyname>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
                 <configuration>
                     <mavenExecutorId>forked-path</mavenExecutorId>
                     <useReleaseProfile>false</useReleaseProfile>
@@ -347,7 +345,7 @@
             </plugin>
         </plugins>
     </build>
-  <version>2.0.2</version>
+  <version>2.0.3</version>
   <profiles>
         <profile>
             <id>sonatype-oss-release</id>

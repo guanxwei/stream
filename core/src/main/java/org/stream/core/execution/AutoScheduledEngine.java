@@ -188,7 +188,7 @@ public class AutoScheduledEngine implements Engine {
                 .application(application)
                 .graphName(graphName)
                 .initiatedTime(System.currentTimeMillis())
-                .jsonfiedPrimaryResource(primaryResource.toString())
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis())
                 .nextExecutionTime(System.currentTimeMillis() + 5 * 1000)
                 .nodeName(graph.getStartNode().getNodeName())
@@ -196,7 +196,6 @@ public class AutoScheduledEngine implements Engine {
                 .status(TaskStatus.INITIATED.code())
                 .taskId(taskId)
                 .build();
-        data.add("primary", (Serializable) primaryResource.getValue());
         data.add("primaryClass", primaryResource.getValue().getClass().getName());
         TaskStep taskStep = TaskStep.builder()
                 .createTime(System.currentTimeMillis())

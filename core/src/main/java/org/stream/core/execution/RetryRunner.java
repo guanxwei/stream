@@ -1,9 +1,8 @@
 package org.stream.core.execution;
 
-import java.io.Serializable;
-
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
+import org.stream.core.helper.Jackson;
 import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
@@ -86,7 +85,7 @@ public class RetryRunner implements Runnable {
         }
 
         StreamTransferData data = taskPersister.retrieveData(task.getTaskId());
-        Resource primaryResource = preparePrimaryResource(data);
+        Resource primaryResource = preparePrimaryResource(data, task);
 
         TaskHelper.prepare(task.getGraphName(), primaryResource, graphContext);
         WorkFlowContext.attachResource(Resource.builder()
@@ -104,7 +103,7 @@ public class RetryRunner implements Runnable {
                 break;
             }
 
-            node = TaskHelper.traverse(activityResult, node);;
+            node = TaskHelper.traverse(activityResult, node);
         }
 
         if (activityResult == ActivityResult.SUCCESS || activityResult == ActivityResult.FAIL) {
@@ -150,13 +149,17 @@ public class RetryRunner implements Runnable {
         return activityResult;
     }
 
-    private Resource preparePrimaryResource(final StreamTransferData streamTransferData) {
-        Serializable primary = streamTransferData.get("primary");
-        if (primary != null) {
-            return Resource.builder()
-                    .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
-                    .value(primary)
-                    .build();
+    private Resource preparePrimaryResource(final StreamTransferData streamTransferData, final Task task) {
+       String className = streamTransferData.as("primaryClass", String.class);
+        if (task.getJsonfiedPrimaryResource() != null) {
+            try {
+                return Resource.builder()
+                        .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
+                        .value(Jackson.parse(task.getJsonfiedPrimaryResource(), Class.forName(className)))
+                        .build();
+            } catch (ClassNotFoundException e) {
+                log.error("Fail to parse primary value [{}] with type [{}]", task.getJsonfiedPrimaryResource(), className);
+            }
         }
         return null;
     }
