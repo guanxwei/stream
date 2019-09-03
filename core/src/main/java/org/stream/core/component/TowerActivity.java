@@ -1,6 +1,7 @@
 package org.stream.core.component;
 
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 
 import org.stream.core.exception.WorkFlowExecutionExeception;
@@ -46,7 +47,10 @@ public class TowerActivity extends Activity {
         Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
         StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
         try {
-            StreamTransferData streamTransferData = tower.call(contextData);
+            StreamTransferData request = StreamTransferData.succeed(contextData.getObjects());
+            Resource primary = WorkFlowContext.getPrimary();
+            request.add("primary", (Serializable) primary.getValue());
+            StreamTransferData streamTransferData = tower.call(request);
             StreamTransferData.merge(contextData, streamTransferData);
             contextData.getObjects().remove("errorMessge");
             contextData.getObjects().remove("erroStack");
