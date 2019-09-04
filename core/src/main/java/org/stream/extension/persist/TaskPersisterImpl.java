@@ -138,6 +138,9 @@ public class TaskPersisterImpl implements TaskPersister {
         } else if (isLegibleOwner(taskId)) {
             // Retry within the legible time window, return true directly and refresh the lock time.
             redisClient.set(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis());
+            if (processingTasks.contains(taskId)) {
+                return false;
+            }
             processingTasks.add(taskId);
             return true;
         } else {
