@@ -122,4 +122,11 @@ public interface TaskPersister {
      * @return Application name.
      */
     String getApplication();
+
+    /**
+     * Test if the task id being processed by this machine.
+     * @param taskId Target task id.
+     * @return {@code true} task is being processed should yield, otherwise {@code false} should continue.
+     */
+    boolean isProcessing(final String taskId);
 }

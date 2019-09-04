@@ -1,6 +1,7 @@
 package org.stream.core.execution.test;
 
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -18,12 +19,16 @@ import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.helper.Jackson;
 import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
+import org.stream.extension.clients.RedisClient;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
+import org.stream.extension.persist.DelayQueue;
+import org.stream.extension.persist.FifoQueue;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.persist.TaskPersisterImpl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -290,5 +295,81 @@ public class RetryRunnerTest {
         Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
         Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
         assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
+    }
+
+    @Test
+    public void testDuplicatedRun() throws Throwable {
+        taskPersister = Mockito.mock(TaskPersister.class);
+        Task task = Task.builder()
+                .graphName("autoSchedule2")
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
+                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .nodeName("node5")
+                .retryTimes(5)
+                .status(TaskStatus.PENDING.code())
+                .taskId(UUID.randomUUID().toString())
+                .build();
+
+        content = task.toString();
+        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
+        Mockito.when(pattern.getTimeInterval(6)).thenReturn(10);
+        Mockito.when(taskPersister.retrieveData(Mockito.anyString())).thenReturn(data);
+
+        Mockito.when(taskPersister.isProcessing(task.getTaskId())).thenReturn(false).thenReturn(true);
+        for (int i = 0; i < 10; i++) {
+            Thread t = new Thread(retryRunner);
+            t.start();
+        }
+
+        Thread.sleep(1000);
+        ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
+        ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
+        ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
+
+        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(),
+                captor6.capture());
+
+        Assert.assertEquals(captor2.getValue().intValue(), 10);
+        Task captured = captor1.getValue();
+
+        Assert.assertEquals(captured.getNodeName(), "node5");
+        Assert.assertEquals(captured.getJsonfiedPrimaryResource(), task.getJsonfiedPrimaryResource());
+        Assert.assertEquals(captured.getStatus(), TaskStatus.PENDING.code());
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
+    }
+
+    @Test
+    public void testNormalScan() {
+        TaskPersisterImpl taskPersisterImpl = new TaskPersisterImpl();
+        taskPersister = taskPersisterImpl;
+        Task task = Task.builder()
+                .graphName("autoSchedule2")
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
+                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .nodeName("node5")
+                .retryTimes(5)
+                .status(TaskStatus.PENDING.code())
+                .taskId(UUID.randomUUID().toString())
+                .build();
+
+        content = task.toString();
+        taskPersisterImpl.setFifoQueue(Mockito.mock(FifoQueue.class));
+        taskPersisterImpl.setDelayQueue(Mockito.mock(DelayQueue.class));
+        RedisClient redisClient = Mockito.mock(RedisClient.class);
+        taskPersisterImpl.setRedisClient(redisClient);
+        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
+        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        taskPersisterImpl.tryLock(task.getTaskId());
+        retryRunner.run();
+        taskPersisterImpl.tryLock(task.getTaskId());
+        retryRunner.run();
+
+        taskPersisterImpl.releaseLock(task.getTaskId());
+        try {
+            retryRunner.run();
+        } catch (Exception e) {
+            assertTrue(e instanceof NullPointerException);
+        }
     }
 }
