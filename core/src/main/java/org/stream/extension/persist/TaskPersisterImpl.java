@@ -2,8 +2,9 @@ package org.stream.extension.persist;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -37,7 +38,7 @@ public class TaskPersisterImpl implements TaskPersister {
     private static final String HOST_NAME = RandomStringUtils.randomAlphabetic(32);
     // Lock expire time in milliseconds.
     private static final long LOCK_EXPIRE_TIME = 6 * 1000;
-    private List<String> processingTasks = new LinkedList<String>();
+    private Map<String, String> processingTasks = new HashMap<String, String>();
 
     @Setter
     private TaskStorage messageQueueBasedTaskStorage;
@@ -138,14 +139,14 @@ public class TaskPersisterImpl implements TaskPersister {
         } else if (isLegibleOwner(taskId)) {
             // Retry within the legible time window, return true directly and refresh the lock time.
             redisClient.set(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis());
-            if (processingTasks.contains(taskId)) {
+            if (processingTasks.containsKey(taskId) 
+                    && !Thread.currentThread().getName().equals(processingTasks.get(taskId))) {
                 return false;
             }
-            processingTasks.add(taskId);
+            processingTasks.put(taskId, Thread.currentThread().getName());
             return true;
         } else {
             // Someone else owns the lock, we should check if it has expired.
-            processingTasks.remove(taskId);
             long lockTime = parseLock(redisClient.get(taskId + "_lock"));
             long now = System.currentTimeMillis();
             /** 
@@ -164,9 +165,9 @@ public class TaskPersisterImpl implements TaskPersister {
     }
 
     private void markAsLocked(final String taskId) {
+        processingTasks.put(taskId, Thread.currentThread().getName());
         fifoQueue.push(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
         delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);
-        processingTasks.add(taskId);
     }
 
     /**
@@ -295,7 +296,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean isProcessing(final String taskId) {
-        return processingTasks.contains(taskId);
+        return processingTasks.containsKey(taskId);
     }
 
 }

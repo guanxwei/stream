@@ -67,17 +67,24 @@ public class TaskPersisterImplTest {
     }
 
     @Test
-    public void testTryLock2() {
+    public void testTryLock2() throws Throwable {
         Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0L);
         String taskID = RandomStringUtils.randomAlphabetic(12);
-        assertTrue(taskPersisterImpl.tryLock(taskID));
-        String queue = QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskID);
-        String queue2 = QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskID);
-        assertTrue(taskPersisterImpl.isProcessing(taskID));
-        Mockito.verify(delayQueue).deleteItem(queue, taskID);
-        Mockito.verify(fifoQueue).push(queue2, taskID);
+        Thread t = new Thread(() -> {
+            assertTrue(taskPersisterImpl.tryLock(taskID));
+            String queue = QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskID);
+            String queue2 = QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskID);
+            assertTrue(taskPersisterImpl.isProcessing(taskID));
+            Mockito.verify(delayQueue).deleteItem(queue, taskID);
+            Mockito.verify(fifoQueue).push(queue2, taskID);
+        }) ;
+        t.start();
+        Thread.sleep(1000);
 
         assertFalse(taskPersisterImpl.tryLock(taskID));
+        taskPersisterImpl.releaseLock(taskID);
+        assertTrue(taskPersisterImpl.tryLock(taskID));
+
     }
 
     @Test
