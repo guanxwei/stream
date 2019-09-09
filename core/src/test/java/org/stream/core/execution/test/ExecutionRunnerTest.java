@@ -58,6 +58,7 @@ public class ExecutionRunnerTest {
         paths.add("AutoScheduleFull.graph");
         paths.add("AutoScheduleSuspend.graph");
         paths.add("AutoScheduleSuspend2.graph");
+        paths.add("AutoScheduleSuspend3.graph");
 
         this.graphContext = new GraphContext();
         this.graphLoader = new LocalGraphLoader();

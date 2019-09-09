@@ -46,6 +46,7 @@ public class RetryRunner implements Runnable {
     private GraphContext graphContext;
     private TaskPersister taskPersister;
     private RetryPattern retryPattern;
+    private boolean completedWithFailure = false;
 
     /**
      * Constructor.
@@ -112,6 +113,10 @@ public class RetryRunner implements Runnable {
         }
 
         if (activityResult == ActivityResult.SUCCESS || activityResult == ActivityResult.FAIL) {
+            if (completedWithFailure) {
+                log.warn("Max retry times reached, change activity result to failed anyway.");
+                activityResult = ActivityResult.FAIL;
+            }
             TaskHelper.complete(task, data, taskPersister, activityResult);
         }
         WorkFlowContext.reboot();
@@ -134,6 +139,7 @@ public class RetryRunner implements Runnable {
         if (activityResult.equals(ActivityResult.SUSPEND)) {
             if (task.getRetryTimes() == MAX_RETRY) {
                 activityResult = ActivityResult.FAIL;
+                completedWithFailure = true;
             } else {
                 suspend(task, node, data);
                 return ActivityResult.SUSPEND;
@@ -148,6 +154,7 @@ public class RetryRunner implements Runnable {
                 .streamTransferData(HessianIOSerializer.encode(data))
                 .taskId(task.getTaskId())
                 .build();
+
         TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
         taskPersister.initiateOrUpdateTask(task, false, taskStep);
 

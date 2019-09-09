@@ -61,6 +61,7 @@ public class RetryRunnerTest {
         paths.add("AutoScheduleFull.graph");
         paths.add("AutoScheduleSuspend.graph");
         paths.add("AutoScheduleSuspend2.graph");
+        paths.add("AutoScheduleSuspend3.graph");
 
         this.graphContext = new GraphContext();
         this.graphLoader = new LocalGraphLoader();
@@ -371,5 +372,44 @@ public class RetryRunnerTest {
         } catch (Exception e) {
             assertTrue(e instanceof NullPointerException);
         }
+    }
+
+    @Test
+    public void testSuspendExhaustedCase2() {
+        taskPersister = Mockito.mock(TaskPersister.class);
+        Task task = Task.builder()
+                .graphName("autoSchedule3")
+                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
+                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .nodeName("node5")
+                .retryTimes(24)
+                .status(TaskStatus.PENDING.code())
+                .taskId(UUID.randomUUID().toString())
+                .build();
+
+        content = task.toString();
+        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
+        Mockito.when(pattern.getTimeInterval(1)).thenReturn(10);
+        Mockito.when(taskPersister.retrieveData(Mockito.anyString())).thenReturn(data);
+
+        retryRunner.run();
+
+        ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
+        ArgumentCaptor<Task> captor3 = ArgumentCaptor.forClass(Task.class);
+        ArgumentCaptor<Task> captor4 = ArgumentCaptor.forClass(Task.class);
+        ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
+
+        ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
+
+        Mockito.verify(taskPersister, Mockito.times(0)).suspend(captor1.capture(), captor2.capture(),
+                captor6.capture());
+
+        Mockito.verify(taskPersister).complete(captor3.capture());
+        Mockito.verify(taskPersister).persist(captor4.capture());
+
+        Assert.assertEquals(captor3.getValue(), captor4.getValue());
+        Assert.assertEquals(captor3.getValue().getStatus(), TaskStatus.FAILED.code());
+        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
     }
 }

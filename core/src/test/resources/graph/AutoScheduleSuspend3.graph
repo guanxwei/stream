@@ -1,7 +1,8 @@
 {
-  "graphName":"autoSchedule",
+  "graphName":"autoSchedule3",
   "resourceType":"OBJECT",
   "startNode":"node4",
+  "defaultErrorNode":"defaultErrorNode",
   "nodes":[
     {
       "nodeName":"node4",
@@ -11,6 +12,10 @@
     {
       "nodeName":"node5",
       "activityClass":"org.stream.core.test.base.AutoScheduleSuspendCaseActivity"
+    },
+    {
+      "nodeName":"defaultErrorNode",
+      "activityClass":"org.stream.core.test.base.TestActivity"
     }
   ]
 }
