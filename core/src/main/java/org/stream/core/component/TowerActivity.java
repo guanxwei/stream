@@ -52,8 +52,8 @@ public class TowerActivity extends Activity {
             request.add("primary", (Serializable) primary.getValue());
             StreamTransferData streamTransferData = tower.call(request);
             StreamTransferData.merge(contextData, streamTransferData);
-            contextData.getObjects().remove("errorMessge");
-            contextData.getObjects().remove("erroStack");
+            contextData.getObjects().remove("errorMessage");
+            contextData.getObjects().remove("errorStack");
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
             log.error("Fail to call actor [{}]", tower.getClass().getName());
@@ -64,7 +64,7 @@ public class TowerActivity extends Activity {
             PrintWriter pw = new PrintWriter(sw, true);
             e.printStackTrace(pw);
             String stack = sw.getBuffer().toString();
-            contextData.add("erroStack", stack);
+            contextData.add("errorStack", stack);
             return ActivityResult.SUSPEND;
         }
     }
