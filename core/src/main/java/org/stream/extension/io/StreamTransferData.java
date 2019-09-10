@@ -82,6 +82,7 @@ public class StreamTransferData implements Serializable {
      */
     public static void merge(final StreamTransferData target, final StreamTransferData source) {
         target.objects.putAll(source.getObjects());
+        target.setActivityResult(source.getActivityResult());
     }
 
     private static StreamTransferData status(final String status, final Map<String, Serializable> values) {

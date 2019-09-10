@@ -15,7 +15,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Special activity containing a {@link Tower} instance to do the real work.
+ * Special activity containing a {@link Tower} instance to communicate with external service.
  *
  * Users should not use this class themselves, the framework will help construct a instance of this
  * type when the activityClass is implementation of {@link Tower} in graph definition.
@@ -56,7 +56,7 @@ public class TowerActivity extends Activity {
             contextData.getObjects().remove("errorStack");
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
-            log.error("Fail to call actor [{}]", tower.getClass().getName());
+            log.error("Fail to call actor [{}] at node [{}]", tower.getClass().getName(), Node.CURRENT.get().getNodeName(), e);
             StreamTransferData streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);
             contextData.add("errorMessage", e.getMessage());

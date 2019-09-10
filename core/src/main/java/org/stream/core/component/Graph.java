@@ -50,4 +50,10 @@ public class Graph {
      * Please refer to {@link GraphConfiguration#getPrimaryResourceType()}
      */
     private String primaryResourceType;
+
+    /**
+     * Detail description of graph, mainly used to tell the users how this graph should be used
+     * what the procedure will be, etc.
+     */
+    private String description;
 }
