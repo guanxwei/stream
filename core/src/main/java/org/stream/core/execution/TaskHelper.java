@@ -13,9 +13,7 @@ import org.stream.core.component.Node;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
-import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
-import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
@@ -62,6 +60,8 @@ public final class TaskHelper {
      * @return Execution result.
      */
     public static ActivityResult perform(final Node node, final ActivityResult defaultResult) {
+        Node.CURRENT.set(node);
+        TaskExecutionUtils.prepareAsyncTasks(node);
         ActivityResult activityResult = null;
         try {
             activityResult = node.perform();
@@ -102,21 +102,30 @@ public final class TaskHelper {
                 StreamTransferData.class);
         TaskHelper.updateTask(task, node, TaskStatus.PENDING.code());
         // Let the back-end runners have chances to retry the suspended work-flow.;
-        int interval = RetryRunner.getTime(pattern, 0);
-        if (node.getIntervals() != null && node.getNextRetryInterval(0) > 0) {
-            interval = node.getNextRetryInterval(0);
-        }
+        int interval = getInterval(node, pattern, 0);
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
-        TaskStep taskStep = TaskStep.builder()
-                .createTime(System.currentTimeMillis())
-                .graphName(node.getGraph().getGraphName())
-                .nodeName(node.getNodeName())
-                .status(StreamTransferDataStatus.SUSPEND)
-                .streamTransferData(HessianIOSerializer.encode(data))
-                .taskId(task.getTaskId())
-                .build();
+        TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, ActivityResult.SUSPEND, data, task);
         taskPersister.suspend(task, interval, taskStep);
 
+        return interval;
+    }
+
+    /**
+     * Get next retry time window to be elapsed.
+     * @param node Current node.
+     * @param pattern Retry pattern.
+     * @param retryTimes Retry times.
+     * @return Period to be elasped.
+     */
+    public static int getInterval(final Node node, final RetryPattern pattern, final int retryTimes) {
+        int interval = RetryRunner.getTime(pattern, retryTimes);
+        if (node.getIntervals() != null) {
+            if (node.getIntervals().size() > retryTimes) {
+                interval = node.getIntervals().get(retryTimes);
+            } else {
+                interval = node.getIntervals().get(node.getIntervals().size() - 1);
+            }
+        }
         return interval;
     }
 

@@ -124,30 +124,6 @@ public class RetryRunnerTest {
     }
 
     @Test
-    public void testNodeNotfoundCase() {
-        Task task = Task.builder()
-                .graphName("autoSchedule1")
-                .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
-                .nodeName("node100")
-                .retryTimes(3)
-                .status(TaskStatus.PENDING.code())
-                .taskId(UUID.randomUUID().toString())
-                .build();
-
-        content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
-        Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
-
-        retryRunner.run();
-
-       ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
-       Mockito.verify(taskPersister).complete(captor.capture());
-       assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
-
-    }
-
-    @Test
     public void testNodeNormalCase() {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
@@ -224,7 +200,6 @@ public class RetryRunnerTest {
 
     @Test
     public void testSuspendExhaustedCase() {
-        taskPersister = Mockito.mock(TaskPersister.class);
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
@@ -263,7 +238,6 @@ public class RetryRunnerTest {
 
     @Test
     public void testSuspendAgainCase() {
-        taskPersister = Mockito.mock(TaskPersister.class);
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
@@ -300,7 +274,6 @@ public class RetryRunnerTest {
 
     @Test
     public void testDuplicatedRun() throws Throwable {
-        taskPersister = Mockito.mock(TaskPersister.class);
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))

@@ -106,7 +106,6 @@ public class StandardAutoScheduleEngineConfiguration {
     public Engine engine() throws Exception {
         AutoScheduledEngine autoScheduledEngine = new AutoScheduledEngine();
         autoScheduledEngine.setApplication(environment.getProperty("application"));
-        autoScheduledEngine.setGraphContext(graphContext());
         autoScheduledEngine.setMaxRetry(20);
         autoScheduledEngine.setTaskPersister(taskPersister());
         if (containsBean(TaskIDGenerator.class)) {

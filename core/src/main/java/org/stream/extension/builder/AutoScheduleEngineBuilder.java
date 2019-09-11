@@ -1,7 +1,6 @@
 package org.stream.extension.builder;
 
 import org.stream.core.execution.AutoScheduledEngine;
-import org.stream.core.execution.GraphContext;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.monitor.StatusMonitor;
 import org.stream.extension.persist.TaskPersister;
@@ -15,8 +14,6 @@ public final class AutoScheduleEngineBuilder {
 
     private TaskPersister taskPersister;
 
-    private GraphContext graphContext;
-
     private TaskExecutor taskExecutor;
 
     private TaskIDGenerator taskIDGenerator;
@@ -27,11 +24,6 @@ public final class AutoScheduleEngineBuilder {
 
     public static AutoScheduleEngineBuilder builder() {
         return new AutoScheduleEngineBuilder();
-    }
-
-    public AutoScheduleEngineBuilder graphContext(final GraphContext graphContext) {
-        this.graphContext = graphContext;
-        return this;
     }
 
     public AutoScheduleEngineBuilder taskPersister(final TaskPersister taskPersister) {
@@ -62,7 +54,6 @@ public final class AutoScheduleEngineBuilder {
     public AutoScheduledEngine build() {
         this.autoScheduledEngine = new AutoScheduledEngine();
         this.autoScheduledEngine.setApplication(application);
-        this.autoScheduledEngine.setGraphContext(graphContext);
         this.autoScheduledEngine.setTaskExecutor(taskExecutor);
         this.autoScheduledEngine.setTaskIDGenerator(taskIDGenerator);
         this.autoScheduledEngine.setTaskPersister(taskPersister);

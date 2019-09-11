@@ -61,7 +61,6 @@ public class AutoScheduledEngineTest {
         paths.add("AutoScheduleSuspend2.graph");
 
         this.graphContext = new GraphContext();
-        autoScheduledEngine.setGraphContext(graphContext);
         this.graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         this.graphContext.setActivityRepository(new ActivityRepository());

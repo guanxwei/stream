@@ -4,12 +4,8 @@ import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.resource.Resource;
-import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
-import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
-import org.stream.extension.meta.TaskStatus;
-import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
 
@@ -56,56 +52,28 @@ public class ExecutionRunner implements Runnable {
     @Override
     public void run() {
         WorkFlowContext.setUpWorkFlow().start();
-        if (dataResource != null) {
-            WorkFlowContext.attachResource(dataResource);
-        }
+        WorkFlowContext.attachResource(dataResource);
         WorkFlowContext.attachPrimaryResource(primaryResource);
         Node node = graph.getStartNode();
 
         ActivityResult activityResult = null;
         while (node != null && taskPersister.tryLock(task.getTaskId())) {
-
-            Node.CURRENT.set(node);
-
-            /**
-             * Before executing the activity, we'd check if the node contains asynchronous dependency nodes,
-             * if yes, we should construct some asynchronous tasks then turn back to the normal procedure.
-             */
-            if (node.getAsyncDependencies() != null) {
-                TaskHelper.setUpAsyncTasks(WorkFlowContext.provide(), node);
-            }
-
             log.trace("Execute graph [{}] at node [{}]", graph.getGraphName(), node.getNodeName());
             activityResult = TaskHelper.perform(node, ActivityResult.SUSPEND);
             log.trace("Execution result [{}]", activityResult.name());
 
             if (activityResult.equals(ActivityResult.SUSPEND)) {
-                int interval = TaskHelper.suspend(task, node, taskPersister, pattern);
                 log.info("Task suspended, will try to run locally if possible");
-                TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, pattern);
-                log.info("Task [{}] suspended for interval [{}] at node [{}]", task.getTaskId(),
-                        interval, Node.CURRENT.get().getNodeName());
-                WorkFlowContext.reboot();
+                TaskExecutionUtils.suspend(task, node, taskPersister, graph, pattern, graphContext);
                 return;
             }
 
-            StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
-            TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
-            TaskStep taskStep = TaskStep.builder()
-                    .createTime(System.currentTimeMillis())
-                    .graphName(graph.getGraphName())
-                    .nodeName(node.getNodeName())
-                    .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
-                    .streamTransferData(HessianIOSerializer.encode(data))
-                    .taskId(task.getTaskId())
-                    .build();
-            taskPersister.initiateOrUpdateTask(task, false, taskStep);
-            node = TaskHelper.traverse(activityResult, node);
+            node = TaskExecutionUtils.updateTaskAndTraverseNode(task, node, taskPersister, graph, activityResult);
         }
 
         TaskHelper.complete(task, WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class),
                 taskPersister, activityResult);
         WorkFlowContext.reboot();
-
     }
+
 }

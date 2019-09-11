@@ -6,8 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
@@ -45,10 +47,11 @@ public final class WorkFlowContext {
     // In case users want to define the pool size according to requirement.
     static {
         if (System.getProperty("stream.async.pool.size") == null) {
-            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
+                    Runtime.getRuntime().availableProcessors() * 2, 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(200));
         } else {
-            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = Executors.newFixedThreadPool(
-                    Integer.parseInt(System.getProperty("stream.async.pool.size")));
+            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Integer.parseInt(System.getProperty("stream.async.pool.size")),
+                    Integer.parseInt(System.getProperty("stream.async.pool.size")), 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(200));
         }
     }
 

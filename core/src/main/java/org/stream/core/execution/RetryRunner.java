@@ -6,9 +6,7 @@ import org.stream.core.helper.Jackson;
 import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
-import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
-import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
@@ -76,20 +74,12 @@ public class RetryRunner implements Runnable {
             return;
         }
 
-        if (task.getStatus() == TaskStatus.COMPLETED.code()) {
+        if (task.getStatus() == TaskStatus.COMPLETED.code() || task.getStatus() == TaskStatus.FAILED.code()) {
             taskPersister.complete(task);
             return;
         }
 
         Node node = TaskHelper.deduceNode(task, graphContext);
-        if (node == null) {
-            log.error("Unvalid node, data [{}]", content);
-            // 防止不断重试.
-            taskPersister.complete(task);
-
-            return;
-        }
-
         StreamTransferData data = taskPersister.retrieveData(task.getTaskId());
         Resource primaryResource = preparePrimaryResource(data, task);
 
@@ -99,118 +89,62 @@ public class RetryRunner implements Runnable {
                 .value(data)
                 .build());
 
-        log.info("Retry workflow at node [{}]", node.getNodeName());
         ActivityResult activityResult = null;
         while (node != null && taskPersister.tryLock(task.getTaskId())) {
             log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());
-
-            activityResult = doRetry(node, task, data);
+            activityResult = TaskHelper.perform(node, ActivityResult.SUSPEND);
             if (ActivityResult.SUSPEND.equals(activityResult)) {
-                break;
+                if (task.getRetryTimes() == MAX_RETRY) {
+                    activityResult = ActivityResult.FAIL;
+                    completedWithFailure = true;
+                } else {
+                    suspend(task, node, data);
+                    WorkFlowContext.reboot();
+                    return;
+                }
             }
-
+            TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, activityResult, data, task);
+            TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
+            taskPersister.initiateOrUpdateTask(task, false, taskStep);
             node = TaskHelper.traverse(activityResult, node);
         }
 
-        if (activityResult == ActivityResult.SUCCESS || activityResult == ActivityResult.FAIL) {
+        if (activityResult != null) {
             if (completedWithFailure) {
-                log.warn("Max retry times reached, change activity result to failed anyway.");
                 activityResult = ActivityResult.FAIL;
             }
             TaskHelper.complete(task, data, taskPersister, activityResult);
         }
+
         WorkFlowContext.reboot();
     }
 
-    private ActivityResult doRetry(final Node node, final Task task, final StreamTransferData data) {
-
-        Node.CURRENT.set(node);
-
-        /**
-         * Before executing the activity, we'd check if the node contains asynchronous dependency nodes,
-         * if yes, we should construct some asynchronous tasks then turn back to the normal procedure.
-         */
-        if (node.getAsyncDependencies() != null) {
-            TaskHelper.setUpAsyncTasks(WorkFlowContext.provide(), node);
+    private Resource preparePrimaryResource(final StreamTransferData streamTransferData, final Task task)  {
+        String className = streamTransferData.as("primaryClass", String.class);
+        try {
+            return Resource.builder()
+                   .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
+                   .value(Jackson.parse(task.getJsonfiedPrimaryResource(), Class.forName(className)))
+                   .build();
+        } catch (Exception e) {
+            return null;
         }
-
-        ActivityResult activityResult = TaskHelper.perform(node, ActivityResult.SUSPEND);
-
-        if (activityResult.equals(ActivityResult.SUSPEND)) {
-            if (task.getRetryTimes() == MAX_RETRY) {
-                activityResult = ActivityResult.FAIL;
-                completedWithFailure = true;
-            } else {
-                suspend(task, node, data);
-                return ActivityResult.SUSPEND;
-            }
-        }
-
-        TaskStep taskStep = TaskStep.builder()
-                .createTime(System.currentTimeMillis())
-                .graphName(node.getGraph().getGraphName())
-                .nodeName(node.getNodeName())
-                .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
-                .streamTransferData(HessianIOSerializer.encode(data))
-                .taskId(task.getTaskId())
-                .build();
-
-        TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
-        taskPersister.initiateOrUpdateTask(task, false, taskStep);
-
-        return activityResult;
-    }
-
-    private Resource preparePrimaryResource(final StreamTransferData streamTransferData, final Task task) {
-       String className = streamTransferData.as("primaryClass", String.class);
-        if (task.getJsonfiedPrimaryResource() != null) {
-            try {
-                return Resource.builder()
-                        .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
-                        .value(Jackson.parse(task.getJsonfiedPrimaryResource(), Class.forName(className)))
-                        .build();
-            } catch (ClassNotFoundException e) {
-                log.error("Fail to parse primary value [{}] with type [{}]", task.getJsonfiedPrimaryResource(), className);
-            }
-        }
-        return null;
     }
 
     private void suspend(final Task task, final Node node, final StreamTransferData data) {
         // Persist workflow status to persistent layer.
-        TaskStep taskStep = TaskStep.builder()
-                .createTime(System.currentTimeMillis())
-                .graphName(node.getGraph().getGraphName())
-                .nodeName(node.getNodeName())
-                .status(StreamTransferDataStatus.SUSPEND)
-                .streamTransferData(HessianIOSerializer.encode(data))
-                .taskId(task.getTaskId())
-                .build();
+        TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, ActivityResult.SUSPEND, data, task);
         task.setLastExcutionTime(System.currentTimeMillis());
-        if (task.getRetryTimes() == MAX_RETRY) {
-            // Will not try any more.
-            log.error("Max retry times reached for task [{}] at node [{}] in procedure [{}]", task.getTaskId(),
-                    node.getNodeName(), node.getGraph().getGraphName());
-            return;
+        if (task.getNodeName().contentEquals(node.getNodeName())) {
+            task.setRetryTimes(task.getRetryTimes() + 1);
         } else {
-            if (task.getNodeName().contentEquals(node.getNodeName())) {
-                task.setRetryTimes(task.getRetryTimes() + 1);
-            } else {
-                task.setRetryTimes(0);
-            }
+            task.setRetryTimes(0);
         }
         updateLastExecutionTimeAndSuspend(node, task, taskStep);
     }
 
     private void updateLastExecutionTimeAndSuspend(final Node node, final Task task, final TaskStep taskStep) {
-        int interval = getTime(this.retryPattern, task.getRetryTimes());
-        if (node.getIntervals() != null) {
-            if (node.getIntervals().size() > task.getRetryTimes()) {
-                interval = node.getIntervals().get(task.getRetryTimes());
-            } else {
-                interval = node.getIntervals().get(node.getIntervals().size() - 1);
-            }
-        }
+        int interval = TaskHelper.getInterval(node, retryPattern, task.getRetryTimes());
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
         task.setNodeName(node.getNodeName());
         task.setStatus(TaskStatus.PENDING.code());

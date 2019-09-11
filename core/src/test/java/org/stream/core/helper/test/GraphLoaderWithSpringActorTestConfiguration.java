@@ -77,7 +77,6 @@ public class GraphLoaderWithSpringActorTestConfiguration {
     @Bean
     public Engine engine() {
         AutoScheduledEngine defaultEngine = new AutoScheduledEngine();
-        defaultEngine.setGraphContext(graphContext());
         defaultEngine.setApplication("testApplication");
         defaultEngine.setTaskIDGenerator(new UUIDTaskIDGenerator());
         defaultEngine.setTaskPersister(taskPersister());
