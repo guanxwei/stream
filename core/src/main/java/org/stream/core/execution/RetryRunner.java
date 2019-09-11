@@ -7,6 +7,7 @@ import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
@@ -103,7 +104,8 @@ public class RetryRunner implements Runnable {
                     return;
                 }
             }
-            TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, activityResult, data, task);
+            TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node,
+                    TaskExecutionUtils.STATUS_MAPPING.get(activityResult), data, task);
             TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
             taskPersister.initiateOrUpdateTask(task, false, taskStep);
             node = TaskHelper.traverse(activityResult, node);
@@ -133,7 +135,7 @@ public class RetryRunner implements Runnable {
 
     private void suspend(final Task task, final Node node, final StreamTransferData data) {
         // Persist workflow status to persistent layer.
-        TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, ActivityResult.SUSPEND, data, task);
+        TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
         task.setLastExcutionTime(System.currentTimeMillis());
         if (task.getNodeName().contentEquals(node.getNodeName())) {
             task.setRetryTimes(task.getRetryTimes() + 1);

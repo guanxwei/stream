@@ -2,7 +2,6 @@ package org.stream.core.execution;
 
 import java.io.Serializable;
 
-import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.exception.DuplicateTaskException;
 import org.stream.core.exception.WorkFlowExecutionExeception;
@@ -12,6 +11,7 @@ import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
@@ -182,7 +182,8 @@ public class AutoScheduledEngine implements Engine {
                 .taskId(taskId)
                 .build();
         data.add("primaryClass", primaryResource.getValue().getClass().getName());
-        TaskStep taskStep = TaskExecutionUtils.constructStep(graph, graph.getStartNode(), ActivityResult.SUCCESS, data, task);
+        TaskStep taskStep = TaskExecutionUtils.constructStep(graph, graph.getStartNode(),
+                StreamTransferDataStatus.SUCCESS, data, task);
         taskPersister.initiateOrUpdateTask(task, true, taskStep);
         return task;
     }

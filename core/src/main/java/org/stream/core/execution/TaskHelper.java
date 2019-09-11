@@ -14,6 +14,7 @@ import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
@@ -104,7 +105,7 @@ public final class TaskHelper {
         // Let the back-end runners have chances to retry the suspended work-flow.;
         int interval = getInterval(node, pattern, 0);
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
-        TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, ActivityResult.SUSPEND, data, task);
+        TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
         taskPersister.suspend(task, interval, taskStep);
 
         return interval;

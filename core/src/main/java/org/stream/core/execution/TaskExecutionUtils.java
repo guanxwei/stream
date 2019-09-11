@@ -12,6 +12,8 @@ import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
 
+import com.google.common.collect.ImmutableMap;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -22,6 +24,15 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class TaskExecutionUtils {
+
+    /**
+     * Status mapping.
+     */
+    public static final ImmutableMap<ActivityResult, String> STATUS_MAPPING = ImmutableMap.<ActivityResult, String>builder()
+            .put(ActivityResult.SUCCESS, StreamTransferDataStatus.SUCCESS)
+            .put(ActivityResult.SUSPEND, StreamTransferDataStatus.SUSPEND)
+            .put(ActivityResult.FAIL, StreamTransferDataStatus.FAIL)
+            .build();
 
     private TaskExecutionUtils() { }
 
@@ -49,27 +60,27 @@ public final class TaskExecutionUtils {
             final ActivityResult activityResult) {
         StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
         TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
-        TaskStep taskStep = constructStep(graph, node, activityResult, data, task);
+        TaskStep taskStep = constructStep(graph, node, STATUS_MAPPING.get(activityResult), data, task);
         taskPersister.initiateOrUpdateTask(task, false, taskStep);
         return TaskHelper.traverse(activityResult, node);
     }
 
     /**
-     * Construct task step information based on node execution result.
+     * Construct task step information.
      * @param graph Procedure graph.
      * @param node Current node.
-     * @param activityResult Current node' execution result.
+     * @param status Step status
      * @param data Stream transfer data allocated for the task.
      * @param task Target task.
      * @return Constructed step entity.
      */
-    public static TaskStep constructStep(final Graph graph, final Node node, final ActivityResult activityResult,
+    public static TaskStep constructStep(final Graph graph, final Node node, final String status,
             final StreamTransferData data, final Task task) {
         TaskStep taskStep = TaskStep.builder()
                 .createTime(System.currentTimeMillis())
                 .graphName(graph.getGraphName())
                 .nodeName(node.getNodeName())
-                .status(activityResult.equals(ActivityResult.SUCCESS) ? StreamTransferDataStatus.SUCCESS : StreamTransferDataStatus.FAIL)
+                .status(status)
                 .streamTransferData(HessianIOSerializer.encode(data))
                 .taskId(task.getTaskId())
                 .build();
