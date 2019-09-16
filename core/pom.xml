@@ -137,7 +137,7 @@
         <dependency>
         <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
-            <version>2.6.2</version><!--$NO-MVN-MAN-VER$-->
+            <version>3.0.1</version><!--$NO-MVN-MAN-VER$-->
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
         <dependency>
@@ -344,7 +344,7 @@
             </plugin>
         </plugins>
     </build>
-  <version>4.0.0</version>
+  <version>4.0.1</version>
   <profiles>
         <profile>
             <id>sonatype-oss-release</id>

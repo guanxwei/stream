@@ -4,7 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import lombok.AllArgsConstructor;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
 import lombok.Getter;
 import lombok.Setter;
 import redis.clients.jedis.HostAndPort;
@@ -14,7 +15,6 @@ import redis.clients.jedis.JedisCluster;
  * Default implementation of {@linkplain RedisClient}
  */
 @Setter @Getter
-@AllArgsConstructor
 public class RedisClientImpl implements RedisClient {
 
     private JedisCluster jedisCluster;
@@ -24,6 +24,14 @@ public class RedisClientImpl implements RedisClient {
     private int timeout;
 
     private int maxRetryTimes;
+
+    private String passWord;
+
+    private int maxActive;
+
+    private int maxIdle;
+
+    private int minIdle;
 
     /**
      * Default constructor.
@@ -89,7 +97,12 @@ public class RedisClientImpl implements RedisClient {
             HostAndPort hostAndPort = new HostAndPort(pair[0], Integer.parseInt(pair[1]));
             hostAndPorts.add(hostAndPort);
         }
-        jedisCluster = new JedisCluster(hostAndPorts, timeout, maxRetryTimes);
+        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+        config.setMaxIdle(maxIdle);
+        config.setMinIdle(minIdle);
+        config.setMaxTotal(maxActive);
+        config.setMaxWaitMillis(500);
+        jedisCluster = new JedisCluster(hostAndPorts, timeout, maxRetryTimes, config);
     }
 
     /**
