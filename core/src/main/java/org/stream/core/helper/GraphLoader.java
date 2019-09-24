@@ -2,10 +2,13 @@ package org.stream.core.helper;
 
 import org.stream.core.component.Graph;
 import org.stream.core.exception.GraphLoadException;
+import org.stream.core.execution.Engine;
 
 /**
- * Encapsulation of stream framework graph loader.
- * @author weigu
+ * A graph loader who is responsible to load the graph definition from the input source,
+ * parse the definition and translate them into java objects so that {@link Engine} implementation
+ * can use them to execute tasks.
+ * @author weiguanxiong
  *
  */
 public interface GraphLoader {

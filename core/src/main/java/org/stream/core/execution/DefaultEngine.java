@@ -96,11 +96,8 @@ public class DefaultEngine implements Engine {
         WorkFlowContext.provide().setRebooting(true);
     }
 
-    private ResourceTank start(final GraphContext graphContext,
-            final String graphName,
-            final Resource resource,
-            final boolean autoRecord,
-            final boolean autoClean) {
+    private ResourceTank start(final GraphContext graphContext, final String graphName, final Resource resource,
+            final boolean autoRecord, final boolean autoClean) {
 
         // Deduce work-flow procedure definition graph.
         Graph graph = deduceGraph(graphName, graphContext);
@@ -234,7 +231,6 @@ public class DefaultEngine implements Engine {
          * Extract the start node of the graph, and invoke the perform() method.
          */
         Node executionNode = graph.getStartNode();
-        Node.CURRENT.set(null);
         while (executionNode != null && !WorkFlowContext.provide().isRebooting()) {
 
             if (isStuckInDeadLoop(executionNode, Node.CURRENT.get())) {
@@ -264,11 +260,7 @@ public class DefaultEngine implements Engine {
                 activityResult = processSuspendCase(activityResult, workFlow, executionNode);
             }
 
-            Node temp = executionNode;
-            executionNode = TaskHelper.traverse(activityResult, executionNode);
-            if (executionStateSwitcher.isOpen(temp, executionNode, activityResult)) {
-                executionNode = executionStateSwitcher.open(graph, temp);
-            }
+            executionNode = TaskHelper.onCondition(executionNode, executionStateSwitcher, activityResult, graph);
         }
     }
 

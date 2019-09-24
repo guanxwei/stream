@@ -20,6 +20,7 @@ import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.state.ExecutionStateSwitcher;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -63,15 +64,13 @@ public final class TaskHelper {
     public static ActivityResult perform(final Node node, final ActivityResult defaultResult) {
         Node.CURRENT.set(node);
         TaskExecutionUtils.prepareAsyncTasks(node);
-        ActivityResult activityResult = null;
         try {
-            activityResult = node.perform();
+            return node.perform();
         } catch (Exception e) {
-            log.warn("Fail to execute graph [{}] at node [{}]", node.getGraph().getGraphName(), node.getNodeName());
-            e.printStackTrace();
-            activityResult = defaultResult;
+            log.warn("Fail to execute graph [{}] at node [{}] due to exeception",
+                    node.getGraph().getGraphName(), node.getNodeName(), e);
+            return defaultResult;
         }
-        return activityResult;
     }
 
     /**
@@ -121,11 +120,7 @@ public final class TaskHelper {
     public static int getInterval(final Node node, final RetryPattern pattern, final int retryTimes) {
         int interval = RetryRunner.getTime(pattern, retryTimes);
         if (node.getIntervals() != null) {
-            if (node.getIntervals().size() > retryTimes) {
-                interval = node.getIntervals().get(retryTimes);
-            } else {
-                interval = node.getIntervals().get(node.getIntervals().size() - 1);
-            }
+            interval = node.getNextRetryInterval(retryTimes);
         }
         return interval;
     }
@@ -263,5 +258,25 @@ public final class TaskHelper {
 
             }, interval, TimeUnit.MILLISECONDS);
         }
+    }
+
+    /**
+     * Deduce the next node to be executed based on the activity result and current node's configuration.
+     * If dead loop is detected, return null so that the engine can terminate the worklflow normally.
+     * @param previous The node previous step was executed.
+     * @param executionStateSwitcher Execution state switcher used to check if it is stuck at dead loop.
+     *      if so change the next node to null.
+     * @param activityResult The activity result returned by the previous node.
+     * @param graph Graph
+     * @return Next node to be executed.
+     */
+    public static Node onCondition(final Node previous, final ExecutionStateSwitcher executionStateSwitcher,
+            final ActivityResult activityResult, final Graph graph) {
+        Node next = TaskHelper.traverse(activityResult, previous);
+        if (executionStateSwitcher.isOpen(previous, next, activityResult)) {
+            next = executionStateSwitcher.open(graph, previous);
+        }
+
+        return next;
     }
 }

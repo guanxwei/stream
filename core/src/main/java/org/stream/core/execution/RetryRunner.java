@@ -21,7 +21,7 @@ import org.stream.extension.state.ExecutionStateSwitcher;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Runnable implementation to process pending on retry tasks.
+ * Runnable implementation to process suspended tasks.
  *
  *
  * Updated 2018/09/12:
@@ -112,11 +112,7 @@ public class RetryRunner implements Runnable {
                     TaskExecutionUtils.STATUS_MAPPING.get(activityResult), data, task);
             TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
             taskPersister.initiateOrUpdateTask(task, false, taskStep);
-            Node previous = node;
-            node = TaskHelper.traverse(activityResult, node);
-            if (executionStateSwitcher.isOpen(previous, node, activityResult)) {
-                node = executionStateSwitcher.open(previous.getGraph(), previous);
-            }
+            node = TaskHelper.onCondition(node, executionStateSwitcher, activityResult, node.getGraph());
         }
 
         if (activityResult != null) {

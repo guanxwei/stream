@@ -39,8 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract of stream graph loader. Define the basic procedure to load a graph from the input resource.
- * Implementations only have to implement the method {@link #loadInputStream(String)},
- * which load the graph as input stream from the input resource.
+ * Abstract graph loader will first translate the input source into an input-stream object, then read
+ * the graph detail from the stream. Implementations should only override the method {@link #loadGraphFromSource(String)}.
  *
  * @author weiguanxiong
  *

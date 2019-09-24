@@ -72,12 +72,8 @@ public class ExecutionRunner implements Runnable {
                 return;
             }
 
-            Node temp = node;
-            node = TaskExecutionUtils.updateTaskAndTraverseNode(task, node, taskPersister, graph, activityResult);
-
-            if (executionStateSwitcher.isOpen(temp, node, activityResult)) {
-                node = executionStateSwitcher.open(graph, temp);
-            }
+            TaskExecutionUtils.updateTask(task, node, taskPersister, graph, activityResult);
+            node = TaskHelper.onCondition(node, executionStateSwitcher, activityResult, graph);
         }
 
         TaskHelper.complete(task, WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class),

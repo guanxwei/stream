@@ -53,16 +53,15 @@ public final class TaskExecutionUtils {
      * @param node Current node.
      * @param taskPersister Task persister used to update the task information.
      * @param graph Graph used to define the procedure.
-     * @param activityResult Current node's execution result.
-     * @return Next node to be executed.
+     * @param activityResult Current node's execution result..
      */
-    public static Node updateTaskAndTraverseNode(final Task task, final Node node, final TaskPersister taskPersister, final Graph graph,
+    public static void updateTask(final Task task, final Node node, final TaskPersister taskPersister, final Graph graph,
             final ActivityResult activityResult) {
-        StreamTransferData data = (StreamTransferData) WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE).getValue();
+        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE,
+                StreamTransferData.class);
         TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
         TaskStep taskStep = constructStep(graph, node, STATUS_MAPPING.get(activityResult), data, task);
         taskPersister.initiateOrUpdateTask(task, false, taskStep);
-        return TaskHelper.traverse(activityResult, node);
     }
 
     /**
