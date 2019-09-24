@@ -8,6 +8,8 @@ import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.state.DefaultExecutionStateSwitcher;
+import org.stream.extension.state.ExecutionStateSwitcher;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +26,8 @@ public class ExecutionRunner implements Runnable {
     private TaskPersister taskPersister;
     private RetryPattern pattern;
     private Resource dataResource;
+
+    private ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
 
     /**
      * Constructor.
@@ -68,7 +72,12 @@ public class ExecutionRunner implements Runnable {
                 return;
             }
 
+            Node temp = node;
             node = TaskExecutionUtils.updateTaskAndTraverseNode(task, node, taskPersister, graph, activityResult);
+
+            if (executionStateSwitcher.isOpen(temp, node, activityResult)) {
+                node = executionStateSwitcher.open(graph, temp);
+            }
         }
 
         TaskHelper.complete(task, WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class),

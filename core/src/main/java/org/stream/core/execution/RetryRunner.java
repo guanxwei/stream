@@ -15,6 +15,8 @@ import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.pattern.defaults.EqualTimeIntervalPattern;
 import org.stream.extension.pattern.defaults.ScheduledTimeIntervalPattern;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.state.DefaultExecutionStateSwitcher;
+import org.stream.extension.state.ExecutionStateSwitcher;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,6 +48,8 @@ public class RetryRunner implements Runnable {
     private TaskPersister taskPersister;
     private RetryPattern retryPattern;
     private boolean completedWithFailure = false;
+
+    private ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
 
     /**
      * Constructor.
@@ -108,7 +112,11 @@ public class RetryRunner implements Runnable {
                     TaskExecutionUtils.STATUS_MAPPING.get(activityResult), data, task);
             TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
             taskPersister.initiateOrUpdateTask(task, false, taskStep);
+            Node previous = node;
             node = TaskHelper.traverse(activityResult, node);
+            if (executionStateSwitcher.isOpen(previous, node, activityResult)) {
+                node = executionStateSwitcher.open(previous.getGraph(), previous);
+            }
         }
 
         if (activityResult != null) {

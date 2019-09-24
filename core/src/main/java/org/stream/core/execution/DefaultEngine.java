@@ -242,9 +242,6 @@ public class DefaultEngine implements Engine {
                 break;
             }
 
-            // Set the current working node reference.
-            Node.CURRENT.set(executionNode);
-
             if (autoRecord) {
                 ExecutionRecord executionRecord = ExecutionRecord.builder()
                         .time(Calendar.getInstance().getTime())
