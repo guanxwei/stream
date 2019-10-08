@@ -18,6 +18,7 @@ import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.test.base.AsyncTestActivity;
 import org.stream.core.test.base.FailTestActivity;
+import org.stream.core.test.base.PrintRecordActivity;
 import org.stream.core.test.base.SuccessTestActivity;
 import org.stream.core.test.base.SuspendActivity;
 import org.stream.core.test.base.TestActivity;
@@ -61,6 +62,11 @@ public class SpringConfiguration {
     }
 
     @Bean
+    public PrintRecordActivity printRecordActivity() {
+        return new PrintRecordActivity();
+    }
+
+    @Bean
     public GraphContext graphContext() {
         GraphContext graphContext = new GraphContext();
         graphContext.setActivityRepository(activityRepository());
@@ -90,6 +96,9 @@ public class SpringConfiguration {
             .addAction("failedAction")
                 .act(failTestActivity())
                 .dependsOn(dependencies)
+                .done()
+            .addAction("errorProcess")
+                .act(printRecordActivity())
                 .done()
             .startFrom("startNode")
                 .act(testActivity())

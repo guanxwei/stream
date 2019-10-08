@@ -13,7 +13,6 @@ import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRecord;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.Jackson;
 import org.stream.core.resource.ResourceTank;
 import org.testng.annotations.Test;
 
@@ -32,6 +31,5 @@ public class ProcedureSpringTest extends AbstractTestNGSpringContextTests {
         assertNotNull(resourceTank);
         List<ExecutionRecord> executionRecords = WorkFlowContext.getRecords();
         assertEquals(executionRecords.size(), 9);
-        System.out.print(Jackson.json(executionRecords));
     }
 }

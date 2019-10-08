@@ -214,9 +214,14 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         return activity;
     }
 
-    private void trackNodes(final Map<String, Node> knowNodes, final StepPair pair) {
+    private void trackNodes(final Map<String, Node> knowNodes, final StepPair pair) throws GraphLoadException {
         final Node predecessor = knowNodes.get(pair.getPredecessor());
         final Node successor = knowNodes.get(pair.getSuccessor());
+        if (successor == null) {
+            throw new GraphLoadException(String.format("Node %s not found for "
+                    + "predecessor node %s with step type %s", pair.getSuccessor(), pair.getPredecessor(),
+                    pair.getNextStepType().name()));
+        }
         final NextStepType type = pair.getNextStepType();
         for (final ActivityResult result : ActivityResult.values()) {
             result.accept(new Visitor<Void>() {
