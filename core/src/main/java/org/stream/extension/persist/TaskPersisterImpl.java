@@ -69,9 +69,6 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean persist(final Task task) {
-        /**
-         * Persist the task in reliable storage and send a message to Kafka cluster if configured. 
-         */
         return taskStorage.update(task) && messageQueueBasedTaskStorage.persist(task);
     }
 
@@ -96,14 +93,19 @@ public class TaskPersisterImpl implements TaskPersister {
     public Collection<String> getPendingList(final int type, final int queue) {
         assert application != null;
 
+        String queueName = QueueHelper.getQueueNameFromIndex(QueueHelper.getPrefix(type), application, queue);
         Collection<String> result = Collections.emptyList();
         try {
             switch (type) {
             case 1:
-                result = delayQueue.getItems(QueueHelper.getQueueNameFromIndex(QueueHelper.RETRY_KEY, application, queue), System.currentTimeMillis());
+                if (lockQueue(queueName)) {
+                    result = delayQueue.getItems(queueName, System.currentTimeMillis());
+                }
                 break;
             case 2:
-                result = fifoQueue.pop(QueueHelper.getQueueNameFromIndex(QueueHelper.BACKUP_KEY, application, queue), 10);
+                if (lockQueue(queueName)) {
+                    result = fifoQueue.pop(queueName, 10);
+                }
                 break;
             case 3:
                 List<Task> tasks = taskStorage.queryStuckTasks();
@@ -130,44 +132,24 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean tryLock(final String taskId) {
-        boolean result = redisClient.setnx(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis()) == 1L;
-        if (result) {
-            // No body else grabs the lock, we are the winner of contest;
-            // Mark as locked.
+        boolean locked = redisClient.setnx(genLock(taskId), genLockValue()) == 1L;
+        if (locked) {
             markAsLocked(taskId);
             return true;
-        } else if (isLegibleOwner(taskId)) {
-            // Retry within the legible time window, return true directly and refresh the lock time.
-            redisClient.set(taskId + "_lock", HOST_NAME + "_" + System.currentTimeMillis());
-            if (processingTasks.containsKey(taskId) 
-                    && !Thread.currentThread().getName().equals(processingTasks.get(taskId))) {
+        } else if (isLegibleOwner(genLock(taskId))) {
+            if (processingTasks.containsKey(taskId)
+                    && !processingTasks.get(taskId).equals(Thread.currentThread().getName())) {
                 return false;
             }
+            // refresh locked time.
+            redisClient.set(genLock(taskId), genLockValue());
             processingTasks.put(taskId, Thread.currentThread().getName());
             return true;
         } else {
-            // Someone else owns the lock, we should check if it has expired.
-            long lockTime = parseLock(redisClient.get(taskId + "_lock"));
-            long now = System.currentTimeMillis();
-            /** 
-             * If the lock was hold longer then 6 seconds, we would think that the previous owner has crashed.
-             * In most cases a remote call should be done in at most 3 seconds, here set the lock as double the
-             * most used timeout * 2 seconds.
-             */
-            if (now - lockTime >= LOCK_EXPIRE_TIME) {
-                /**
-                 * The task has been locked too long, release the lock so as other contenders have chances to retry the work-flow.
-                 */
-                releaseLock(taskId);
-            }
+            releaseExpiredLock(genLock(taskId), LOCK_EXPIRE_TIME);
+            processingTasks.remove(taskId);
             return false;
         }
-    }
-
-    private void markAsLocked(final String taskId) {
-        processingTasks.put(taskId, Thread.currentThread().getName());
-        fifoQueue.push(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
-        delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);
     }
 
     /**
@@ -175,8 +157,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean releaseLock(final String taskId) {
-        processingTasks.remove(taskId);
-        return redisClient.del(taskId + "_lock");
+        return redisClient.del(genLock(taskId));
     }
 
     /**
@@ -185,7 +166,7 @@ public class TaskPersisterImpl implements TaskPersister {
     @Override
     public boolean initiateOrUpdateTask(final Task task, final boolean withInsert, final TaskStep taskStep) {
         // Refresh lock time.
-        if (isLegibleOwner(task.getTaskId())) {
+        if (isLegibleOwner(genLock(task.getTaskId()))) {
             if (withInsert) {
                 return taskStepStorage.insert(taskStep) && taskStorage.persist(task);
             } else {
@@ -194,27 +175,6 @@ public class TaskPersisterImpl implements TaskPersister {
         } else {
             throw new WorkFlowExecutionExeception("Lock has been grabed by other processors, give up execution");
         }
-    }
-
-    private boolean isLegibleOwner(final String taskId) {
-        String ownerInfo = redisClient.get(taskId + "_lock");
-        if (ownerInfo == null) {
-            return true;
-        }
-
-        if (ownerInfo.startsWith(HOST_NAME)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private long parseLock(final String ownerInfo) {
-        if (ownerInfo == null) {
-            return 0L;
-        }
-        String[] infos = ownerInfo.split("_");
-        return Long.valueOf(infos[1]);
     }
 
     /**
@@ -299,4 +259,67 @@ public class TaskPersisterImpl implements TaskPersister {
         return processingTasks.containsKey(taskId);
     }
 
+    private void markAsLocked(final String taskId) {
+        processingTasks.put(taskId, Thread.currentThread().getName());
+        fifoQueue.push(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
+        delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);
+    }
+
+    private String genLock(final String taskId) {
+        return taskId + "_lock";
+    }
+
+    private String genLockValue() {
+        return HOST_NAME + "_" + System.currentTimeMillis();
+    }
+
+    private boolean isLegibleOwner(final String lock) {
+        String ownerInfo = redisClient.get(lock);
+        if (ownerInfo == null) {
+            return true;
+        }
+
+        if (ownerInfo.startsWith(HOST_NAME)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private long parseLock(final String ownerInfo) {
+        if (ownerInfo == null) {
+            return 0L;
+        }
+        String[] infos = ownerInfo.split("_");
+        return Long.valueOf(infos[1]);
+    }
+
+    private boolean lockQueue(final String queueName) {
+        String lock = queueName + "::lock";
+        String value = genLockValue();
+        boolean locked = redisClient.setnx(lock, value) == 1L;
+        if (locked) {
+            redisClient.setWithExpireTime(lock, value, 3);
+        } else if (isLegibleOwner(lock)) {
+            redisClient.setWithExpireTime(lock, value, 3);
+        } else {
+            releaseExpiredLock(lock, 3);
+        }
+
+        return locked;
+    }
+
+    private void releaseExpiredLock(final String lock, final long seconds) {
+        // Someone else owns the lock, we should check if it has expired.
+        long lockTime = parseLock(redisClient.get(lock));
+        long now = System.currentTimeMillis();
+        /** 
+         * If the lock was hold longer then 6 seconds, we would think that the previous owner has crashed.
+         * In most cases a remote call should be done in at most 3 seconds, here set the lock as double the
+         * most used timeout * 2 seconds.
+         */
+        if (now - lockTime >= seconds) {
+            redisClient.del(lock);
+        }
+    }
 }

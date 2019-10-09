@@ -83,13 +83,14 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
         for (int i = 0; i < threads; i++) {
             Integer queue = i;
             scheduledExecutorService.scheduleAtFixedRate(() -> {
+                String queueName = QueueHelper.getQueueNameFromIndex(QueueHelper.getPrefix(type),
+                        taskPersister.getApplication(), queue);
                 if (!shuttingDown) {
                     List<String> contents = new LinkedList<>();
                     contents.addAll(taskPersister.getPendingList(type, queue));
                     if (!contents.isEmpty()) {
                         log.info("Pending tasks [{}] loaded for type [{}] from queue [{}]", Jackson.json(contents), type,
-                                QueueHelper.getQueueNameFromIndex(QueueHelper.getPrefix(type),
-                                        taskPersister.getApplication(), queue));
+                                queueName);
                         process(contents);
                     }
                 }

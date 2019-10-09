@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.execution.test.MockRedisClient;
 import org.stream.extension.clients.RedisClient;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStep;
@@ -37,7 +38,6 @@ public class TaskPersisterImplTest {
     @Mock
     private TaskStepStorage taskStepStorage;
 
-    @Mock
     private RedisClient redisClient;
 
     @Mock
@@ -52,11 +52,12 @@ public class TaskPersisterImplTest {
     public void BeforeMethod() {
         MockitoAnnotations.initMocks(this);
         taskPersisterImpl.setApplication(application);
+        redisClient = new MockRedisClient();
+        taskPersisterImpl.setRedisClient(redisClient);
     }
 
     @Test
     public void testTryLock() {
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
         String taskID = RandomStringUtils.randomAlphabetic(12);
         assertTrue(taskPersisterImpl.tryLock(taskID));
         String queue = QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskID);
@@ -68,7 +69,6 @@ public class TaskPersisterImplTest {
 
     @Test
     public void testTryLock2() throws Throwable {
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0L);
         String taskID = RandomStringUtils.randomAlphabetic(12);
         Thread t = new Thread(() -> {
             assertTrue(taskPersisterImpl.tryLock(taskID));
@@ -89,7 +89,6 @@ public class TaskPersisterImplTest {
 
     @Test
     public void testTryLock3() {
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
         String taskID = RandomStringUtils.randomAlphabetic(12);
         assertTrue(taskPersisterImpl.tryLock(taskID));
         String queue = QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskID);
@@ -104,6 +103,8 @@ public class TaskPersisterImplTest {
 
     @Test
     public void tetTrylockexpired() {
+        RedisClient redisClient = Mockito.mock(RedisClient.class);
+        taskPersisterImpl.setRedisClient(redisClient);
         Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(0l);
         String taskID = RandomStringUtils.randomAlphabetic(12);
         Mockito.when(redisClient.get(taskID + "_lock")).thenReturn("fdafdafaf_102102");
@@ -153,6 +154,8 @@ public class TaskPersisterImplTest {
 
     @Test
     public void testReleaseLock() {
+        RedisClient redisClient = Mockito.mock(RedisClient.class);
+        taskPersisterImpl.setRedisClient(redisClient);
         taskPersisterImpl.releaseLock("test");
         Mockito.verify(redisClient).del("test_lock");
         assertFalse(taskPersisterImpl.isProcessing("test"));
@@ -161,28 +164,29 @@ public class TaskPersisterImplTest {
     @Test
     public void testInitiateOrUpdateTask() {
         Task task = new Task();
+        task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         TaskStep taskStep = new TaskStep();
         Mockito.when(taskStepStorage.insert(taskStep)).thenReturn(true);
         taskPersisterImpl.initiateOrUpdateTask(task, true, taskStep);
         Mockito.verify(taskStorage).persist(task);
         Mockito.verify(taskStepStorage).insert(taskStep);
-        
     }
 
     @Test
     public void testInitiateOrUpdateTask2() {
         Task task = new Task();
+        task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         TaskStep taskStep = new TaskStep();
         Mockito.when(taskStepStorage.insert(taskStep)).thenReturn(true);
-
         taskPersisterImpl.initiateOrUpdateTask(task, false, taskStep);
         Mockito.verify(taskStorage).update(task);
         Mockito.verify(taskStepStorage).insert(taskStep);
-        
     }
 
     @Test(expectedExceptions = WorkFlowExecutionExeception.class)
     public void testInitiateOrUpdateTask3() {
+        RedisClient redisClient = Mockito.mock(RedisClient.class);
+        taskPersisterImpl.setRedisClient(redisClient);
         Task task = new Task();
         task.setTaskId("dfafdafaf");
         TaskStep taskStep = new TaskStep();
