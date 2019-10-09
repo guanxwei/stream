@@ -74,7 +74,7 @@ public class RetryRunner implements Runnable {
 
         log.info("Begin to process stuck task [{}]", content);
         Task task = Task.parse(content);
-        if (taskPersister.isProcessing(task.getTaskId())) {
+        if (!taskPersister.tryLock(task.getTaskId())) {
             log.info("Task [{}] is being processed, yield", task.getTaskId());
             return;
         }

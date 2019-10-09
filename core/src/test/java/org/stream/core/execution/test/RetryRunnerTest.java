@@ -6,6 +6,7 @@ import static org.testng.Assert.assertTrue;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -91,6 +92,8 @@ public class RetryRunnerTest {
 
        content = task.toString();
        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+       Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
+
        retryRunner.run();
 
        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
@@ -285,23 +288,38 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
-        Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
-        Mockito.when(pattern.getTimeInterval(6)).thenReturn(10);
-        Mockito.when(taskPersister.retrieveData(Mockito.anyString())).thenReturn(data);
+        TaskPersisterImpl taskPersisterImpl = Mockito.spy(new TaskPersisterImpl());
+        taskPersisterImpl.setFifoQueue(Mockito.mock(FifoQueue.class));
+        taskPersisterImpl.setDelayQueue(Mockito.mock(DelayQueue.class));
 
-        Mockito.when(taskPersister.isProcessing(task.getTaskId())).thenReturn(false).thenReturn(true);
+        retryRunner = new RetryRunner(content, graphContext, taskPersisterImpl, pattern);
+
+        RedisClient redisClient = new MockRedisClient();
+        taskPersisterImpl.setRedisClient(redisClient);
+
+        Mockito.when(pattern.getTimeInterval(6)).thenReturn(10);
+        Mockito.doReturn(data).when(taskPersisterImpl).retrieveData(task.getTaskId());
+
+        CountDownLatch countDownLatch = new CountDownLatch(10);
         for (int i = 0; i < 10; i++) {
-            Thread t = new Thread(retryRunner);
+            Thread t = new Thread(() -> {
+                try {
+                    retryRunner.run();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
             t.start();
         }
 
-        Thread.sleep(1000);
+        countDownLatch.await();
         ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
 
-        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(),
+        Mockito.verify(taskPersisterImpl).suspend(captor1.capture(), captor2.capture(),
                 captor6.capture());
 
         Assert.assertEquals(captor2.getValue().intValue(), 10);
@@ -334,12 +352,18 @@ public class RetryRunnerTest {
         taskPersisterImpl.setRedisClient(redisClient);
         Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
         retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
-        taskPersisterImpl.tryLock(task.getTaskId());
+        try {
+            // Mock host a running action.
+            retryRunner.run();
+        } catch (Exception e) {
+            assertTrue(e instanceof NullPointerException);
+        }
+        // Mock host b running action
+        Thread.currentThread().setName("fkljdasfjal");
         retryRunner.run();
-        taskPersisterImpl.tryLock(task.getTaskId());
-        retryRunner.run();
-
         taskPersisterImpl.releaseLock(task.getTaskId());
+
+        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
         try {
             retryRunner.run();
         } catch (Exception e) {
