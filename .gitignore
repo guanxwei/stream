@@ -7,3 +7,4 @@ core/.classpath
 core/.settings/*
 .classpath
 .settings*
+*/local-pom.xml
