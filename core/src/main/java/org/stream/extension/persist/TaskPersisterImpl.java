@@ -37,7 +37,7 @@ public class TaskPersisterImpl implements TaskPersister {
 
     private static final String HOST_NAME = RandomStringUtils.randomAlphabetic(32);
     // Lock expire time in milliseconds.
-    private static final long LOCK_EXPIRE_TIME = 6 * 1000;
+    private static final int LOCK_EXPIRE_TIME = 6 * 1000;
     private Map<String, String> processingTasks = new HashMap<String, String>();
 
     @Setter
@@ -299,17 +299,17 @@ public class TaskPersisterImpl implements TaskPersister {
         String value = genLockValue();
         boolean locked = redisClient.setnx(lock, value) == 1L;
         if (locked) {
-            redisClient.setWithExpireTime(lock, value, 3);
+            redisClient.setWithExpireTime(lock, value, LOCK_EXPIRE_TIME);
         } else if (isLegibleOwner(lock)) {
-            redisClient.setWithExpireTime(lock, value, 3);
+            redisClient.setWithExpireTime(lock, value, LOCK_EXPIRE_TIME);
         } else {
-            releaseExpiredLock(lock, 3);
+            releaseExpiredLock(lock, LOCK_EXPIRE_TIME);
         }
 
         return locked;
     }
 
-    private void releaseExpiredLock(final String lock, final long seconds) {
+    private void releaseExpiredLock(final String lock, final int seconds) {
         // Someone else owns the lock, we should check if it has expired.
         long lockTime = parseLock(redisClient.get(lock));
         long now = System.currentTimeMillis();
