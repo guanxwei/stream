@@ -299,11 +299,11 @@ public class TaskPersisterImpl implements TaskPersister {
         String value = genLockValue();
         boolean locked = redisClient.setnx(lock, value) == 1L;
         if (locked) {
-            redisClient.setWithExpireTime(lock, value, LOCK_EXPIRE_TIME);
+            redisClient.setWithExpireTime(lock, value, 1);
         } else if (isLegibleOwner(lock)) {
-            redisClient.setWithExpireTime(lock, value, LOCK_EXPIRE_TIME);
+            redisClient.setWithExpireTime(lock, value, 1);
         } else {
-            releaseExpiredLock(lock, LOCK_EXPIRE_TIME);
+            releaseExpiredLock(lock, 1000);
         }
 
         return locked;
