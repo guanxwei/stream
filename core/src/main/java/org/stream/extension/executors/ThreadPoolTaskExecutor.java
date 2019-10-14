@@ -121,12 +121,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private void process(final List<String> taskIDList) {
         for (String taskID :taskIDList) {
-            String content = taskPersister.get(taskID);
-            if (content == null) {
-                taskPersister.removeHub(taskID);
-                continue;
-            }
-            RetryRunner worker = new RetryRunner(content, graphContext, taskPersister, retryPattern);
+            RetryRunner worker = new RetryRunner(taskID, graphContext, taskPersister, retryPattern);
             executorService.submit(worker);
         }
     }

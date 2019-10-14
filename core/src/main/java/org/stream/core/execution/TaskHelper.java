@@ -247,9 +247,8 @@ public final class TaskHelper {
             final TaskPersister taskPersister, final RetryPattern pattern) {
         if (interval <= 1000) {
             LOCAL_RETRY_SCHEDULER.schedule(() -> {
-                String content = taskPersister.get(taskID);
                 log.info("Local retry for task [{}] begin after interval [{}]", taskID, interval);
-                RetryRunner retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+                RetryRunner retryRunner = new RetryRunner(taskID, graphContext, taskPersister, pattern);
                 try {
                     retryRunner.run();
                 } catch (Exception e) {

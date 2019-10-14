@@ -43,7 +43,7 @@ public class RetryRunner implements Runnable {
 
     private static final int MAX_RETRY = 24;
 
-    private String content;
+    private String taskId;
     private GraphContext graphContext;
     private TaskPersister taskPersister;
     private RetryPattern retryPattern;
@@ -53,14 +53,14 @@ public class RetryRunner implements Runnable {
 
     /**
      * Constructor.
-     * @param content Jsonfied {@link Task} entity.
+     * @param taskId taskId.
      * @param graphContext Graph context.
      * @param taskPersister {@linkplain TaskPersister} entity.
      * @param pattern Retry pattern.
      */
-    public RetryRunner(final String content, final GraphContext graphContext, final TaskPersister taskPersister,
+    public RetryRunner(final String taskId, final GraphContext graphContext, final TaskPersister taskPersister,
             final RetryPattern pattern) {
-        this.content = content;
+        this.taskId = taskId;
         this.graphContext = graphContext;
         this.taskPersister = taskPersister;
         this.retryPattern = pattern;
@@ -72,11 +72,15 @@ public class RetryRunner implements Runnable {
     @Override
     public void run() {
 
-        log.info("Begin to process stuck task [{}]", content);
-        Task task = Task.parse(content);
-        if (!taskPersister.tryLock(task.getTaskId())) {
-            log.info("Task [{}] is being processed, yield", task.getTaskId());
+        log.info("Begin to process stuck task [{}]", taskId);
+        if (!taskPersister.tryLock(taskId)) {
+            log.info("Task [{}] is being processed, yield", taskId);
             return;
+        }
+        Task task = Task.parse(taskPersister.get(taskId));
+
+        if (task == null) {
+            taskPersister.removeHub(taskId);
         }
 
         if (task.getStatus() == TaskStatus.COMPLETED.code() || task.getStatus() == TaskStatus.FAILED.code()) {

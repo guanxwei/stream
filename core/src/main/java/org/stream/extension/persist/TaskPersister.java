@@ -25,7 +25,7 @@ public interface TaskPersister {
     /**
      * Get a task by key.
      * @param key Task's unique key.
-     * @return Manipulation result.
+     * @return Jsonfied task entity.
      */
     String get(final String key);
 

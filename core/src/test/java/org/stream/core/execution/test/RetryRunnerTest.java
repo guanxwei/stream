@@ -91,7 +91,8 @@ public class RetryRunnerTest {
                 .build();
 
        content = task.toString();
-       retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+       retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+       Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
        Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
 
        retryRunner.run();
@@ -115,8 +116,8 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
 
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(false);
         retryRunner.run();
@@ -139,7 +140,8 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
 
         retryRunner.run();
@@ -180,7 +182,8 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(0)).thenReturn(10);
 
@@ -214,7 +217,8 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(1)).thenReturn(10);
         Mockito.when(taskPersister.retrieveData(Mockito.anyString())).thenReturn(data);
@@ -252,7 +256,8 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(6)).thenReturn(10);
         Mockito.when(taskPersister.retrieveData(Mockito.anyString())).thenReturn(data);
@@ -291,15 +296,12 @@ public class RetryRunnerTest {
         TaskPersisterImpl taskPersisterImpl = Mockito.spy(new TaskPersisterImpl());
         taskPersisterImpl.setFifoQueue(Mockito.mock(FifoQueue.class));
         taskPersisterImpl.setDelayQueue(Mockito.mock(DelayQueue.class));
-
-        retryRunner = new RetryRunner(content, graphContext, taskPersisterImpl, pattern);
-
         RedisClient redisClient = new MockRedisClient();
         taskPersisterImpl.setRedisClient(redisClient);
-
+        Mockito.doReturn(content).when(taskPersisterImpl).get(task.getTaskId());
         Mockito.when(pattern.getTimeInterval(6)).thenReturn(10);
         Mockito.doReturn(data).when(taskPersisterImpl).retrieveData(task.getTaskId());
-
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern);
         CountDownLatch countDownLatch = new CountDownLatch(10);
         for (int i = 0; i < 10; i++) {
             Thread t = new Thread(() -> {
@@ -333,8 +335,7 @@ public class RetryRunnerTest {
 
     @Test
     public void testNormalScan() {
-        TaskPersisterImpl taskPersisterImpl = new TaskPersisterImpl();
-        taskPersister = taskPersisterImpl;
+        TaskPersisterImpl taskPersisterImpl = Mockito.spy(new TaskPersisterImpl());
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
@@ -351,7 +352,8 @@ public class RetryRunnerTest {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         taskPersisterImpl.setRedisClient(redisClient);
         Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern);
+        Mockito.doReturn(content).when(taskPersisterImpl).get(task.getTaskId());
         try {
             // Mock host a running action.
             retryRunner.run();
@@ -385,7 +387,8 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(content, graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(1)).thenReturn(10);
         Mockito.when(taskPersister.retrieveData(Mockito.anyString())).thenReturn(data);
