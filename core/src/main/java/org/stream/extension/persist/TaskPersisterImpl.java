@@ -98,14 +98,10 @@ public class TaskPersisterImpl implements TaskPersister {
         try {
             switch (type) {
             case 1:
-                if (lockQueue(queueName)) {
-                    result = delayQueue.getItems(queueName, System.currentTimeMillis());
-                }
+                result = delayQueue.getItems(queueName, System.currentTimeMillis());
                 break;
             case 2:
-                if (lockQueue(queueName)) {
-                    result = fifoQueue.pop(queueName, 10);
-                }
+                result = fifoQueue.pop(queueName, 10);
                 break;
             case 3:
                 List<Task> tasks = taskStorage.queryStuckTasks();
@@ -292,21 +288,6 @@ public class TaskPersisterImpl implements TaskPersister {
         }
         String[] infos = ownerInfo.split("_");
         return Long.valueOf(infos[1]);
-    }
-
-    private boolean lockQueue(final String queueName) {
-        String lock = queueName + "::lock";
-        String value = genLockValue();
-        boolean locked = redisClient.setnx(lock, value) == 1L;
-        if (locked) {
-            redisClient.setWithExpireTime(lock, value, 1);
-        } else if (isLegibleOwner(lock)) {
-            redisClient.setWithExpireTime(lock, value, 1);
-        } else {
-            releaseExpiredLock(lock, 1000);
-        }
-
-        return locked;
     }
 
     private void releaseExpiredLock(final String lock, final int seconds) {
