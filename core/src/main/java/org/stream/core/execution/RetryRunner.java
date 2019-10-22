@@ -83,6 +83,11 @@ public class RetryRunner implements Runnable {
             taskPersister.removeHub(taskId);
         }
 
+        if (task.getNextExecutionTime() > System.currentTimeMillis()) {
+            log.warn("Retry runner got stuck!");
+            return;
+        }
+
         if (task.getStatus() == TaskStatus.COMPLETED.code() || task.getStatus() == TaskStatus.FAILED.code()) {
             taskPersister.complete(task);
             return;
