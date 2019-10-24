@@ -69,6 +69,7 @@ public final class TaskHelper {
         } catch (Exception e) {
             log.warn("Fail to execute graph [{}] at node [{}] due to exeception",
                     node.getGraph().getGraphName(), node.getNodeName(), e);
+            WorkFlowContext.markException(e);
             return defaultResult;
         }
     }
