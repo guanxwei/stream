@@ -81,6 +81,7 @@ public class RetryRunner implements Runnable {
 
         if (task == null) {
             taskPersister.removeHub(taskId);
+            return;
         }
 
         if (task.getNextExecutionTime() > System.currentTimeMillis()) {
