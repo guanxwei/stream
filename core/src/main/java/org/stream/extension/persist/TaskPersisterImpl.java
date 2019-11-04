@@ -39,6 +39,7 @@ public class TaskPersisterImpl implements TaskPersister {
     // Lock expire time in milliseconds.
     private static final int LOCK_EXPIRE_TIME = 6 * 1000;
     private Map<String, String> processingTasks = new HashMap<String, String>();
+    private Map<String, Long> lockingTimes = new HashMap<String, Long>();
 
     @Setter
     private TaskStorage messageQueueBasedTaskStorage;
@@ -128,6 +129,14 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean tryLock(final String taskId) {
+        if (Thread.currentThread().getName().equals(processingTasks.get(taskId))
+                && System.currentTimeMillis() - lockingTimes.get(taskId) < LOCK_EXPIRE_TIME) {
+            // refresh locked time.
+            redisClient.set(genLock(taskId), genLockValue());
+            lockingTimes.put(taskId, System.currentTimeMillis());
+            return true;
+        }
+
         boolean locked = redisClient.setnx(genLock(taskId), genLockValue()) == 1L;
         if (locked) {
             markAsLocked(taskId);
@@ -153,6 +162,8 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean releaseLock(final String taskId) {
+        processingTasks.remove(taskId);
+        lockingTimes.remove(taskId);
         return redisClient.del(genLock(taskId));
     }
 
@@ -181,6 +192,7 @@ public class TaskPersisterImpl implements TaskPersister {
         assert application != null;
 
         processingTasks.remove(taskId);
+        lockingTimes.remove(taskId);
         delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);
         return fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
     }
@@ -256,6 +268,7 @@ public class TaskPersisterImpl implements TaskPersister {
     }
 
     private void markAsLocked(final String taskId) {
+        lockingTimes.put(taskId, System.currentTimeMillis());
         processingTasks.put(taskId, Thread.currentThread().getName());
         fifoQueue.push(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
         delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);

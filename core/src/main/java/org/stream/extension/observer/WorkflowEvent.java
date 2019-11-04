@@ -17,7 +17,7 @@ public abstract class WorkflowEvent {
 
     /**
      * Source that triggers the event.
-     * @return
+     * @param context Workflow event context.
      */
     public void context(final WorkflowEventContext context) {
         this.context = context;
