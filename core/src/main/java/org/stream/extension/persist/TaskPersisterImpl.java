@@ -149,6 +149,7 @@ public class TaskPersisterImpl implements TaskPersister {
             // refresh locked time.
             redisClient.set(genLock(taskId), genLockValue());
             processingTasks.put(taskId, Thread.currentThread().getName());
+            lockingTimes.put(taskId, System.currentTimeMillis());
             return true;
         } else {
             releaseExpiredLock(genLock(taskId), LOCK_EXPIRE_TIME);
@@ -219,7 +220,8 @@ public class TaskPersisterImpl implements TaskPersister {
             score = 5;
         }
         delayQueue.enqueue(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);
-        log.info("Task [{}] pushed to delay queue [{}]", QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()));
+        log.info("Task [{}] pushed to delay queue [{}]", task.getTaskId(),
+                QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()));
         fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
         releaseLock(task.getTaskId());
     }

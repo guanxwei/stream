@@ -23,9 +23,9 @@ public class MangoDBBasedTaskCompleteListener implements Listener {
      * {@inheritDoc}
      */
     @Override
-    public void handle(final Event<?, ?> event) {
+    public void handle(final Event event) {
         TaskCompleteEvent realEvent = (TaskCompleteEvent) event;
-        Task task = realEvent.getObject();
+        Task task = realEvent.getTrigger();
         log.info("Save completed task [{}]", task.getTaskId());
 
         taskStorage.persist(task);

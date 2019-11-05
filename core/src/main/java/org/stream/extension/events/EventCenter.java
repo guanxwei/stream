@@ -13,21 +13,21 @@ public interface EventCenter {
      * Fire an event asynchronously.
      * @param event Event to be fired.
      */
-    void fireEvent(final Event<?, ?> event);
+    void fireEvent(final Event event);
 
     /**
      * Fire an event synchronously.
      * @param event Event to be fired.
      * @throws Exception  Exception thrown when fail to communicate with kafka server.
      */
-    void fireSyncEvent(final Event<?, ?> event) throws Exception;
+    void fireSyncEvent(final Event event) throws Exception;
 
     /**
      * Register the event listener.
      * @param event Event type that the listener interested in.
      * @param listener Event listener.
      */
-    void registerListener(final Class<?> event, final Listener listener);
+    void registerListener(final Class<? extends Event> event, final Listener listener);
 
     /**
      * Remove a listener from the event center.
@@ -40,7 +40,7 @@ public interface EventCenter {
      * @param events Event class list the listener is interested in.
      * @param listener Listener to be registered.
      */
-    void registerMutilChannelListerner(final List<Class<?>> events, final Listener listener);
+    void registerMutilChannelListerner(final List<Class<? extends Event>> events, final Listener listener);
 
     /**
      * Get listener list by event type.

@@ -13,6 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.stream.core.helper.Jackson;
 import org.stream.extension.clients.KafkaClient;
+import org.stream.extension.io.HessianIOSerializer;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MemoryEventCenter implements EventCenter {
 
-    private BlockingQueue<Event<?, ?>> pendingEvents = new LinkedBlockingQueue<>();
+    private BlockingQueue<Event> pendingEvents = new LinkedBlockingQueue<>();
 
     @Setter
     private KafkaClient kafkaClient;
 
-    private Map<Class<?>, List<Listener>> listeners = new ConcurrentHashMap<>();
+    private Map<Class<? extends Event>, List<Listener>> listeners = new ConcurrentHashMap<>();
 
     private Object monitor = new Object();
 
@@ -43,13 +44,20 @@ public class MemoryEventCenter implements EventCenter {
 
     private volatile boolean shutingDown = false;
 
+    @Setter
+    private volatile boolean sendOnly = false;
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void fireEvent(final Event<?, ?> event) {
+    public void fireEvent(final Event event) {
         if (shutingDown) {
             throw new RuntimeException("JVM has been shuted down");
+        }
+        if ("Anony".equals(event.type())) {
+            log.warn("Unsupported event type");
+            return;
         }
         pendingEvents.offer(event);
     }
@@ -58,19 +66,14 @@ public class MemoryEventCenter implements EventCenter {
      * {@inheritDoc}
      */
     @Override
-    public void registerListener(final Class<?> eventClass, final Listener listener) {
-        if (!listeners.containsKey(eventClass)) {
-            synchronized (monitor) {
+    public void registerListener(final Class<? extends Event> eventClass, final Listener listener) {
+        synchronized (monitor) {
+            if (!listeners.containsKey(eventClass)) {
                 List<Listener> eventListeners = new LinkedList<>();
-                eventListeners.add(listener);
                 listeners.put(eventClass, eventListeners);
             }
-        } else {
-            List<Listener> eventListeners = listeners.get(eventClass);
-            if (!eventListeners.contains(listener)) {
-                eventListeners.add(listener);
-            }
         }
+        listeners.get(eventClass).add(listener);
     }
 
     /**
@@ -87,8 +90,8 @@ public class MemoryEventCenter implements EventCenter {
      * {@inheritDoc}
      */
     @Override
-    public void registerMutilChannelListerner(final List<Class<?>> events, final Listener listener) {
-        for (Class<?> clazz : events) {
+    public void registerMutilChannelListerner(final List<Class<? extends Event>> events, final Listener listener) {
+        for (Class<? extends Event> clazz : events) {
             if (Event.class.isAssignableFrom(clazz)) {
                 registerListener(clazz, listener);
             }
@@ -111,7 +114,7 @@ public class MemoryEventCenter implements EventCenter {
      * {@inheritDoc}
      */
     @Override
-    public void fireSyncEvent(final Event<?, ?> event) throws Exception {
+    public void fireSyncEvent(final Event event) throws Exception {
         if (shutingDown) {
             throw new RuntimeException("JVM has been shuted down");
         }
@@ -119,7 +122,8 @@ public class MemoryEventCenter implements EventCenter {
             String eventEntity = Jackson.json(event);
             log.info("Receive request to deliver event synchronouly, will push it to the Kafka queue service immediately",
                     eventEntity, event.getClass().getSimpleName());
-            Future<RecordMetadata> result = kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), eventEntity);
+            Future<RecordMetadata> result = kafkaClient.sendMessage(topic, event.getClass().getSimpleName(),
+                    HessianIOSerializer.encode(event));
             result.get();
             log.info("Event [{}] sent to Kafka cluster successfully", eventEntity);
         } catch (Exception e) {
@@ -134,19 +138,25 @@ public class MemoryEventCenter implements EventCenter {
      * let the Kafaka consumers to process the event asynchronously.
      */
     public void init() {
-        // We just create a thread pool with threads up limit (1 + number of event types * 2).
-        service = Executors.newFixedThreadPool(1 + listeners.keySet().size() * 2);
-        log.info("Event center initiating...");
-        log.info("Find kafka topic [{}]", topic);
-        Runnable pipeline = createPipelineWorker();
-        service.submit(pipeline);
-        for (Class<?> clazz : listeners.keySet()) {
-            //Assign two threads to process one kind of event.
-            service.submit(createListenerNotifiers(clazz));
-            service.submit(createListenerNotifiers(clazz));
+        if (!sendOnly) {
+            // We just create a thread pool with threads up limit (1 + number of event types * 2).
+            service = Executors.newFixedThreadPool(1 + listeners.keySet().size() * 2);
+            log.info("Event center initiating...");
+            log.info("Find kafka topic [{}]", topic);
+            Runnable pipeline = createPipelineWorker();
+            service.submit(pipeline);
+            for (Class<? extends Event> clazz : listeners.keySet()) {
+                // Assign two threads to process one kind of event.
+                service.submit(createListenerNotifiers(clazz));
+                service.submit(createListenerNotifiers(clazz));
+            }
+            log.info("Event center initiated.");
+            registerStopHook();
+            return;
         }
-        log.info("Event center initiated.");
-        registerStopHook();
+
+        log.info("This machine is only used to send kafka messages! Please deploy consumer machine somewhere else in case"
+                + " messages are over accumulated");
     }
 
     private Runnable createPipelineWorker() {
@@ -163,30 +173,11 @@ public class MemoryEventCenter implements EventCenter {
     }
 
     private void retrieveAndProcess(final boolean discarded) {
-        Event<?, ?> event = null;
-        try {
-            String eventEntity;
-            event = pendingEvents.take();
-            eventEntity = Jackson.json(event);
-            log.info("Retrieve event entity [{}] with type [{}] from the buffered queue, will push it to the Kafka queue service",
-                    eventEntity, event.getClass().getSimpleName());
-            kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), eventEntity);
-            log.info("Event [{}] sent to Kafka cluster", eventEntity);
-        } catch (Exception e) {
-            log.warn("Event dispatch error!", e);
-            if (!discarded) {
-                try {
-                    log.info("Take a little break! Will continue to work after one second.");
-                    Thread.sleep(100);
-                } catch (InterruptedException e1) {
-                    log.warn("Thread interrupted", e1);
-                }
-                pendingEvents.offer(event);
-            }
-        }
+        Event event = pendingEvents.poll();
+        kafkaClient.sendMessage(topic, event.getClass().getSimpleName(), HessianIOSerializer.encode(event));
     }
 
-    private Runnable createListenerNotifiers(final Class<?> clazz) {
+    private Runnable createListenerNotifiers(final Class<? extends Event> clazz) {
         log.info("Create event type [{}] listener notify worker", clazz.getSimpleName());
         Runnable worker = new Runnable() {
             @Override
@@ -195,12 +186,12 @@ public class MemoryEventCenter implements EventCenter {
                         Thread.currentThread().getName(), topic, clazz.getSimpleName());
                 while (true) {
                     try {
-                        String message = kafkaClient.pullMessageAsString(clazz.getSimpleName());
+                        byte[] message = kafkaClient.pullMessage(clazz.getSimpleName());
                         log.info("Incoming event [{}]", message);
                         if (message == null) {
                             continue;
                         }
-                        Event<?, ?> event = (Event<?, ?>) Jackson.parse(message, clazz);
+                        Event event = HessianIOSerializer.decode(message, clazz);
                         for (Listener listener : listeners.get(clazz)) {
                             try {
                                 listener.handle(event);

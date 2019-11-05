@@ -11,9 +11,9 @@ public class DiscardListener implements Listener {
      * {@inheritDoc}
      */
     @Override
-    public void handle(final Event<?, ?> event) {
+    public void handle(final Event event) {
         TaskCompleteEvent realEvent = (TaskCompleteEvent) event;
-        Task task = realEvent.getObject();
+        Task task = realEvent.getTrigger();
         log.info("Discard completed task [{}], content", task.getTaskId(), task.toString());
     }
 

@@ -43,11 +43,11 @@ public class KafkaClientImpl implements KafkaClient {
     @Setter
     private String group;
 
-    private KafkaConsumer<String, String> consumer;
-    private KafkaProducer<String, String> producer;
+    private KafkaConsumer<String, byte[]> consumer;
+    private KafkaProducer<String, byte[]> producer;
     private Properties consumerProperties;
     private Properties producerProperties;
-    private ConcurrentHashMap<String, BlockingQueue<String>> repository = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, BlockingQueue<byte[]>> repository = new ConcurrentHashMap<>();
     private AtomicInteger accounter = new AtomicInteger();
     private ExecutorService service;
 
@@ -67,14 +67,14 @@ public class KafkaClientImpl implements KafkaClient {
         service.submit(() -> {
             while (true) {
                 try {
-                    ConsumerRecords<String, String> records = consumer.poll(3000);
-                    for (ConsumerRecord<String, String> record : records) {
+                    ConsumerRecords<String, byte[]> records = consumer.poll(3000);
+                    for (ConsumerRecord<String, byte[]> record : records) {
                         log.info("Reveive kafka message from topic [{}] with key [{}]", topic, record.key());
                         repository.get(record.key()).offer(record.value());
                         accounter.incrementAndGet();
                     }
                     while (accounter.get() != 0) {
-                        Thread.sleep(50);
+                        Thread.sleep(5);
                     }
                     consumer.commitSync();
                 } catch (Exception e) {
@@ -119,7 +119,7 @@ public class KafkaClientImpl implements KafkaClient {
         props.put("buffer.memory", "33554432");
         props.put("group.id", group);
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
         return props;
     }
 
@@ -132,7 +132,7 @@ public class KafkaClientImpl implements KafkaClient {
         props.put("max.poll.records", "100");
         props.put("group.id", group);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         return props;
     }
 
@@ -140,8 +140,8 @@ public class KafkaClientImpl implements KafkaClient {
      * {@inheritDoc}
      */
     @Override
-    public boolean sendMessage(final String topic, final String data) {
-        ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, data);
+    public boolean sendMessage(final String topic, final byte[] data) {
+        ProducerRecord<String, byte[]> record = new ProducerRecord<String, byte[]>(topic, data);
         return !producer.send(record).isCancelled();
     }
 
@@ -149,8 +149,8 @@ public class KafkaClientImpl implements KafkaClient {
      * {@inheritDoc}
      */
     @Override
-    public Future<RecordMetadata> sendMessage(final String topic, final String key, final String data) {
-        ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, key, data);
+    public Future<RecordMetadata> sendMessage(final String topic, final String key, final byte[] data) {
+        ProducerRecord<String, byte[]> record = new ProducerRecord<String, byte[]>(topic, key, data);
         return producer.send(record);
     }
 
@@ -158,7 +158,7 @@ public class KafkaClientImpl implements KafkaClient {
      * {@inheritDoc}
      */
     @Override
-    public String pullMessageAsString(final String key) {
+    public byte[] pullMessage(final String key) {
         try {
             return repository.get(key).take();
         } catch (InterruptedException e) {

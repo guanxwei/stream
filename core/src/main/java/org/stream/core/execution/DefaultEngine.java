@@ -162,6 +162,8 @@ public class DefaultEngine implements Engine {
         }
         workFlow = WorkFlowContext.provide();
         workFlow.attachPrimaryResource(resource);
+        // Let's turn it off, in case developers forget to clean the thread local exception after last execution.
+        WorkFlowContext.markException(null);
         return workFlow;
     }
 

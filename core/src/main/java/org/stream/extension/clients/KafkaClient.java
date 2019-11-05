@@ -17,7 +17,7 @@ public interface KafkaClient {
      * @param data  The record contents
      * @return Manipulation result.
      */
-    public boolean sendMessage(final String topic, final String data);
+    public boolean sendMessage(final String topic, final byte[] data);
 
     /**
      * Send a message (with key) to the kafka queue.
@@ -26,18 +26,18 @@ public interface KafkaClient {
      * @param data The record contents
      * @return Manipulation result.
      */
-    public Future<RecordMetadata> sendMessage(final String topic, final String key, final String data);
+    public Future<RecordMetadata> sendMessage(final String topic, final String key, final byte[] data);
 
     /**
      * Pull messages from the Kafaka queue according to the topic.
      * @param key Message topic.
      * @return Message queue head.
      */
-    public String pullMessageAsString(final String key);
+    public byte[] pullMessage(final String key);
 
     /**
      * Utility method to atomically decrease the counter.
-     * <p> Please make sure that the method {@link KafkaClient#pullMessageAsString(String)}} is invoked before invoking this method.
+     * <p> Please make sure that the method {@link KafkaClient#pullMessage(String)}} is invoked before invoking this method.
      * @return Manipulation result.
      */
     public boolean markAsConsumed();
