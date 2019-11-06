@@ -192,12 +192,14 @@ public class MemoryEventCenter implements EventCenter {
                             continue;
                         }
                         Event event = HessianIOSerializer.decode(message, clazz);
-                        for (Listener listener : listeners.get(clazz)) {
-                            try {
-                                listener.handle(event);
-                            } catch (Exception e) {
-                                fireEvent(event);
-                                log.warn("Handler [{}] failed to handle the event message [{}]", listener.getClass().getSimpleName(), message);
+                        if (listeners.containsKey(clazz)) {
+                            for (Listener listener : listeners.get(clazz)) {
+                                try {
+                                    listener.handle(event);
+                                } catch (Exception e) {
+                                    fireEvent(event);
+                                    log.warn("Handler [{}] failed to handle the event message [{}]", listener.getClass().getSimpleName(), message);
+                                }
                             }
                         }
                         kafkaClient.markAsConsumed();
