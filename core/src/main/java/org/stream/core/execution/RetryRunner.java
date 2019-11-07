@@ -166,7 +166,7 @@ public class RetryRunner implements Runnable {
         task.setStatus(TaskStatus.PENDING.code());
         taskPersister.suspend(task, interval, taskStep);
         TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
-        log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] seconds",
+        log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] milliseconds",
                 task.getTaskId(), node.getNodeName(), task.getRetryTimes(), interval);
     }
 
