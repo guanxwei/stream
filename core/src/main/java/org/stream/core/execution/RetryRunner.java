@@ -95,6 +95,12 @@ public class RetryRunner implements Runnable {
         }
 
         Node node = TaskHelper.deduceNode(task, graphContext);
+        if (node == null) {
+            log.error("Graph has been upgraded, target node [{}] is missing", task.getNodeName());
+            taskPersister.complete(task);
+            return;
+        }
+
         StreamTransferData data = taskPersister.retrieveData(task.getTaskId());
         Resource primaryResource = preparePrimaryResource(data, task);
 
