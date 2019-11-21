@@ -9,11 +9,19 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.util.CollectionUtils;
+import org.stream.core.component.Node;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.extension.clients.RedisClient;
+import org.stream.extension.events.Event;
+import org.stream.extension.events.EventCenter;
+import org.stream.extension.events.EventsHelper;
+import org.stream.extension.events.WorkflowFailedEvent;
+import org.stream.extension.events.WorkflowSucceedEvent;
+import org.stream.extension.events.WorkflowSuspendEvent;
 import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
+import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 
 import lombok.Getter;
@@ -64,6 +72,9 @@ public class TaskPersisterImpl implements TaskPersister {
 
     @Getter
     private String application;
+
+    @Setter
+    private EventCenter eventCenter;
 
     /**
      * {@inheritDoc}
@@ -224,6 +235,9 @@ public class TaskPersisterImpl implements TaskPersister {
                 QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()));
         fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
         releaseLock(task.getTaskId());
+        if (task.getRetryTimes() == 3 || task.getRetryTimes() == 10) {
+            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowSuspendEvent.class, task.getTaskId(), Node.CURRENT.get()), false);
+        }
     }
 
     /**
@@ -231,6 +245,11 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public void complete(final Task task) {
+        if (task.getStatus() == TaskStatus.FAILED.code()) {
+            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowFailedEvent.class, task.getTaskId(), Node.CURRENT.get()), false);
+        } else {
+            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowSucceedEvent.class, task.getTaskId(), Node.CURRENT.get()), false);
+        }
         delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()), task.getTaskId());
         fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
         releaseLock(task.getTaskId());

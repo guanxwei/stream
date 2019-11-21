@@ -114,7 +114,7 @@ public class MemoryEventCenter implements EventCenter {
      * {@inheritDoc}
      */
     @Override
-    public void fireSyncEvent(final Event event) throws Exception {
+    public void fireSyncEvent(final Event event) {
         if (shutingDown) {
             throw new RuntimeException("JVM has been shuted down");
         }
@@ -128,7 +128,7 @@ public class MemoryEventCenter implements EventCenter {
             log.info("Event [{}] sent to Kafka cluster successfully", eventEntity);
         } catch (Exception e) {
             log.warn("Event dispatch error!", e);
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 
@@ -138,13 +138,14 @@ public class MemoryEventCenter implements EventCenter {
      * let the Kafaka consumers to process the event asynchronously.
      */
     public void init() {
+        // We just create a thread pool with threads up limit (1 + number of event types * 2).
+        service = Executors.newFixedThreadPool(1 + listeners.keySet().size() * 2);
+        log.info("Event center initiating...");
+        log.info("Find kafka topic [{}]", topic);
+        Runnable pipeline = createPipelineWorker();
+        service.submit(pipeline);
         if (!sendOnly) {
-            // We just create a thread pool with threads up limit (1 + number of event types * 2).
-            service = Executors.newFixedThreadPool(1 + listeners.keySet().size() * 2);
-            log.info("Event center initiating...");
-            log.info("Find kafka topic [{}]", topic);
-            Runnable pipeline = createPipelineWorker();
-            service.submit(pipeline);
+            log.info("Register event listeners");
             for (Class<? extends Event> clazz : listeners.keySet()) {
                 // Assign two threads to process one kind of event.
                 service.submit(createListenerNotifiers(clazz));

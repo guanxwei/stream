@@ -9,6 +9,10 @@ import org.stream.core.helper.Jackson;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
+import org.stream.extension.events.Event;
+import org.stream.extension.events.EventCenter;
+import org.stream.extension.events.EventsHelper;
+import org.stream.extension.events.WorkflowInitiatedEvent;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
@@ -66,6 +70,9 @@ public class AutoScheduledEngine implements Engine {
 
     @Setter
     private TaskIDGenerator taskIDGenerator = new UUIDTaskIDGenerator();
+
+    @Setter
+    private EventCenter eventCenter;
 
     /**
      * {@inheritDoc}
@@ -148,6 +155,8 @@ public class AutoScheduledEngine implements Engine {
         try {
             StreamTransferData data = new StreamTransferData();
             Task task = initiateTask(taskId, graphName, primaryResource, data, graphContext);
+            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowInitiatedEvent.class, task.getTaskId(),
+                    graph.getStartNode()), false);
             log.info("New task [{}] initiated", task.getTaskId());
             taskExecutor.submit(graph, primaryResource, task, data);
             log.info("Task [{}] submited", taskId);

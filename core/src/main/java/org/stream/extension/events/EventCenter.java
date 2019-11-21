@@ -18,9 +18,8 @@ public interface EventCenter {
     /**
      * Fire an event synchronously.
      * @param event Event to be fired.
-     * @throws Exception  Exception thrown when fail to communicate with kafka server.
      */
-    void fireSyncEvent(final Event event) throws Exception;
+    void fireSyncEvent(final Event event);
 
     /**
      * Register the event listener.
