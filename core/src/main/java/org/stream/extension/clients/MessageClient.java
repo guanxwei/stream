@@ -1,9 +1,5 @@
 package org.stream.extension.clients;
 
-import java.util.concurrent.Future;
-
-import org.apache.kafka.clients.producer.RecordMetadata;
-
 /**
  * Kafka client.
  *
@@ -26,7 +22,7 @@ public interface MessageClient {
      * @param data The record contents
      * @return Manipulation result.
      */
-    public Future<RecordMetadata> sendMessage(final String topic, final String key, final byte[] data);
+    public boolean sendMessage(final String topic, final String key, final byte[] data);
 
     /**
      * Pull messages from the Kafaka queue according to the topic.

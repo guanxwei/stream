@@ -7,10 +7,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.stream.core.helper.Jackson;
 import org.stream.extension.clients.MessageClient;
 import org.stream.extension.io.HessianIOSerializer;
@@ -120,12 +118,11 @@ public class MemoryEventCenter implements EventCenter {
         }
         try {
             String eventEntity = Jackson.json(event);
-            log.info("Receive request to deliver event synchronouly, will push it to the Kafka queue service immediately",
+            log.trace("Receive request to deliver event synchronouly, will push it to the Kafka queue service immediately",
                     eventEntity, event.getClass().getSimpleName());
-            Future<RecordMetadata> result = kafkaClient.sendMessage(topic, event.getClass().getSimpleName(),
+            kafkaClient.sendMessage(topic, event.getClass().getSimpleName(),
                     HessianIOSerializer.encode(event));
-            result.get();
-            log.info("Event [{}] sent to Kafka cluster successfully", eventEntity);
+            log.trace("Event [{}] sent to Kafka cluster successfully", eventEntity);
         } catch (Exception e) {
             log.warn("Event dispatch error!", e);
             throw new RuntimeException(e);
