@@ -8,7 +8,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
  * Kafka client.
  *
  */
-public interface KafkaClient {
+public interface MessageClient {
 
     /**
      * Send a message to the kafaka queue.
@@ -37,7 +37,7 @@ public interface KafkaClient {
 
     /**
      * Utility method to atomically decrease the counter.
-     * <p> Please make sure that the method {@link KafkaClient#pullMessage(String)}} is invoked before invoking this method.
+     * <p> Please make sure that the method {@link MessageClient#pullMessage(String)}} is invoked before invoking this method.
      * @return Manipulation result.
      */
     public boolean markAsConsumed();

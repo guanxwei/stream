@@ -12,7 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.stream.core.helper.Jackson;
-import org.stream.extension.clients.KafkaClient;
+import org.stream.extension.clients.MessageClient;
 import org.stream.extension.io.HessianIOSerializer;
 
 import lombok.Setter;
@@ -31,7 +31,7 @@ public class MemoryEventCenter implements EventCenter {
     private BlockingQueue<Event> pendingEvents = new LinkedBlockingQueue<>();
 
     @Setter
-    private KafkaClient kafkaClient;
+    private MessageClient kafkaClient;
 
     private Map<Class<? extends Event>, List<Listener>> listeners = new ConcurrentHashMap<>();
 
@@ -134,7 +134,7 @@ public class MemoryEventCenter implements EventCenter {
 
     /**
      * Initiate new threads to process the events.
-     * Our strategy is to send a message to Kafaka cluster for each event,
+     * Our strategy is to send a message to Kafka cluster for each event,
      * let the Kafaka consumers to process the event asynchronously.
      */
     public void init() {

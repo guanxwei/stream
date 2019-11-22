@@ -24,12 +24,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * {@link KafkaClient} implementation.
+ * {@link MessageClient} implementation.
  * @author hzweiguanxiong
  *
  */
 @Slf4j
-public class KafkaClientImpl implements KafkaClient {
+public class KafkaClientImpl implements MessageClient {
 
     /**
      * Kafka uses ZooKeeper to coordinate with each blockers, so we need to set zk servers here.

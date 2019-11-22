@@ -17,7 +17,7 @@ import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.GraphLoader;
 import org.stream.core.helper.LocalGraphLoader;
-import org.stream.extension.clients.KafkaClient;
+import org.stream.extension.clients.MessageClient;
 import org.stream.extension.clients.KafkaClientImpl;
 import org.stream.extension.clients.MongoClient;
 import org.stream.extension.clients.MongoClientImpl;
@@ -125,7 +125,7 @@ public class StandardAutoScheduleEngineConfiguration {
     }
 
     @Bean
-    public KafkaClient kafkaClient() {
+    public MessageClient kafkaClient() {
         KafkaClientImpl kafkaClientImpl = new KafkaClientImpl();
         if (environment.getProperty("fast.stream.kafka.group") != null) {
             kafkaClientImpl.setGroup(environment.getProperty("fast.stream.kafka.group"));
