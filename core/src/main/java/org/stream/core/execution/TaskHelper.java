@@ -227,6 +227,10 @@ public final class TaskHelper {
 
         Node node = null;
         Graph graph = graphContext.getGraph(graphName);
+        if (graph == null) {
+            return null;
+        }
+
         for (Node alternative : graph.getNodes()) {
             if (alternative.getNodeName().equals(nodeName)) {
                 node = alternative;
