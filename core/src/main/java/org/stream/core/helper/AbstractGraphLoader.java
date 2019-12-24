@@ -58,7 +58,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
 
     private boolean circuitChecking = false;
 
-    protected List<String> graphFilePaths;
+    protected List<String> graphFilePaths = new LinkedList<String>();
 
     /**
      * {@inheritDoc}

@@ -2,6 +2,7 @@ package org.stream.core.helper;
 
 import java.io.InputStream;
 
+import org.springframework.util.CollectionUtils;
 import org.stream.core.exception.GraphLoadException;
 
 /**
@@ -25,7 +26,7 @@ public class LocalGraphLoader extends AbstractGraphLoader {
      * @throws GraphLoadException GraphLoadException.
      */
     public void init() throws GraphLoadException {
-        if (graphFilePaths == null || graphFilePaths.size() == 0) {
+        if (CollectionUtils.isEmpty(graphFilePaths)) {
             throw new GraphLoadException("Graph definition file paths not specified!");
         }
         for (String path : graphFilePaths) {

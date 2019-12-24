@@ -1,5 +1,7 @@
 package org.stream.core.helper.test;
 
+import static org.testng.Assert.assertTrue;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -9,6 +11,7 @@ import org.stream.core.component.Node;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.LocalGraphLoader;
+import org.stream.core.helper.SmartLocalGraphLoader;
 import org.stream.core.test.base.TestActivity;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -155,6 +158,12 @@ public class GraphLoadTest {
         ActivityRepository activityRepository = new ActivityRepository();
         graphContext.setActivityRepository(activityRepository);
         graphLoader.init();
+    }
+
+    @Test
+    public void testSmartGraphLoader() throws Throwable {
+        SmartLocalGraphLoader graphLoader = new SmartLocalGraphLoader();
+        assertTrue(graphLoader.getGraphFilePaths().size() > 0);
     }
 
     @DataProvider(name = "noProvider")

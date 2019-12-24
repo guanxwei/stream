@@ -84,6 +84,11 @@ public class Node {
     private List<Integer> intervals;
 
     /**
+     * Detail description of the purpose of the node.
+     */
+    private String description;
+
+    /**
      * Thread local storage to hold the reference to the current invoking node.
      */
     public static final ThreadLocal<Node> CURRENT = new ThreadLocal<>();
