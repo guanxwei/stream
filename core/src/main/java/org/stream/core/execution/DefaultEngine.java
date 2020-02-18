@@ -248,14 +248,6 @@ public class DefaultEngine implements Engine {
                 workFlow.keepRecord(executionRecord);
             }
 
-            /**
-             * Before executing the activity, we'd check if the node contains asynchronous dependency nodes,
-             * if yes, we should construct some asynchronous tasks then turn back to the normal procedure.
-             */
-            if (executionNode.getAsyncDependencies() != null) {
-                TaskHelper.setUpAsyncTasks(workFlow, executionNode);
-            }
-
             ActivityResult activityResult = TaskHelper.perform(executionNode, ActivityResult.FAIL);
 
             if (ActivityResult.SUSPEND.equals(activityResult)) {
