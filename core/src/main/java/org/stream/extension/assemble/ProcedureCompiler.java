@@ -24,14 +24,13 @@ import org.stream.core.helper.PlainTextGraphLoader;
 import lombok.extern.slf4j.Slf4j;
 
 /**
-
- * a procedure, developers can constr * Encapsulation of a procedure compiler.
+ * Encapsulation of procedure compiler.
  * A procedure is defined as a series of work to be done in one turn around. Stream work-flow framework
  * was initiated to define a procedure in graph definition file which is constructed of json string.
  * To make it more convenient for developers to cooperate with the stream framework using the
- * Java program language, stream provides the abstract of the way defining the work in Java object asuct an instance of {@link ProcedureCompiler} instead of writing a graph file
+ * Java program language, stream provides the abstract of the way defining the work in Java object instead of writing a graph file
  * in the local file system. Eventually the procedure will be re-compiled into a {@link Graph}, users can use the
- * graph like the way they used to with a graph file.
+ * graph like the way they use graph files.
  * 
  * @author weiguanxiong.
  *

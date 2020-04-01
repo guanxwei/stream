@@ -8,3 +8,4 @@ core/.settings/*
 .classpath
 .settings*
 */local-pom.xml
+*factorypath

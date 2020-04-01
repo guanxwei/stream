@@ -140,15 +140,18 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean tryLock(final String taskId) {
+        long current = System.currentTimeMillis();
         if (Thread.currentThread().getName().equals(processingTasks.get(taskId))
-                && System.currentTimeMillis() - lockingTimes.get(taskId) < LOCK_EXPIRE_TIME) {
-            // refresh locked time.
-            redisClient.set(genLock(taskId), genLockValue());
-            lockingTimes.put(taskId, System.currentTimeMillis());
+                && current - lockingTimes.get(taskId) < LOCK_EXPIRE_TIME) {
+            if (current - lockingTimes.get(taskId) < LOCK_EXPIRE_TIME / 2) {
+                // refresh locked time if we have hold the lock for a long time
+                redisClient.set(genLock(taskId), genLockValue(current));
+                lockingTimes.put(taskId, current);
+            }
             return true;
         }
 
-        boolean locked = redisClient.setnx(genLock(taskId), genLockValue()) == 1L;
+        boolean locked = redisClient.setnx(genLock(taskId), genLockValue(current)) == 1L;
         if (locked) {
             markAsLocked(taskId);
             return true;
@@ -158,7 +161,7 @@ public class TaskPersisterImpl implements TaskPersister {
                 return false;
             }
             // refresh locked time.
-            redisClient.set(genLock(taskId), genLockValue());
+            redisClient.set(genLock(taskId), genLockValue(current));
             processingTasks.put(taskId, Thread.currentThread().getName());
             lockingTimes.put(taskId, System.currentTimeMillis());
             return true;
@@ -299,8 +302,8 @@ public class TaskPersisterImpl implements TaskPersister {
         return taskId + "_lock";
     }
 
-    private String genLockValue() {
-        return HOST_NAME + "_" + System.currentTimeMillis();
+    private String genLockValue(final long current) {
+        return HOST_NAME + "_" + current;
     }
 
     private boolean isLegibleOwner(final String lock) {
