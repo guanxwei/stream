@@ -68,6 +68,7 @@ public class Task implements Serializable {
      */
     public static Task parse(final String content) {
         try {
+            if (content == null) return null;
             return MAPPER.readValue(content, Task.class);
         } catch (Exception e) {
             throw new RuntimeException(e);

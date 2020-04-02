@@ -24,4 +24,10 @@ public interface Interceptor {
      */
     void intercept(final Node currentNode);
 
+    /**
+     * Return the target graph name, so that we can filter non used interceptors for
+     * every node execution.
+     * @return Target graph name.
+     */
+    String targetGraph();
 }
