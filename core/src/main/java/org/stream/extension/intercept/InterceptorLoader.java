@@ -16,6 +16,9 @@ public class InterceptorLoader implements ApplicationContextAware {
 
     private static final Map<String, List<Interceptor>> INTERCEPTORS = new HashMap<>();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         Map<String, Interceptor> interceptors = applicationContext.getBeansOfType(Interceptor.class);

@@ -13,6 +13,7 @@ import org.stream.core.component.Node;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
+import org.stream.extension.intercept.Interceptors;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
@@ -65,11 +66,16 @@ public final class TaskHelper {
         Node.CURRENT.set(node);
         TaskExecutionUtils.prepareAsyncTasks(node);
         try {
-            return node.perform();
+            // Invoke interceptors before we execute the actions
+            Interceptors.before(node);
+            ActivityResult result = node.perform();
+            Interceptors.after(node, result);
+            return result;
         } catch (Exception e) {
             log.warn("Fail to execute graph [{}] at node [{}] due to exeception",
                     node.getGraph().getGraphName(), node.getNodeName(), e);
             WorkFlowContext.markException(e);
+            Interceptors.onError(node, e);
             return defaultResult;
         }
     }
