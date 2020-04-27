@@ -57,10 +57,6 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     public ThreadPoolTaskExecutor(final ExecutorService executorService, final TaskPersister taskPersister,
             final RetryPattern retryPattern, final GraphContext graphContext) {
-        // For sake of unit test, mock executor service should also be granted. 
-        if (!(executorService instanceof ThreadPoolExecutor) && !(executorService instanceof MockExecutorService)) {
-            throw new RuntimeException("Thread pool executor supported only");
-        }
         this.executorService = executorService;
         this.taskPersister = taskPersister;
         this.retryPattern = retryPattern;

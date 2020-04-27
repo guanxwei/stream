@@ -110,7 +110,6 @@ public class TaskPersisterImplTest {
         Mockito.when(redisClient.get(taskID + "_lock")).thenReturn("fdafdafaf_102102");
 
         assertFalse(taskPersisterImpl.tryLock(taskID));
-        Mockito.verify(redisClient).del(taskID+ "_lock");
     }
 
     @Test
@@ -192,5 +191,38 @@ public class TaskPersisterImplTest {
         TaskStep taskStep = new TaskStep();
         Mockito.when(redisClient.get("dfafdafaf_lock")).thenReturn("fdfad");
         taskPersisterImpl.initiateOrUpdateTask(task, false, taskStep);
+    }
+
+    @Test
+    public void testFastReentry() {
+        RedisClient redisClient = Mockito.mock(RedisClient.class);
+        taskPersisterImpl.setRedisClient(redisClient);
+        Task task = new Task();
+        task.setTaskId("dfafdafaf");
+        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
+        taskPersisterImpl.tryLock(task.getTaskId());
+        assertTrue(taskPersisterImpl.tryLock(task.getTaskId()));
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> captor2 = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(redisClient).setnx(captor.capture(), captor2.capture());
+    }
+
+    @Test
+    public void testOnehostTwoThread() throws Throwable {
+        RedisClient redisClient = Mockito.mock(RedisClient.class);
+        taskPersisterImpl.setRedisClient(redisClient);
+        Task task = new Task();
+        task.setTaskId("dfafdafaf");
+        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString()))
+                .thenReturn(1l).thenReturn(0l);
+        new Thread(() -> {
+            taskPersisterImpl.tryLock(task.getTaskId());
+        }).start();
+
+        Thread.sleep(100);
+        assertFalse(taskPersisterImpl.tryLock(task.getTaskId()));
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> captor2 = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(redisClient, Mockito.times(2)).setnx(captor.capture(), captor2.capture());
     }
 }
