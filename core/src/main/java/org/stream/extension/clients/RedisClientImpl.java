@@ -9,7 +9,6 @@ import org.stream.extension.persist.TaskPersisterImpl;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.params.SetParams;
@@ -17,7 +16,6 @@ import redis.clients.jedis.params.SetParams;
 /**
  * Default implementation of {@linkplain RedisClient}
  */
-@Slf4j
 @Setter @Getter
 public class RedisClientImpl implements RedisClient {
 
@@ -122,10 +120,8 @@ public class RedisClientImpl implements RedisClient {
      */
     @Override
     public Long setnx(final String key, final String value) {
-        String result = jedisCluster.set(key, value,
-                SetParams.setParams().nx().ex(TaskPersisterImpl.LOCK_EXPIRE_TIME / 1000));
-        log.info("lock result [{}]", result);
-        return "OK".equalsIgnoreCase(result) ? 1l : 0l;
+        String res = jedisCluster.set(key, value, SetParams.setParams().nx().px(TaskPersisterImpl.LOCK_EXPIRE_TIME));
+        return "ok".equalsIgnoreCase(res) ? 1l : 0l;
     }
 
     /**

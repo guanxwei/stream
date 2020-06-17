@@ -142,19 +142,37 @@ public class TaskPersisterImpl implements TaskPersister {
     public boolean tryLock(final String taskId) {
         long current = System.currentTimeMillis();
         boolean ownered = Thread.currentThread().getName().equals(processingTasks.get(taskId));
+
         if (ownered && current - lockingTimes.get(taskId) < LOCK_EXPIRE_TIME) {
             if (current - lockingTimes.get(taskId) > LOCK_EXPIRE_TIME / 2) {
                 // refresh locked time if we have hold the lock for a long time
-                redisClient.set(genLock(taskId), genLockValue(current));
+                redisClient.setWithExpireTime(genLock(taskId), genLockValue(current), LOCK_EXPIRE_TIME / 1000);
                 lockingTimes.put(taskId, current);
+                log.info("Lock info refreshed");
             }
+
             return true;
         }
 
+        if (isProcessing(taskId) && !ownered) {
+            log.info("Another thread in the jvm is processing the task, skip");
+            // Duplicate thread in the same host.
+            return false;
+        }
+
         boolean locked = redisClient.setnx(genLock(taskId), genLockValue(current)) == 1L;
+
         if (locked) {
+            log.info("Mark as locked");
             markAsLocked(taskId, current);
             return true;
+        } else {
+            String value = redisClient.get(genLock(taskId));
+            long lockedTime = parseLock(value);
+            if (lockedTime - current >= LOCK_EXPIRE_TIME) {
+                log.info("Release stuck lock");
+                releaseLock(taskId);
+            }
         }
 
         return false;
@@ -315,17 +333,4 @@ public class TaskPersisterImpl implements TaskPersister {
         return Long.valueOf(infos[1]);
     }
 
-    private void releaseExpiredLock(final String lock, final int seconds) {
-        // Someone else owns the lock, we should check if it has expired.
-        long lockTime = parseLock(redisClient.get(lock));
-        long now = System.currentTimeMillis();
-        /** 
-         * If the lock was hold longer then 6 seconds, we would think that the previous owner has crashed.
-         * In most cases a remote call should be done in at most 3 seconds, here set the lock as double the
-         * most used timeout * 2 seconds.
-         */
-        if (now - lockTime >= seconds) {
-            redisClient.del(lock);
-        }
-    }
 }

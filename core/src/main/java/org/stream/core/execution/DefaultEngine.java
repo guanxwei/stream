@@ -12,7 +12,6 @@ import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
-import org.stream.extension.intercept.Interceptors;
 import org.stream.extension.state.DefaultExecutionStateSwitcher;
 import org.stream.extension.state.ExecutionStateSwitcher;
 

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +54,14 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     public ThreadPoolTaskExecutor(final int size, final TaskPersister taskPersister,
             final RetryPattern retryPattern, final GraphContext graphContext) {
-        this(Executors.newFixedThreadPool(size), taskPersister, retryPattern, graphContext);
+        this(new ThreadPoolExecutor(size / 2, size, 10 * 1000, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(200),
+                new RejectedExecutionHandler() {
+                    @Override
+                    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                        log.error("Workflow executor pool overflowed");
+                    }
+                }), taskPersister, retryPattern, graphContext);
     }
 
     public ThreadPoolTaskExecutor(final ExecutorService executorService, final TaskPersister taskPersister,

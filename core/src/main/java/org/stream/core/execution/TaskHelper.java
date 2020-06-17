@@ -1,9 +1,12 @@
 package org.stream.core.execution;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.stream.core.component.ActivityResult;
@@ -33,8 +36,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class TaskHelper {
 
-    // 本地重试队列长度为100.
-    private static final ScheduledExecutorService LOCAL_RETRY_SCHEDULER = Executors.newScheduledThreadPool(100);
+    private static final ThreadPoolExecutor EXECUTOR_SERVICE = new ThreadPoolExecutor(100, 100, 10 * 1000, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<Runnable>(30),
+            new RejectedExecutionHandler() {
+                @Override
+                public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                    log.error("Workflow retry executor pool overflowed");
+                }
+            });
+
+    // Set the local retry thread pool with fixed queue length 100.
+    private static final ScheduledExecutorService LOCAL_RETRY_SCHEDULER = new ScheduledThreadPoolExecutor(100,
+            EXECUTOR_SERVICE.getThreadFactory());
 
     private TaskHelper() { }
 

@@ -187,9 +187,9 @@ public class TaskPersisterImplTest {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         taskPersisterImpl.setRedisClient(redisClient);
         Task task = new Task();
-        task.setTaskId("dfafdafaf");
+        task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         TaskStep taskStep = new TaskStep();
-        Mockito.when(redisClient.get("dfafdafaf_lock")).thenReturn("fdfad");
+        Mockito.when(redisClient.get(task.getTaskId() + "_lock")).thenReturn("fdfad");
         taskPersisterImpl.initiateOrUpdateTask(task, false, taskStep);
     }
 
@@ -198,7 +198,7 @@ public class TaskPersisterImplTest {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         taskPersisterImpl.setRedisClient(redisClient);
         Task task = new Task();
-        task.setTaskId("dfafdafaf");
+        task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
         taskPersisterImpl.tryLock(task.getTaskId());
         assertTrue(taskPersisterImpl.tryLock(task.getTaskId()));
@@ -212,17 +212,17 @@ public class TaskPersisterImplTest {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         taskPersisterImpl.setRedisClient(redisClient);
         Task task = new Task();
-        task.setTaskId("dfafdafaf");
+        task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(1l).thenReturn(0l);
         new Thread(() -> {
             taskPersisterImpl.tryLock(task.getTaskId());
         }).start();
 
-        Thread.sleep(100);
+        Thread.sleep(300);
         assertFalse(taskPersisterImpl.tryLock(task.getTaskId()));
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> captor2 = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(redisClient, Mockito.times(2)).setnx(captor.capture(), captor2.capture());
+        Mockito.verify(redisClient, Mockito.times(1)).setnx(captor.capture(), captor2.capture());
     }
 }
