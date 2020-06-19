@@ -45,7 +45,6 @@ import org.stream.extension.utils.UUIDTaskIDGenerator;
 @Configuration
 public class PremiumAutoScheduleEngineConfiguration {
 
-
     @Resource
     private Environment environment;
 

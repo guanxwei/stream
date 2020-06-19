@@ -157,6 +157,11 @@ public class TaskPersisterImpl implements TaskPersister {
         if (isProcessing(taskId) && !ownered) {
             log.info("Another thread in the jvm is processing the task, skip");
             // Duplicate thread in the same host.
+            long lockingTime = lockingTimes.get(taskId);
+            if (System.currentTimeMillis() - lockingTime > LOCK_EXPIRE_TIME) {
+                // The owner thread must be crashed or stuck.
+                releaseLock(taskId);
+            }
             return false;
         }
 
@@ -184,7 +189,12 @@ public class TaskPersisterImpl implements TaskPersister {
     @Override
     public boolean releaseLock(final String taskId) {
         processingTasks.remove(taskId);
-        lockingTimes.remove(taskId);
+        Long lockTime = lockingTimes.remove(taskId);
+        // Lock for to long time, let other workers to release the lock.
+        if (lockTime != null && System.currentTimeMillis() - lockTime > LOCK_EXPIRE_TIME) {
+            return true;
+        }
+
         return redisClient.del(genLock(taskId));
     }
 
@@ -294,6 +304,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean isProcessing(final String taskId) {
+        // If the lock has been locked for a long period of time, ingore the previous locking owner.
         return processingTasks.containsKey(taskId);
     }
 
