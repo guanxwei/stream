@@ -99,7 +99,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
                         process(contents);
                     }
                 }
-            }, 0, time, TimeUnit.MILLISECONDS);
+            }, 3000, time, TimeUnit.MILLISECONDS);
         }
     }
 
