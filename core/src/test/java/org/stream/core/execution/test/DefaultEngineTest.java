@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.stream.core.component.ActivityRepository;
+import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.ExecutionRecord;
 import org.stream.core.execution.GraphContext;
@@ -186,5 +187,25 @@ public class DefaultEngineTest {
         primary = WorkFlowContext.getPrimary();
         long value = (long) primary.getValue();
         assertEquals(value, 100000l);
+    }
+
+    @Test(dependsOnMethods = "testCheck", expectedExceptions = WorkFlowExecutionExeception.class)
+    public void testStartFrom() {
+        Resource primary = Resource.builder()
+                .resourceReference("testExecuteWithAsyncNode")
+                .build();
+        defaultEngine.executeFrom(graphContext, "checkCase", primary, "node5", false);
+    }
+
+    @Test(dependsOnMethods = "testStartFrom")
+    public void testExecuteWithAutoRecordStartFrom() {
+        defaultEngine.executeFrom(graphContext, "comprehensive2", "node2", true);
+        Assert.assertNull(WorkFlowContext.getPrimary());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
+
+        Resource resource = WorkFlowContext.resolveResource("PrintRecordActivity");
+        @SuppressWarnings("unchecked")
+        List<ExecutionRecord> executionRecords = (List<ExecutionRecord>) resource.getValue();
+        Assert.assertEquals(executionRecords.size(), 4);
     }
 }

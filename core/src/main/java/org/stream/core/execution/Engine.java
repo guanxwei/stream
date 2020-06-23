@@ -19,9 +19,7 @@ public interface Engine {
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
      * @return New resource tank, which stores resources created during work-flow execution.
      */
-    public ResourceTank execute(final GraphContext graphContext,
-            final String graphName,
-            final boolean autoRecord);
+    public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord);
 
     /**
      * Use the graph with name <p>graphName</p> in the graphContext and execute on it. Clients should provide an
@@ -33,10 +31,8 @@ public interface Engine {
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
      * @return New resource tank, which stores resources created during work-flow execution.
      */
-    public ResourceTank execute(final GraphContext graphContext,
-            final String graphName,
-            final Resource primaryResource,
-            final boolean autoRecord);
+    public ResourceTank execute(final GraphContext graphContext, final String graphName,
+            final Resource primaryResource, final boolean autoRecord);
 
     /**
      * Use the graph with name <p>graphName</p> in the graphContext and execute on it. Clients should provide an
@@ -49,10 +45,8 @@ public interface Engine {
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
      * @return New resource tank, which stores resources created during work-flow execution.
      */
-    public ResourceTank executeOnce(final GraphContext graphContext,
-            final String graphName,
-            final Resource primaryResource,
-            final boolean autoRecord);
+    public ResourceTank executeOnce(final GraphContext graphContext, final String graphName,
+            final Resource primaryResource, final boolean autoRecord);
 
     /**
      * Use the graph with name graphName in the graphContext and execute on it. Clients will not provide an
@@ -64,9 +58,57 @@ public interface Engine {
      * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
      * @return new resource tank, which stores some resource.
      */
-    public ResourceTank executeOnce(final GraphContext graphContext,
-            final String graphName,
-            final boolean autoRecord);
+    public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord);
+
+    /**
+     * Execute the graph from the specific start node.
+     * @see #execute(GraphContext, String, boolean)
+     * @param graphContext the graph Context from which the graph will be extracted.
+     * @param graphName The graph's name.
+     * @param startNode Start node instead of the graph's default start node.
+     * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
+     * @return New resource tank, which stores resources created during work-flow execution.
+     */
+    public ResourceTank executeFrom(final GraphContext graphContext, final String graphName,
+            final String startNode, final boolean autoRecord);
+
+    /**
+     * Execute the graph from the specific start node.
+     * @see #execute(GraphContext, String, Resource, boolean)
+     * @param graphContext the graph Context from which the graph will be extracted.
+     * @param graphName The graph's name.
+     * @param primaryResource resource clients sent to the work flow engine, will be added to the new created resource tank.
+     * @param startNode Start node instead of the graph's default start node.
+     * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
+     * @return New resource tank, which stores resources created during work-flow execution.
+     */
+    public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final Resource primaryResource,
+            final String startNode, final boolean autoRecord);
+
+    /**
+     * Execute the graph from the specific start node.
+     * @see #executeOnce(GraphContext, String, Resource, boolean)
+     * @param graphContext the graph Context from which the graph will be extracted.
+     * @param graphName the name of graph which will be executed on.
+     * @param primaryResource resource clients sent to the work flow engine, will be added to the new created resource tank.
+     * @param startNode Start node instead of the graph's default start node.
+     * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
+     * @return New resource tank, which stores resources created during work-flow execution.
+     */
+    public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName,
+            final Resource primaryResource, final String startNode, final boolean autoRecord);
+
+    /**
+     * Execute the graph from the specific start node.
+     * @see #executeOnce(GraphContext, String, boolean)
+     * @param graphContext the graph Context from which the graph will be extracted.
+     * @param graphName the name of graph which will be executed on.
+     * @param autoRecord implicit indicator telling the engine if it need to record events automatically.
+     * @param startNode Start node instead of the graph's default start node.
+     * @return new resource tank, which stores some resource.
+     */
+    public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName,
+            final String startNode, final boolean autoRecord);
 
     /**
      * Stop the engine, it needs lubrication! Clients should be very careful to invoke this method,

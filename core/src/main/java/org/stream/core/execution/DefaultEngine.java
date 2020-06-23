@@ -39,46 +39,72 @@ public class DefaultEngine implements Engine {
      * {@inheritDoc}
      */
     @Override
-    public ResourceTank execute(final GraphContext graphContext,
-            final String graphName,
-            final boolean autoRecord) {
-
-        return start(graphContext, graphName, null, autoRecord, false);
+    public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
+        return start(graphContext, graphName, null, autoRecord, false, null);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ResourceTank execute(final GraphContext graphContext,
-            final String graphName,
-            final Resource primaryResource,
-            final boolean autoRecord) {
-
-        return start(graphContext, graphName, primaryResource, autoRecord, false);
+    public ResourceTank execute(final GraphContext graphContext, final String graphName,
+            final Resource primaryResource, final boolean autoRecord) {
+        return start(graphContext, graphName, primaryResource, autoRecord, false, null);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ResourceTank executeOnce(final GraphContext graphContext,
-            final String graphName,
-            final Resource primaryResource,
-            final boolean autoRecord) {
-
-        return  start(graphContext, graphName, primaryResource, autoRecord, true);
+    public ResourceTank executeOnce(final GraphContext graphContext, final String graphName,
+            final Resource primaryResource, final boolean autoRecord) {
+        return  start(graphContext, graphName, primaryResource, autoRecord, true, null);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ResourceTank executeOnce(final GraphContext graphContext,
-            final String graphName,
-            final boolean autoRecord) {
+    public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
+        return start(graphContext, graphName, null, autoRecord, true, null);
+    }
 
-        return start(graphContext, graphName, null, autoRecord, true);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final String startNode,
+            final boolean autoRecord) {
+        return start(graphContext, graphName, null, autoRecord, false, startNode);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final Resource primaryResource,
+            final String startNode, final boolean autoRecord) {
+        return start(graphContext, graphName, primaryResource, autoRecord, false, startNode);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName, final Resource primaryResource,
+            final String startNode, final boolean autoRecord) {
+        return start(graphContext, graphName, primaryResource, autoRecord, true, startNode);
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName, final String startNode,
+            final boolean autoRecord) {
+        return start(graphContext, graphName, null, autoRecord, true, startNode);
+
     }
 
     /**
@@ -97,7 +123,7 @@ public class DefaultEngine implements Engine {
     }
 
     private ResourceTank start(final GraphContext graphContext, final String graphName, final Resource resource,
-            final boolean autoRecord, final boolean autoClean) {
+            final boolean autoRecord, final boolean autoClean, final String startNode) {
 
         // Deduce work-flow procedure definition graph.
         Graph graph = deduceGraph(graphName, graphContext);
@@ -113,7 +139,7 @@ public class DefaultEngine implements Engine {
         WorkFlow context = prepare(graph, autoRecord, graphName, resource, isWorkflowEntryGraph);
 
         // Execute
-        execute(context, graph, autoRecord);
+        execute(context, graph, autoRecord, startNode);
         ResourceTank resourceTank = context.getResourceTank();
 
         // Clean context.
@@ -227,12 +253,26 @@ public class DefaultEngine implements Engine {
         workFlow.getChildren().add(child);
     }
 
-    private void execute(final WorkFlow workFlow, final Graph graph, final boolean autoRecord) {
+    private void execute(final WorkFlow workFlow, final Graph graph, final boolean autoRecord, final String startNode) {
 
         /**
          * Extract the start node of the graph, and invoke the perform() method.
          */
         Node executionNode = graph.getStartNode();
+        /**
+         * Update 2020/06/03, to make it possible to start the procedure at specific start node,
+         * add four methods with suffix from, which means start from the specific node.
+         * Adding a new flag startNode, when the value is not null, the engines should retrieve the
+         * specific node and start from that node.
+         */
+        if (startNode != null) {
+            executionNode = graph.getNode(startNode);
+            if (executionNode == null) {
+                log.error("Can not find the target node [{}] from the graph [{}]", startNode, graph.getGraphName());
+                throw new WorkFlowExecutionExeception(String.format("Start node [%s] node exists in graph [%s]",
+                        startNode, graph.getGraphName()));
+            }
+        }
         while (executionNode != null && !WorkFlowContext.provide().isRebooting()) {
 
             if (isStuckInDeadLoop(executionNode, Node.CURRENT.get())) {
@@ -311,4 +351,5 @@ public class DefaultEngine implements Engine {
             WorkFlowContext.reboot();
         }
     }
+
 }

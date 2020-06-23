@@ -3,6 +3,7 @@ package org.stream.core.execution;
 import java.io.Serializable;
 
 import org.stream.core.component.Graph;
+import org.stream.core.component.Node;
 import org.stream.core.exception.DuplicateTaskException;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.helper.Jackson;
@@ -75,7 +76,7 @@ public class AutoScheduledEngine implements Engine {
     private EventCenter eventCenter;
 
     /**
-     * {@inheritDoc}
+     * Not supported in auto scheduled engine, please do not use it.
      */
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
@@ -88,7 +89,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final Resource primaryResource,
             final boolean autoRecord) {
-        String taskId = start(graphName, graphContext, primaryResource.getValue());
+        String taskId = start(graphName, graphContext, primaryResource.getValue(), null);
         Resource taskResource = Resource.builder()
                 .value(taskId)
                 .resourceReference(TASK_REFERENCE)
@@ -108,10 +109,53 @@ public class AutoScheduledEngine implements Engine {
     }
 
     /**
-     * {@inheritDoc}
+     * Not supported in auto scheduled engine, please do not use it.
      */
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
+        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
+    }
+
+    /**
+     * Not supported in auto scheduled engine, please do not use it.
+     */
+    @Override
+    public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final String startNode,
+            final boolean autoRecord) {
+        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final Resource primaryResource,
+            final String startNode, final boolean autoRecord) {
+        String taskId = start(graphName, graphContext, primaryResource.getValue(), startNode);
+        Resource taskResource = Resource.builder()
+                .value(taskId)
+                .resourceReference(TASK_REFERENCE)
+                .build();
+        ResourceTank tank = new ResourceTank();
+        tank.addResource(taskResource);
+        return tank;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName, final Resource primaryResource,
+            final String startNode, final boolean autoRecord) {
+        return executeFrom(graphContext, graphName, primaryResource, startNode, autoRecord);
+    }
+
+    /**
+     * Not supported in auto scheduled engine, please do not use it.
+     */
+    @Override
+    public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName, final String startNode,
+            final boolean autoRecord) {
         throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
     }
 
@@ -131,7 +175,8 @@ public class AutoScheduledEngine implements Engine {
         return;
     }
 
-    private String start(final String graphName, final GraphContext graphContext, final Object resource) {
+    private String start(final String graphName, final GraphContext graphContext, final Object resource,
+            final String startNode) {
 
         if (!(resource instanceof Serializable)) {
             throw new WorkFlowExecutionExeception("Primary resource should be serializable when you are using auto schedule engine");
@@ -154,7 +199,7 @@ public class AutoScheduledEngine implements Engine {
 
         try {
             StreamTransferData data = new StreamTransferData();
-            Task task = initiateTask(taskId, graphName, primaryResource, data, graphContext);
+            Task task = initiateTask(taskId, graphName, primaryResource, data, graphContext, startNode);
             EventsHelper.fireEvent(eventCenter, Event.of(WorkflowInitiatedEvent.class, task.getTaskId(),
                     graph.getStartNode()), false);
             log.info("New task [{}] initiated", task.getTaskId());
@@ -168,7 +213,7 @@ public class AutoScheduledEngine implements Engine {
     }
 
     private Task initiateTask(final String taskId, final String graphName, final Resource primaryResource,
-            final StreamTransferData data, final GraphContext graphContext) throws Exception {
+            final StreamTransferData data, final GraphContext graphContext, final String startNode) throws Exception {
         Graph graph = graphContext.getGraph(graphName);
         if (graph == null) {
             throw new WorkFlowExecutionExeception("Graph not existes! Please double check！");
@@ -178,6 +223,12 @@ public class AutoScheduledEngine implements Engine {
             throw new DuplicateTaskException();
         }
 
+        Node firstNode = startNode == null ? graph.getStartNode() : graph.getNode(startNode);
+        if (firstNode == null) {
+            log.error("Can not find the target node [{}] from the graph [{}]", startNode, graph.getGraphName());
+            throw new WorkFlowExecutionExeception(String.format("Start node [%s] node exists in graph [%s]",
+                    startNode, graphName));
+        }
         Task task = Task.builder()
                 .application(application)
                 .graphName(graphName)
@@ -185,15 +236,16 @@ public class AutoScheduledEngine implements Engine {
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
                 .lastExcutionTime(System.currentTimeMillis())
                 .nextExecutionTime(System.currentTimeMillis() + 1000)
-                .nodeName(graph.getStartNode().getNodeName())
+                .nodeName(firstNode.getNodeName())
                 .retryTimes(0)
                 .status(TaskStatus.INITIATED.code())
                 .taskId(taskId)
                 .build();
         data.add("primaryClass", primaryResource.getValue().getClass().getName());
-        TaskStep taskStep = TaskExecutionUtils.constructStep(graph, graph.getStartNode(),
+        TaskStep taskStep = TaskExecutionUtils.constructStep(graph, firstNode,
                 StreamTransferDataStatus.SUCCESS, data, task);
         taskPersister.initiateOrUpdateTask(task, true, taskStep);
         return task;
     }
+
 }

@@ -144,7 +144,7 @@ public class TaskPersisterImpl implements TaskPersister {
         boolean ownered = Thread.currentThread().getName().equals(processingTasks.get(taskId));
 
         if (ownered && current - lockingTimes.get(taskId) < LOCK_EXPIRE_TIME) {
-            if (current - lockingTimes.get(taskId) > LOCK_EXPIRE_TIME / 2) {
+            if (current - lockingTimes.get(taskId) > LOCK_EXPIRE_TIME / 2 && isLegibleOwner(genLock(taskId))) {
                 // refresh locked time if we have hold the lock for a long time
                 redisClient.setWithExpireTime(genLock(taskId), genLockValue(current), LOCK_EXPIRE_TIME / 1000);
                 lockingTimes.put(taskId, current);
@@ -174,7 +174,7 @@ public class TaskPersisterImpl implements TaskPersister {
         } else {
             String value = redisClient.get(genLock(taskId));
             long lockedTime = parseLock(value);
-            if (lockedTime - current >= LOCK_EXPIRE_TIME) {
+            if (current - lockedTime >= LOCK_EXPIRE_TIME) {
                 log.info("Release stuck lock");
                 releaseLock(taskId);
             }

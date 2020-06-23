@@ -185,6 +185,7 @@ Finally, it is worth reading the documentation.
         <module name="UpperEll"/>
         <module name="JavadocStyle">
             <property name="checkFirstSentence" value="false"/>
+            <
         </module>
     </module>
 </module>

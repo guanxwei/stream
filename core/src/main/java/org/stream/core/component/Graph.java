@@ -56,4 +56,18 @@ public class Graph {
      * what the procedure will be, etc.
      */
     private String description;
+
+    /**
+     * Retrieve a node from the graph by node name.
+     * @param nodeName Target node's configured name in graph file.
+     * @return Target node.
+     */
+    public Node getNode(final String nodeName) {
+        for (Node node : nodes) {
+            if (nodeName.equalsIgnoreCase(node.getNodeName())) {
+                return node;
+            }
+        }
+        return null;
+    }
 }

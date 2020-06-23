@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.stream.extension.persist.TaskPersisterImpl;
 
 import lombok.Getter;
 import lombok.Setter;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.params.SetParams;
 
 /**
  * Default implementation of {@linkplain RedisClient}
@@ -118,7 +120,8 @@ public class RedisClientImpl implements RedisClient {
      */
     @Override
     public Long setnx(final String key, final String value) {
-        return jedisCluster.setnx(key, value);
+        return "ok".equalsIgnoreCase(jedisCluster
+                .set(key, value, SetParams.setParams().nx().px(TaskPersisterImpl.LOCK_EXPIRE_TIME))) ? 1l : 0l;
     }
 
     /**
