@@ -177,24 +177,31 @@ public final class TaskHelper {
 
         return activityResult.accept(new ActivityResult.Visitor<Node>() {
             @Override
-            public Node success() {
+            public Node onSuccess() {
                 return startNode.getNext().onSuccess();
             }
 
             @Override
-            public Node fail() {
+            public Node onFail() {
                 // 如果没有配置fail节点，默认使用default error node处理.循环 Default error 处理完只能返回success，否者会陷入死.
                 return startNode.getNext().onFail() == null ? startNode.getGraph().getDefaultErrorNode() : startNode.getNext().onFail();
             }
 
             @Override
-            public Node suspend() {
+            public Node onSuspend() {
                 return startNode.getNext().onSuspend();
             }
 
             @Override
-            public Node check() {
+            public Node onCheck() {
                 return startNode.getNext().onCheck();
+            }
+
+            @Override
+            public Node onCondition() {
+                int conditionCode = Node.CONDITION.get();
+                String currentNode = startNode.getNodeName();
+                return startNode.getNode(currentNode, conditionCode);
             }
         });
     }

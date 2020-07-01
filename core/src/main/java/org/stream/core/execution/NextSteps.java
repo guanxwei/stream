@@ -70,7 +70,7 @@ public class NextSteps {
 
     // CHECKSTYLE:OFF
     public enum NextStepType {
-        SUCCESS, FAIL, SUSPEND, CHECK;
+        SUCCESS, FAIL, SUSPEND, CHECK, CONDITION;
     }
     // CHECKSTYLE:ON
 }

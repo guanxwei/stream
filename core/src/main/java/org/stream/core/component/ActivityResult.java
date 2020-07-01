@@ -13,7 +13,7 @@ public enum ActivityResult {
     SUCCESS {
         @Override
         public <E> E accept(final Visitor<E> visitor) {
-            return visitor.success();
+            return visitor.onSuccess();
         }
     },
 
@@ -23,7 +23,7 @@ public enum ActivityResult {
     FAIL {
         @Override
         public <E> E accept(final Visitor<E> visitor) {
-            return visitor.fail();
+            return visitor.onFail();
         }
     },
 
@@ -33,7 +33,7 @@ public enum ActivityResult {
     UNKNOWN {
         @Override
         public <E> E accept(final Visitor<E> visitor) {
-            return visitor.check();
+            return visitor.onCheck();
         }
     },
 
@@ -43,7 +43,17 @@ public enum ActivityResult {
     SUSPEND {
         @Override
         public <E> E accept(final Visitor<E> visitor) {
-            return visitor.suspend();
+            return visitor.onSuspend();
+        }
+    },
+
+    /**
+     * On condition result, giving users a way to define self specific strategy to determine next steps.
+     */
+    CONDITION {
+        @Override
+        public <E> E accept(final Visitor<E> visitor) {
+            return visitor.onSuspend();
         }
     };
 
@@ -56,25 +66,31 @@ public enum ActivityResult {
          * Visit the success step.
          * @return Processing result.
          */
-        T success();
+        T onSuccess();
 
         /**
          * Visit the failure step.
          * @return Processing result.
          */
-        T fail();
+        T onFail();
 
         /**
          * Visit the suspend step.
          * @return Processing result.
          */
-        T suspend();
+        T onSuspend();
 
         /**
          * Visit the check step.
          * @return Processing result.
          */
-        T check();
+        T onCheck();
+
+        /**
+         * Visit the user specific on condition step.
+         * @return Processing result.
+         */
+        T onCondition();
     }
     // CHECKSTYLE:ON
 }

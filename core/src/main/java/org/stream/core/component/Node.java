@@ -3,10 +3,12 @@ package org.stream.core.component;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.stream.core.execution.NextSteps;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Encapsulation of graph nodes.
@@ -63,6 +65,7 @@ import lombok.Data;
  */
 @Builder
 @Data
+@Slf4j
 public class Node {
 
     // Node name
@@ -94,6 +97,19 @@ public class Node {
     public static final ThreadLocal<Node> CURRENT = new ThreadLocal<>();
 
     /**
+     * Thread local storage to hold the current condition of the node,
+     * users can save condition status here and return {@link ActivityResult#CONDITION} in
+     * their {@link Activity#act()} method. Work-flow engine will check the condition status
+     * when the node returns {@link ActivityResult#CONDITION} and invoke the 
+     */
+    public static final ThreadLocal<Integer> CONDITION = new ThreadLocal<Integer>();
+
+    /**
+     * Condition configuration detail.
+     */
+    private List<Condition> conditions;
+
+    /**
      * Perform the configured activity's job.
      * @return Activity execution result.
      */
@@ -116,5 +132,26 @@ public class Node {
         }
 
         return intervals.get(times);
+    }
+
+    /**
+     * Retrieve a node from the graph by node name.
+     * @param currentNode Current node's configured name in graph file.
+     * @param conditionCode Condition code.
+     * @return Next step node.
+     */
+    public Node getNode(final String currentNode, final int conditionCode) {
+        if (CollectionUtils.isEmpty(conditions)) {
+            log.error("Condition are not configured, please update your graph before using condition strategy");
+            return graph.getDefaultErrorNode();
+        }
+        for (Condition condition : conditions) {
+            if (condition.getCondition() == conditionCode && StringUtils.equals(condition.getNodeName(), currentNode)) {
+                return graph.getNode(condition.getNextStep());
+            }
+        }
+        log.error("Condition configuration info is not surficient, can not find the next node according to the"
+                + " condition code [{}] and node name [{}]", conditionCode, conditionCode);
+        return null;
     }
 }

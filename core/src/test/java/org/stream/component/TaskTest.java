@@ -1,3 +1,5 @@
+package org.stream.component;
+
 import org.stream.extension.meta.Task;
 import org.testng.Assert;
 import org.testng.annotations.Test;

@@ -29,4 +29,5 @@ public abstract class Activity {
     public Node getExecutionContext() {
         return Node.CURRENT.get();
     }
+
 }

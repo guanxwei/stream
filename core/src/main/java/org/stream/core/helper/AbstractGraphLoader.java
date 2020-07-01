@@ -225,21 +225,21 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         final NextStepType type = pair.getNextStepType();
         for (final ActivityResult result : ActivityResult.values()) {
             result.accept(new Visitor<Void>() {
-                public Void success() {
+                public Void onSuccess() {
                     if (type.equals(NextStepType.SUCCESS)) {
                         predecessor.getNext().setSuccess(successor);
                     }
                     return null;
                 }
 
-                public Void fail() {
+                public Void onFail() {
                     if (type.equals(NextStepType.FAIL)) {
                         predecessor.getNext().setFail(successor);
                     }
                     return null;
                 }
 
-                public Void suspend() {
+                public Void onSuspend() {
                     if (type.equals(NextStepType.SUSPEND)) {
                         predecessor.getNext().setSuspend(successor);
                     }
@@ -247,10 +247,17 @@ public abstract class AbstractGraphLoader implements GraphLoader {
                 }
 
                 @Override
-                public Void check() {
+                public Void onCheck() {
                     if (type.equals(NextStepType.CHECK)) {
                         predecessor.getNext().setCheck(successor);
                     }
+                    return null;
+                }
+
+                @Override
+                public Void onCondition() {
+                    // Do nothing when we get on condition result, let the workflow engines determine in run-time which
+                    // node to be continued
                     return null;
                 }
             });
