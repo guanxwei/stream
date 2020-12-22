@@ -9,3 +9,5 @@ core/.settings/*
 .settings*
 */local-pom.xml
 *factorypath
+.vscode/
+*/.vscode
