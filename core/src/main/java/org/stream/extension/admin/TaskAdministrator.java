@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.stereotype.Component;
 import org.stream.core.exception.StreamException;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
+@Component
 public final class TaskAdministrator {
 
     @Resource

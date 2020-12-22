@@ -9,7 +9,7 @@ import lombok.Setter;
 
 /**
  * Common data holder to exchange between different services.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class StreamTransferData implements Serializable {
@@ -95,41 +95,34 @@ public class StreamTransferData implements Serializable {
     }
 
     public static StreamTransferData succeed(final Map<String, Serializable> values) {
-        return status(Result.SUCCESS, values);
+        return status(StreamTransferDataStatus.SUCCESS, values);
     }
 
     public static StreamTransferData succeed() {
-        return status(Result.SUCCESS, null);
+        return status(StreamTransferDataStatus.SUCCESS, null);
     }
 
     public static StreamTransferData failed(final Map<String, Serializable> values) {
-        return status(Result.FAIL, values);
+        return status(StreamTransferDataStatus.FAIL, values);
     }
 
     public static StreamTransferData failed() {
-        return status(Result.FAIL, null);
+        return status(StreamTransferDataStatus.FAIL, null);
     }
 
     public static StreamTransferData suspend(final Map<String, Serializable> values) {
-        return status(Result.SUSPEND, values);
+        return status(StreamTransferDataStatus.SUSPEND, values);
     }
 
     public static StreamTransferData suspend() {
-        return status(Result.SUSPEND, null);
+        return status(StreamTransferDataStatus.SUSPEND, null);
     }
 
     public static StreamTransferData retry(final Map<String, Serializable> values) {
-        return status(Result.UNKNOWN, values);
+        return status(StreamTransferDataStatus.UNKNOWN, values);
     }
 
     public static StreamTransferData retry() {
-        return status(Result.UNKNOWN, null);
-    }
-
-    public interface Result {
-        String SUCCESS = "SUCCESS";
-        String FAIL = "FAIL";
-        String UNKNOWN = "UNKNOWN";
-        String SUSPEND = "SUSPEND";
+        return status(StreamTransferDataStatus.UNKNOWN, null);
     }
 }

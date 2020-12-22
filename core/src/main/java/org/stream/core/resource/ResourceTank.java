@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A tank to store {@link Resource} instances in memory.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class ResourceTank {

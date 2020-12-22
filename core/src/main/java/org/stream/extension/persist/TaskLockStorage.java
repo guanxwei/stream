@@ -4,7 +4,7 @@ import org.stream.extension.meta.TaskLock;
 
 /**
  * Task lock data access layer object.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface TaskLockStorage {

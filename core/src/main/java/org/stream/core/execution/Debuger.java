@@ -6,7 +6,7 @@ import org.stream.core.execution.WorkFlow.WorkFlowStatus;
  * A utility class only for test purpose.
  * Encapsulate some useful methods of {@link WorkFlowContext} so that test cases
  * can easily set up work-flow context.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public final class Debuger {

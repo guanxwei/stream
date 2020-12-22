@@ -7,7 +7,7 @@ import org.stream.extension.meta.Task;
 /**
  * Task data access layer object provides data access methods like saving a new task
  * in db, updating a task's status .etc.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface TaskStorage {

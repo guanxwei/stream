@@ -2,7 +2,7 @@ package org.stream.core.exception;
 
 /**
  * Work-flow execution exception, may be thrown during work-flow execution process.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class WorkFlowExecutionExeception extends RuntimeException {

@@ -5,8 +5,8 @@ import org.stream.extension.pattern.RetryPattern;
 import com.google.common.collect.ImmutableList;
 
 /**
- * 失败重试机制，重试时间间隔等值，每隔10秒执行一次.
- * @author hzweiguanxiong
+ * Equal interval retry pattern.
+ * @author guanxiong wei
  *
  */
 public class EqualTimeIntervalPattern implements RetryPattern {

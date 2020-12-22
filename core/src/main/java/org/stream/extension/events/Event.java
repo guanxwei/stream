@@ -56,12 +56,13 @@ public abstract class Event {
                     return "Anony";
                 }
             };
-            if (node == null) return event;
-
-            event.setGraph(node.getGraph().getGraphName());
-            event.setNode(node.getNodeName());
             event.setTime(System.currentTimeMillis());
             event.setTrigger(trigger);
+            if (node != null) {
+                event.setGraph(node.getGraph().getGraphName());
+                event.setNode(node.getNodeName());
+            }
+
             return event;
         }
 

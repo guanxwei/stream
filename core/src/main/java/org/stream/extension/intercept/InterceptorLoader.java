@@ -27,12 +27,10 @@ public class InterceptorLoader implements ApplicationContextAware {
             return;
         }
         for (Interceptor interceptor : interceptors.values()) {
-            if (!INTERCEPTORS.containsKey(interceptor.targetGraph())) {
-                INTERCEPTORS.put(interceptor.targetGraph(), new LinkedList<>());
-            }
-            List<Interceptor> target = INTERCEPTORS.get(interceptor.targetGraph());
+            List<Interceptor> target = INTERCEPTORS.getOrDefault(interceptor.targetGraph(), new LinkedList<>());
             target.add(interceptor);
         }
+        Interceptors.merge(INTERCEPTORS);
     }
-    
+
 }

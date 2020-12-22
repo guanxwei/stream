@@ -54,14 +54,11 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     public ThreadPoolTaskExecutor(final int size, final TaskPersister taskPersister,
             final RetryPattern retryPattern, final GraphContext graphContext) {
-        this(new ThreadPoolExecutor(size / 2, size, 10 * 1000, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(200),
-                new RejectedExecutionHandler() {
-                    @Override
-                    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                        log.error("Workflow executor pool overflowed");
-                    }
-                }), taskPersister, retryPattern, graphContext);
+        this(new ThreadPoolExecutor(size / 2, size, 10000, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>(200),
+                (r, e) -> {
+                    log.error("Workflow executor pool overflowed");
+                }
+            ), taskPersister, retryPattern, graphContext);
     }
 
     public ThreadPoolTaskExecutor(final ExecutorService executorService, final TaskPersister taskPersister,
@@ -119,6 +116,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
             try {
                 executorService.awaitTermination(60, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();  // set interrupt flag
                 log.error("Shut down hook thread [{}] is interrupted", Thread.currentThread().getName(), e);
             }
         }));

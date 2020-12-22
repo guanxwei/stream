@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Activity repository.
+ * @author guanxiong wei
  */
 public class ActivityRepository {
 

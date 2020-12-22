@@ -4,7 +4,7 @@ import lombok.Data;
 
 /**
  * Abstract of work-flow condition configuration.
- * @author weiguanxiong
+ * @author guanxiong wei
  *
  */
 @Data

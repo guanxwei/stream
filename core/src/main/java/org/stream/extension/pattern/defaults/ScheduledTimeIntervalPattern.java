@@ -5,8 +5,8 @@ import org.stream.extension.pattern.RetryPattern;
 import com.google.common.collect.ImmutableList;
 
 /**
- * 重试机制，时间间隔按照设定的值递增.
- * @author hzweiguanxiong
+ * Progressive increase time interval retry pattern.
+ * @author guanxiong wei
  *
  */
 public class ScheduledTimeIntervalPattern implements RetryPattern {

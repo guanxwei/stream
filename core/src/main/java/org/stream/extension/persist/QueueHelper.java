@@ -2,7 +2,7 @@ package org.stream.extension.persist;
 
 /**
  * Utility class to help deduce queue name based on input information.
- * @author weigu
+ * @author guanxiong wei
  *
  */
 public final class QueueHelper {

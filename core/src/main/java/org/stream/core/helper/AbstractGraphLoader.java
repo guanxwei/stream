@@ -65,11 +65,17 @@ public abstract class AbstractGraphLoader implements GraphLoader {
      */
     @Override
     public Graph loadGraphFromSource(final String sourcePath) throws GraphLoadException {
-        InputStream inputStream = loadInputStream(sourcePath);
-        Graph graph = loadGraph(inputStream);
-
-        graph.setOriginalDefinition(sourcePath);
-        return graph;
+        try (InputStream inputStream = loadInputStream(sourcePath);) {
+            Graph graph = loadGraph(inputStream);
+            graph.setOriginalDefinition(sourcePath);
+            return graph;
+        } catch (Exception e) {
+            if (e instanceof GraphLoadException) {
+                throw (GraphLoadException) e;
+            } else {
+                throw new GraphLoadException(e);
+            }
+        }
     }
 
     /**
@@ -92,7 +98,6 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         Map<String, Node> knowNodes = new HashMap<String, Node>();
         try {
             parse(graph, inputStream, stepPairs, asyncPairs, knowNodes, cause);
-            inputStream.close();
         } catch (IOException e) {
             throw new GraphLoadException("Failed to load graph configuration information from the definition file", e);
         } catch (ClassNotFoundException e) {

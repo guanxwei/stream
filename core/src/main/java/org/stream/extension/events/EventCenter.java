@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Event center to gather and dispatch events.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface EventCenter {

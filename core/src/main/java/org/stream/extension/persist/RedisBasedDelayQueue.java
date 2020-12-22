@@ -8,7 +8,7 @@ import lombok.Setter;
 
 /**
  * A redis based implementation of distributed delay queue.
- * @author weiguanxiong
+ * @author guanxiong wei
  *
  */
 public class RedisBasedDelayQueue implements DelayQueue {

@@ -7,7 +7,7 @@ import lombok.Setter;
 /**
  * Encapsulation of Redis Service.
  * Provide some valuable APIs to manufacture data stored in Redis cluster.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 @Setter

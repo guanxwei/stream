@@ -2,7 +2,7 @@ package org.stream.core.helper;
 
 /**
  * Resource utility class.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public final class ResourceHelper {

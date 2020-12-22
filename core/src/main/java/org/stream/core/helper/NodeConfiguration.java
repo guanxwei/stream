@@ -74,7 +74,7 @@ public class NodeConfiguration {
 
     /**
      * Encapsulation of asynchronous Node configuration, which is used to initiate a asynchronous node.
-     * @author hzweiguanxiong
+     * @author guanxiong wei
      *
      */
     public static class AsyncNodeConfiguration {

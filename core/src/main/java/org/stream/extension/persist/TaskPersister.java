@@ -10,7 +10,7 @@ import org.stream.extension.meta.TaskStep;
 
 /**
  * Encapsulation of Task persister.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface TaskPersister {

@@ -10,7 +10,7 @@ import lombok.Data;
  *
  * Each pair will indicate the host node's name and the successor's name,
  * and the next step's type.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 @Data

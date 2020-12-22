@@ -7,7 +7,7 @@ import org.stream.core.execution.AutoScheduledEngine;
 /**
  * Retry pattern used to generate time interval to elapse before {@link AutoScheduledEngine} retry
  * the stuck work-flow instance.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface RetryPattern {

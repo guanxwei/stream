@@ -11,7 +11,7 @@ import org.stream.core.resource.ResourceURL;
 /**
  * Sample implementation of {@link Cache}.
  * Only used for purpose of illustration, please do not use in online environments.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class MemoryCache implements Cache {

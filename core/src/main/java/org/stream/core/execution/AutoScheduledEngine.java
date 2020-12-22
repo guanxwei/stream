@@ -44,6 +44,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AutoScheduledEngine implements Engine {
 
+    private static final String PRIMARY_MISSING_ERROR = "Auto scheduled engine does not support cases without primary resource!";
+
     /**
      * Preserved resource reference for AutoScheduledEngine's primary resource.
      */
@@ -80,7 +82,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
+        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -113,7 +115,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
+        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -122,7 +124,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final String startNode,
             final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
+        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -156,7 +158,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName, final String startNode,
             final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception("Auto scheduled engine does not support cases without primary resource!");
+        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
     }
 
     /**

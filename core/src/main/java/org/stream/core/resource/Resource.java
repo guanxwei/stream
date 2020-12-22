@@ -12,7 +12,7 @@ import lombok.Data;
  * Encapsulation of work-flow resources.
  * Each resource instance will contain one valuable "resource" that can be found by a reference in the
  * work-flow context.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 @Data
@@ -95,7 +95,7 @@ public class Resource {
     // CHECKSTYLE:OFF
     /**
      * Resource builder.
-     * @author hzweiguanxiong
+     * @author guanxiong wei
      *
      */
     public static class ResourceBuilder {

@@ -2,7 +2,7 @@ package org.stream.core.exception;
 
 /**
  * Resource reading exception.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class ResourceReadingExecption extends Exception {

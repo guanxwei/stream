@@ -2,7 +2,7 @@ package org.stream.extension.events;
 
 /**
  * Task complete event.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class TaskCompleteEvent extends Event {

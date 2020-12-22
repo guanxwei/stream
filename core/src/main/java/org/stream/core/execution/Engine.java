@@ -6,7 +6,7 @@ import org.stream.core.resource.ResourceTank;
 
 /**
  * Abstract of work-flow engine, define APIs that all the implementations should provide.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface Engine {

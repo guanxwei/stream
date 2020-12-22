@@ -18,7 +18,7 @@ import org.stream.extension.persist.TaskStorage;
  *      In each step, remote service's response status will be used to determine what to do at the next step.
  * (3) All the related resources {@link AutoScheduledEngine} need are ready and reliable, like Redis cluster;
  * and {@link TaskStorage}, {@link TaskStepStorage} implementations are provided, etc.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface Tower {

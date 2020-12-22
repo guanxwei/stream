@@ -2,7 +2,7 @@ package org.stream.core.exception;
 
 /**
  * Stream work-flow framework exception, may be thrown in any place of the work-flow context.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class StreamException extends Exception {

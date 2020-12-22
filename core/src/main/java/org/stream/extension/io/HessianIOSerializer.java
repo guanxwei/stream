@@ -16,9 +16,11 @@ import lombok.extern.slf4j.Slf4j;
  * Hessian framework based serializer and de-serializer.
  */
 @Slf4j
-public class HessianIOSerializer {
+public final class HessianIOSerializer {
 
     private static final SerializerFactory SERIALIZER_FACTORY = new SerializerFactory();
+
+    private HessianIOSerializer() { }
 
     /**
      * Encode the object to sessian style bytes.

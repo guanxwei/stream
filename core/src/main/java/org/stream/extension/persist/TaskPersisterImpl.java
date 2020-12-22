@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  * This implement uses redis cluster to speed up the work-flows's processing procedure.
  * Users should prepare a redis cluster in real environment, if not, please implement {@link TaskPersister}
  * and use that version.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 @Slf4j
@@ -329,11 +329,8 @@ public class TaskPersisterImpl implements TaskPersister {
             return true;
         }
 
-        if (ownerInfo.startsWith(HOST_NAME)) {
-            return true;
-        }
+        return ownerInfo.startsWith(HOST_NAME);
 
-        return false;
     }
 
     private long parseLock(final String ownerInfo) {

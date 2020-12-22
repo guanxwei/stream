@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * Users should not use this class themselves, the framework will help construct a instance of this
  * type when the activityClass is implementation of {@link Tower} in graph definition.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 @Slf4j

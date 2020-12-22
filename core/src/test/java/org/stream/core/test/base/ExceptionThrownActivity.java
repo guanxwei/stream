@@ -7,7 +7,7 @@ import org.stream.core.resource.Resource;
 
 /**
  * Activity to mock scenarios that Exception will be thrown during processing.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class ExceptionThrownActivity extends Activity {

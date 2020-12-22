@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Enhanced graph context of {@link GraphContext} enable modifying the graph configuration in run-time.
- * @author weiguanxiong
+ * @author guanxiong wei
  *
  */
 @Slf4j

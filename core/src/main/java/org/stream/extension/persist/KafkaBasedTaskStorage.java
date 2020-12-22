@@ -14,7 +14,7 @@ import lombok.Setter;
 /**
  * Kafka based implementation of {@linkplain TaskStorage}.
  * Will push the entity to the kafka message queue so that anybody that is interested in can process the data.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class KafkaBasedTaskStorage implements TaskStorage {

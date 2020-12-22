@@ -10,7 +10,7 @@ import lombok.Setter;
 
 /**
  * ROA bases framework used reader to read {@link Task} from somewhere.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public class TaskReader extends AbstractResourceReader {

@@ -2,7 +2,7 @@ package org.stream.extension.io;
 
 /**
  * Utility class providing standard Stream Transfer Data Status.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public final class StreamTransferDataStatus {

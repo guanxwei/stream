@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  * Default implementation of {@link EventCenter}.
  *
  * All the events will be stored in Memory first, then assign back-end worker to push all the events to Kafka Queue.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 @Slf4j

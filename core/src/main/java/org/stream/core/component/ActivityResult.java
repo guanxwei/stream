@@ -2,7 +2,7 @@ package org.stream.core.component;
 
 /**
  * {@link Activity} act result.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public enum ActivityResult {

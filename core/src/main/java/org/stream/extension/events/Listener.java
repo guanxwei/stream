@@ -2,7 +2,7 @@ package org.stream.extension.events;
 
 /**
  * Event listener.
- * @author hzweiguanxiong
+ * @author guanxiong wei
  *
  */
 public interface Listener {
