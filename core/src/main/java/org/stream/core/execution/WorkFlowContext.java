@@ -11,14 +11,15 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.mongodb.annotations.ThreadSafe;
+
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
+import org.stream.core.component.Node;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
-
-import com.mongodb.annotations.ThreadSafe;
 
 /**
  * Encapsulation of work-flow execution context.
@@ -312,5 +313,13 @@ public final class WorkFlowContext {
         Resource resource = resolveResource(reference);
 
         return resource.resolveValue(clazz);
+    }
+
+    /**
+     * Mark the current node's condition.
+     * @param condition Condition value.
+     */
+    public static void makrCondition(final int condition) {
+        Node.CONDITION.set(condition);
     }
 }

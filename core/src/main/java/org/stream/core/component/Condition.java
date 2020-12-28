@@ -11,11 +11,6 @@ import lombok.Data;
 public class Condition {
 
     /**
-     * The host node.
-     */
-    private String nodeName;
-
-    /**
      * Condition value.
      */
     private int condition;

@@ -43,6 +43,7 @@ public class DefaultEngineTest {
         paths.add("ComprehensiveWithAsyncNodeCanceledCase.graph");
         paths.add("ComprehensiveWithAsyncNodeCase.graph");
         paths.add("DefaultErrorProcessCase");
+        paths.add("Condition.graph");
 
         paths.add("ComprehensiveWithAsyncNodeCase.graph");
 
@@ -207,5 +208,12 @@ public class DefaultEngineTest {
         @SuppressWarnings("unchecked")
         List<ExecutionRecord> executionRecords = (List<ExecutionRecord>) resource.getValue();
         Assert.assertEquals(executionRecords.size(), 4);
+    }
+
+    @Test
+    public void testCondition() {
+        defaultEngine.execute(graphContext, "condition", true);
+        Assert.assertNull(WorkFlowContext.getPrimary());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
     }
 }

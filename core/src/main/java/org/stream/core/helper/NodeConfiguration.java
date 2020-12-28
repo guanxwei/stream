@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
+import org.stream.core.component.Condition;
 import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.extension.io.Tower;
 
@@ -71,6 +72,11 @@ public class NodeConfiguration {
      * Detail description of the purpose of the node.
      */
     private String description;
+
+    /**
+     * Condition configuration.
+     */
+    private List<Condition> conditions;
 
     /**
      * Encapsulation of asynchronous Node configuration, which is used to initiate a asynchronous node.
