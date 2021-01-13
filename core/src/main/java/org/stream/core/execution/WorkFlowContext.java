@@ -37,7 +37,7 @@ public final class WorkFlowContext {
     private WorkFlowContext() { }
 
     // The thread specific work-flow instance.
-    private static final ThreadLocal<WorkFlow> CURRENT = new ThreadLocal<WorkFlow>();
+    private static final ThreadLocal<WorkFlow> CURRENT = new ThreadLocal<>();
 
     // All the live work-flow instances in the JVM.
     private static final ConcurrentHashMap<String, WorkFlow> WORKFLOWS = new ConcurrentHashMap<>();
@@ -45,14 +45,17 @@ public final class WorkFlowContext {
     // Asynchronous task execution pool.
     private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS;
 
+    private static final String STREAM_POOL_SIZE = "stream.async.pool.size";
+    private static final String WORK_FLOW_CLOSE_ERROR_MESSAGE = "The work-flow instance has been closed!";
+
     // In case users want to define the pool size according to requirement.
     static {
-        if (System.getProperty("stream.async.pool.size") == null) {
+        if (System.getProperty(STREAM_POOL_SIZE) == null) {
             EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
-                    Runtime.getRuntime().availableProcessors() * 2, 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(200));
+                    Runtime.getRuntime().availableProcessors() * 2, 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
         } else {
-            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Integer.parseInt(System.getProperty("stream.async.pool.size")),
-                    Integer.parseInt(System.getProperty("stream.async.pool.size")), 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(200));
+            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Integer.parseInt(System.getProperty(STREAM_POOL_SIZE)),
+                    Integer.parseInt(System.getProperty(STREAM_POOL_SIZE)), 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
         }
     }
 
@@ -131,9 +134,8 @@ public final class WorkFlowContext {
      * @return Asynchronous task wrapper.
      */
     public static Resource getAsyncTaskWrapper(final String nodeName) {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         return CURRENT.get().getAsyncTaskWrapper(nodeName);
     }
 
@@ -142,9 +144,8 @@ public final class WorkFlowContext {
      * @return ExecutionRecord list.
      */
     public static List<ExecutionRecord> getRecords() {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         return CURRENT.get().getRecords();
     }
 
@@ -171,9 +172,8 @@ public final class WorkFlowContext {
      * @param record ExecutionRecord to be recorded.
      */
     public static void keepRecord(final ExecutionRecord record) {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         CURRENT.get().keepRecord(record);
     }
 
@@ -182,9 +182,8 @@ public final class WorkFlowContext {
      * @param resource Resource to be attached.
      */
     public static void attachResource(final Resource resource) {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         CURRENT.get().attachResource(resource);
     }
 
@@ -194,9 +193,8 @@ public final class WorkFlowContext {
      * @return Resource corresponding to the reference.
      */
     public static Resource resolveResource(final String resourceReference) {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         return CURRENT.get().resolveResource(resourceReference);
     }
 
@@ -205,9 +203,8 @@ public final class WorkFlowContext {
      * @param graph Graph to be visited.
      */
     public static void visitGraph(final Graph graph) {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         CURRENT.get().visitGraph(graph);
     }
 
@@ -217,10 +214,8 @@ public final class WorkFlowContext {
      * @throws WorkFlowExecutionExeception Exception thrown during execution
      */
     public static void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionExeception {
+        assertWorkFlowNotClose();
 
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
         if (resource == null) {
             return;
         }
@@ -239,9 +234,8 @@ public final class WorkFlowContext {
      * @return Primary resource.
      */
     public static Resource getPrimary() {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         return CURRENT.get().getPrimary();
     }
 
@@ -250,9 +244,8 @@ public final class WorkFlowContext {
      * @param task Async task.
      */
     public static void submit(final FutureTask<ActivityResult> task) {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         EXECUTOR_SERVICE_FOR_ASYNC_TASKS.submit(task);
     }
 
@@ -261,9 +254,8 @@ public final class WorkFlowContext {
      * @param e Exception.
      */
     public static void markException(final Exception e) {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
+
         CURRENT.get().markException(e);
     }
 
@@ -272,9 +264,7 @@ public final class WorkFlowContext {
      * @return The root exception caused any issues.
      */
     public static Exception extractException() {
-        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception("The work-flow instance has been closed!");
-        }
+        assertWorkFlowNotClose();
         return CURRENT.get().getE();
     }
 
@@ -321,5 +311,11 @@ public final class WorkFlowContext {
      */
     public static void makrCondition(final int condition) {
         Node.CONDITION.set(condition);
+    }
+
+    private static void assertWorkFlowNotClose() {
+        if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
+            throw new WorkFlowExecutionExeception(WORK_FLOW_CLOSE_ERROR_MESSAGE);
+        }
     }
 }

@@ -179,6 +179,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
 
         Node node = Node.builder()
                 .activity(activity)
+                .conditions(nodeConfiguration.getConditions())
                 .nodeName(currentNodeName)
                 .next(new NextSteps())
                 .graph(graph)

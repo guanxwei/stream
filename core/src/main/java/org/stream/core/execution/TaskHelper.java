@@ -200,8 +200,8 @@ public final class TaskHelper {
             @Override
             public Node onCondition() {
                 int conditionCode = Node.CONDITION.get();
-                String currentNode = startNode.getNodeName();
-                return startNode.getNode(currentNode, conditionCode);
+                Node.CONDITION.remove();
+                return startNode.getNode(conditionCode);
             }
         });
     }

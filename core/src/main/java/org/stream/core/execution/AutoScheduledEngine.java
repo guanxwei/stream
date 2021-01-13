@@ -166,7 +166,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public void reboot() throws InterruptedException {
-        return;
+        Thread.interrupted();
     }
 
     /**
@@ -174,7 +174,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public void waitAndReboot() {
-        return;
+        Thread.interrupted();
     }
 
     private String start(final String graphName, final GraphContext graphContext, final Object resource,

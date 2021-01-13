@@ -44,8 +44,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TaskPersisterImpl implements TaskPersister {
 
     private static final String HOST_NAME = RandomStringUtils.randomAlphabetic(32);
-    private Map<String, String> processingTasks = new HashMap<String, String>();
-    private Map<String, Long> lockingTimes = new HashMap<String, Long>();
+    private Map<String, String> processingTasks = new HashMap<>();
+    private Map<String, Long> lockingTimes = new HashMap<>();
     // Lock expire time in milliseconds.
     public static final int LOCK_EXPIRE_TIME = 6 * 1000;
 

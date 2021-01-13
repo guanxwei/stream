@@ -1,14 +1,14 @@
 package org.stream.core.helper;
 
+import java.io.IOException;
+import java.util.StringTokenizer;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-import java.util.StringTokenizer;
 
 /**
  * Utility class providing some useful methods to process Json text.

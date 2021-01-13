@@ -3,7 +3,6 @@ package org.stream.core.component;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.stream.core.execution.NextSteps;
 
 import lombok.Builder;
@@ -136,11 +135,10 @@ public class Node {
 
     /**
      * Retrieve a node from the graph by node name.
-     * @param currentNode Current node's configured name in graph file.
      * @param conditionCode Condition code.
      * @return Next step node.
      */
-    public Node getNode(final String currentNode, final int conditionCode) {
+    public Node getNode(final int conditionCode) {
         if (CollectionUtils.isEmpty(conditions)) {
             log.error("Condition are not configured, please update your graph before using condition strategy");
             return graph.getDefaultErrorNode();

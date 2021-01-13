@@ -53,7 +53,7 @@ public enum ActivityResult {
     CONDITION {
         @Override
         public <E> E accept(final Visitor<E> visitor) {
-            return visitor.onSuspend();
+            return visitor.onCondition();
         }
     };
 
