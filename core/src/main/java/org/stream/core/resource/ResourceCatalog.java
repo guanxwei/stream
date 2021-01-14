@@ -67,7 +67,7 @@ public class ResourceCatalog {
     }
 
     /**
-     * Retrieve the resource from the memory cache speeding up performance.
+     * Retrieve the resource from the cache speeding up performance.
      * @param resourceURL Resource url.
      * @return Resource.
      * @throws ResourceReadingExecption ResourceReadingExecption.

@@ -13,7 +13,7 @@ import lombok.Setter;
  * @author guanxiong wei
  *
  */
-public class TaskReader extends AbstractResourceReader {
+public class TaskReader extends AbstractResourceReader<Task> {
 
     @Setter
     private TaskStorage taskStorage;
@@ -32,10 +32,14 @@ public class TaskReader extends AbstractResourceReader {
      * {@inheritDoc}
      */
     @Override
-    protected Object doRead(final ResourceURL resourceURL) {
+    protected Task doRead(final ResourceURL resourceURL) {
         String key = resourceURL.getPath();
-        Task task = taskStorage.query(key);
-        return task;
+        return taskStorage.query(key);
+    }
+
+    @Override
+    protected String constructResourceReference(ResourceURL resourceURL) {
+        return "Workflow::Task::" + resourceURL.getPath();
     }
 
 }

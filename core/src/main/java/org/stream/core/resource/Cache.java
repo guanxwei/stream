@@ -24,7 +24,7 @@ public interface Cache {
     /**
      * Check if the resource has been marked as expired. Concrete implementation can determine their own mechanism to realize this character,
      * and they should obey to their usage principle when they plug their implementation into real software system.
-     * @param resource resource need to be checked if it is expired.
+     * @param resource Target resource.
      * @return Checking result.
      */
     boolean isResourceExpired(final Resource resource);

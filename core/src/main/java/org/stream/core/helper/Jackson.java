@@ -26,8 +26,6 @@ public class Jackson {
         OBJECT_MANAGER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         OBJECT_MANAGER.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
         OBJECT_MANAGER.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-        OBJECT_MANAGER.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
-        OBJECT_MANAGER.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
     }
 
     /**
