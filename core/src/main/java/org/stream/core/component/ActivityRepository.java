@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ActivityRepository {
 
-    private Map<String, Activity> activities = new ConcurrentHashMap<String, Activity>();
+    private Map<String, Activity> activities = new ConcurrentHashMap<>();
 
     /**
      * Register a activity into the repository.

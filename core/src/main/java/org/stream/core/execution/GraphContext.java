@@ -20,7 +20,7 @@ public class GraphContext {
     @Setter
     private ActivityRepository activityRepository;
 
-    protected Map<String, Graph> graphs = new ConcurrentHashMap<String, Graph>();
+    protected Map<String, Graph> graphs = new ConcurrentHashMap<>();
 
     /**
      * Check if an {@link Activity} instance exist in the graph context.

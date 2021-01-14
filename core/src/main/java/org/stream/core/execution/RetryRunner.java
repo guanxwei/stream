@@ -2,6 +2,7 @@ package org.stream.core.execution;
 
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
+import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.helper.Jackson;
 import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
@@ -135,7 +136,7 @@ public class RetryRunner implements Runnable {
             if (completedWithFailure) {
                 activityResult = ActivityResult.FAIL;
             }
-            TaskHelper.complete(task, data, taskPersister, activityResult);
+            TaskHelper.complete(task, taskPersister, activityResult);
         }
 
         WorkFlowContext.reboot();
@@ -186,6 +187,6 @@ public class RetryRunner implements Runnable {
         if (retryPattern != null) {
             return retryPattern.getTimeInterval(time);
         }
-        throw new RuntimeException("Retry pattern should not be null");
+        throw new WorkFlowExecutionExeception("Retry pattern should not be null");
     }
 }

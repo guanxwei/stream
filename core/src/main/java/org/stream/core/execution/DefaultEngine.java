@@ -136,7 +136,7 @@ public class DefaultEngine implements Engine {
         }
 
         // Prepare work-flow runtime context.
-        WorkFlow context = prepare(graph, autoRecord, graphName, resource, isWorkflowEntryGraph);
+        WorkFlow context = prepare(graph, autoRecord, graphName, resource);
 
         // Execute
         execute(context, graph, autoRecord, startNode);
@@ -165,8 +165,7 @@ public class DefaultEngine implements Engine {
         }
     }
 
-    private WorkFlow prepare(final Graph graph, final boolean autoRecord, final String graphName, final Resource resource,
-            final boolean isWorkflowEntryGraph) {
+    private WorkFlow prepare(final Graph graph, final boolean autoRecord, final String graphName, final Resource resource) {
         WorkFlow workFlow;
         if (!WorkFlowContext.isThereWorkingWorkFlow()) {
             //Currently there is no working work-flow in the same thread, we should create a new work-flow.
@@ -184,7 +183,7 @@ public class DefaultEngine implements Engine {
             log.info("Pre-created workflow instance [{}] will be reused for graph [{}] with resource [{}]",
                     workFlow.getWorkFlowId(), graphName, resource == null ? StringUtils.EMPTY : resource.toString());
 
-            refresh(workFlow, graph, autoRecord, isWorkflowEntryGraph);
+            refresh(workFlow, graph, autoRecord);
         }
         workFlow = WorkFlowContext.provide();
         workFlow.attachPrimaryResource(resource);
@@ -208,21 +207,19 @@ public class DefaultEngine implements Engine {
         return workFlow;
     }
 
-    private void refresh(final WorkFlow workFlow, final Graph graph, final boolean autoRecord,
-            final boolean isWorkflowEntryGraph) {
+    private void refresh(final WorkFlow workFlow, final Graph graph, final boolean autoRecord) {
         if (workFlow.getStatus().equals(WorkFlowStatus.CLOSED)) {
             throw new WorkFlowExecutionExeception("The workflow has been closed!");
         }
 
         if (workFlow.getStatus().equals(WorkFlowStatus.WAITING)) {
-            useCurrentWorkflowDirectly(workFlow, graph, isWorkflowEntryGraph, autoRecord);
+            useCurrentWorkflowDirectly(workFlow, graph, autoRecord);
         } else {
-            useCurrentWorkflowAsParentWorkflow(workFlow, graph, autoRecord, workFlow.getGraphContext());
+            useCurrentWorkflowAsParentWorkflow(workFlow, graph, workFlow.getGraphContext());
         }
     }
 
-    private void useCurrentWorkflowDirectly(final WorkFlow workFlow, final Graph graph,
-            final boolean isWorkflowEntryGraph, final boolean autoRecord) {
+    private void useCurrentWorkflowDirectly(final WorkFlow workFlow, final Graph graph, final boolean autoRecord) {
         workFlow.setStatus(WorkFlowStatus.WORKING);
         workFlow.visitGraph(graph);
         if (autoRecord) {
@@ -238,8 +235,7 @@ public class DefaultEngine implements Engine {
         workFlow.setResourceTank(new ResourceTank());
     }
 
-    private void useCurrentWorkflowAsParentWorkflow(final WorkFlow workFlow, final Graph graph,
-            final boolean autoRecord, final GraphContext graphContext) {
+    private void useCurrentWorkflowAsParentWorkflow(final WorkFlow workFlow, final Graph graph, final GraphContext graphContext) {
 
         /**
          * Currently the work-flow is running for another task, we are triggered within the running work-flow context.
@@ -291,7 +287,7 @@ public class DefaultEngine implements Engine {
             ActivityResult activityResult = TaskHelper.perform(executionNode, ActivityResult.FAIL);
 
             if (ActivityResult.SUSPEND.equals(activityResult)) {
-                activityResult = processSuspendCase(activityResult, workFlow, executionNode);
+                activityResult = processSuspendCase(executionNode);
             }
 
             executionNode = TaskHelper.onCondition(executionNode, executionStateSwitcher, activityResult, graph);
@@ -302,8 +298,7 @@ public class DefaultEngine implements Engine {
         return next.equals(previous);
     }
 
-    private ActivityResult processSuspendCase(final ActivityResult activityResult, final WorkFlow workFlow,
-            final Node node) {
+    private ActivityResult processSuspendCase(final Node node) {
 
         /**
          * Since the previous node return Suspend result, work-flow should suspend and wait for some time to invoke the next node.
@@ -331,7 +326,7 @@ public class DefaultEngine implements Engine {
         context.setStatus(WorkFlowStatus.WAITING);
         if (isWorkflowEntryGraph) {
             // Make the work-flow reusable.
-            ENTRANCE_TAG.set(0);
+            ENTRANCE_TAG.remove();
             context.setChildren(new LinkedList<>());
             executionStateSwitcher.clear();
         }

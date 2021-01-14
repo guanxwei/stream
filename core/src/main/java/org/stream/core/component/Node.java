@@ -101,7 +101,7 @@ public class Node {
      * their {@link Activity#act()} method. Work-flow engine will check the condition status
      * when the node returns {@link ActivityResult#CONDITION} and invoke the 
      */
-    public static final ThreadLocal<Integer> CONDITION = new ThreadLocal<Integer>();
+    public static final ThreadLocal<Integer> CONDITION = new ThreadLocal<>();
 
     /**
      * Condition configuration detail.

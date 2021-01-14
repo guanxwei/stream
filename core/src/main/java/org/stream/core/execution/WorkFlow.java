@@ -13,6 +13,7 @@ import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,7 +51,7 @@ public class WorkFlow {
     @Getter @Setter
     private String workFlowId;
 
-    private List<ExecutionRecord> records = new LinkedList<ExecutionRecord>();
+    private List<ExecutionRecord> records = new LinkedList<>();
 
     @Setter @Getter
     private boolean isRebooting = false;

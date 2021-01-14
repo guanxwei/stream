@@ -13,15 +13,15 @@ import lombok.Getter;
  */
 public abstract class AsyncActivity extends Activity {
 
-    private ThreadLocal<ResourceTank> resources = new ThreadLocal<ResourceTank>();
+    private ThreadLocal<ResourceTank> resources = new ThreadLocal<>();
 
-    private ThreadLocal<String> primaryResourceReference = new ThreadLocal<String>();
-
-    @Getter
-    private ThreadLocal<Node> node = new ThreadLocal<Node>();
+    private ThreadLocal<String> primaryResourceReference = new ThreadLocal<>();
 
     @Getter
-    private ThreadLocal<Node> host = new ThreadLocal<Node>();
+    private ThreadLocal<Node> node = new ThreadLocal<>();
+
+    @Getter
+    private ThreadLocal<Node> host = new ThreadLocal<>();
 
     /**
      * Link-up the execution work-flow instance's resource tank with this activity instance.
@@ -77,8 +77,10 @@ public abstract class AsyncActivity extends Activity {
      * execution engine.
      */
     public void cleanUp() {
-        resources.set(null);
-        primaryResourceReference.set(null);
+        resources.remove();
+        primaryResourceReference.remove();
+        node.remove();
+        host.remove();
     }
 
     /**

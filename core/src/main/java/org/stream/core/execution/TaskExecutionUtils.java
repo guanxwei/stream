@@ -1,5 +1,7 @@
 package org.stream.core.execution;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
@@ -11,8 +13,6 @@ import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
-
-import com.google.common.collect.ImmutableMap;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,7 +75,7 @@ public final class TaskExecutionUtils {
      */
     public static TaskStep constructStep(final Graph graph, final Node node, final String status,
             final StreamTransferData data, final Task task) {
-        TaskStep taskStep = TaskStep.builder()
+        return TaskStep.builder()
                 .createTime(System.currentTimeMillis())
                 .graphName(graph.getGraphName())
                 .nodeName(node.getNodeName())
@@ -83,10 +83,9 @@ public final class TaskExecutionUtils {
                 .streamTransferData(HessianIOSerializer.encode(data))
                 .taskId(task.getTaskId())
                 .build();
-        return taskStep;
     }
 
-    public static void suspend(final Task task, final Node node, final TaskPersister taskPersister, final Graph graph,
+    public static void suspend(final Task task, final Node node, final TaskPersister taskPersister,
             final RetryPattern pattern, final GraphContext graphContext) {
         int interval = TaskHelper.suspend(task, node, taskPersister, pattern);
         TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, pattern);

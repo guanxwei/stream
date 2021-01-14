@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Resource;
+
+import com.google.gson.Gson;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.context.ApplicationContext;
@@ -31,8 +34,6 @@ import org.stream.core.execution.NextSteps.NextStepType;
 import org.stream.core.execution.StepPair;
 import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
 import org.stream.extension.io.Tower;
-
-import com.google.gson.Gson;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +59,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
 
     private boolean circuitChecking = false;
 
-    protected List<String> graphFilePaths = new LinkedList<String>();
+    protected List<String> graphFilePaths = new LinkedList<>();
 
     /**
      * {@inheritDoc}
@@ -93,9 +94,9 @@ public abstract class AbstractGraphLoader implements GraphLoader {
     private Graph loadGraph(final InputStream inputStream) throws GraphLoadException {
         Graph graph = new Graph();
         StringBuilder cause = new StringBuilder(100);
-        List<StepPair> stepPairs = new LinkedList<StepPair>();
-        List<AsyncPair> asyncPairs = new LinkedList<AsyncPair>();
-        Map<String, Node> knowNodes = new HashMap<String, Node>();
+        List<StepPair> stepPairs = new LinkedList<>();
+        List<AsyncPair> asyncPairs = new LinkedList<>();
+        Map<String, Node> knowNodes = new HashMap<>();
         try {
             parse(graph, inputStream, stepPairs, asyncPairs, knowNodes, cause);
         } catch (IOException e) {
@@ -122,7 +123,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         GraphConfiguration graphConfiguration = parseGraphConfiguration(json, graph);
         graph.setPrimaryResourceType(graphConfiguration.getPrimaryResourceType());
         NodeConfiguration[] nodes = graphConfiguration.getNodes();
-        List<Node> staticNodes = new ArrayList<Node>();
+        List<Node> staticNodes = new ArrayList<>();
         for (NodeConfiguration nodeConfiguration : nodes) {
             parseNodeConfiguration(nodeConfiguration, graph, stepPairs, asyncPairs, knowNodes, cause, staticNodes);
         }
@@ -155,7 +156,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
 
     private void parseNodeConfiguration(final NodeConfiguration nodeConfiguration, final Graph graph, final List<StepPair> stepPairs,
             final List<AsyncPair> asyncPairs, final Map<String, Node> knowNodes, final StringBuilder cause, final List<Node> staticNodes)
-                    throws GraphLoadException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+                    throws GraphLoadException, ClassNotFoundException {
         checkNodeConfiguration(nodeConfiguration);
         String currentNodeName = nodeConfiguration.getNodeName();
         String providerClass = nodeConfiguration.getProviderClass();
@@ -216,8 +217,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
          * to communicate with a remote server, for example a RPC client.
          */
         Tower actor = (Tower) applicationContext.getBean(clazz);
-        TowerActivity activity = new TowerActivity(actor);
-        return activity;
+        return new TowerActivity(actor);
     }
 
     private void trackNodes(final Map<String, Node> knowNodes, final StepPair pair) throws GraphLoadException {
@@ -281,9 +281,9 @@ public abstract class AbstractGraphLoader implements GraphLoader {
     }
 
     private String buildStringfyInput(final InputStream input) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(input, "UTF-8"));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
         String singleLine = null;
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         while ((singleLine = reader.readLine()) != null) {
             buffer.append(singleLine.trim());
         }
@@ -321,7 +321,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         String failStep = nodeConfiguration.getFailNode();
         String suspendStep = nodeConfiguration.getSuspendNode();
         String checkStep = nodeConfiguration.getCheckNode();
-        List<StepPair> list = new LinkedList<StepPair>();
+        List<StepPair> list = new LinkedList<>();
         String[] nexts = {successStep, failStep, suspendStep, checkStep};
         int count = 0;
         for (String nextStep : nexts) {

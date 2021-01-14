@@ -4,7 +4,6 @@ import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.resource.Resource;
-import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
@@ -68,7 +67,7 @@ public class ExecutionRunner implements Runnable {
 
             if (activityResult.equals(ActivityResult.SUSPEND)) {
                 log.info("Task suspended, will try to run locally if possible");
-                TaskExecutionUtils.suspend(task, node, taskPersister, graph, pattern, graphContext);
+                TaskExecutionUtils.suspend(task, node, taskPersister, pattern, graphContext);
                 return;
             }
 
@@ -76,8 +75,7 @@ public class ExecutionRunner implements Runnable {
             node = TaskHelper.onCondition(node, executionStateSwitcher, activityResult, graph);
         }
 
-        TaskHelper.complete(task, WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class),
-                taskPersister, activityResult);
+        TaskHelper.complete(task, taskPersister, activityResult);
         WorkFlowContext.reboot();
     }
 

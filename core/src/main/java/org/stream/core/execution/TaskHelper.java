@@ -3,7 +3,6 @@ package org.stream.core.execution;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -37,12 +36,9 @@ import lombok.extern.slf4j.Slf4j;
 public final class TaskHelper {
 
     private static final ThreadPoolExecutor EXECUTOR_SERVICE = new ThreadPoolExecutor(100, 100, 10 * 1000, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<Runnable>(30),
-            new RejectedExecutionHandler() {
-                @Override
-                public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                    log.error("Workflow retry executor pool overflowed");
-                }
+            new LinkedBlockingQueue<>(30),
+            (r, e) -> {
+                log.error("Workflow retry executor pool overflowed");
             });
 
     // Set the local retry thread pool with fixed queue length 100.
@@ -121,7 +117,6 @@ public final class TaskHelper {
         StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE,
                 StreamTransferData.class);
         TaskHelper.updateTask(task, node, TaskStatus.PENDING.code());
-        // Let the back-end runners have chances to retry the suspended work-flow.;
         int interval = getInterval(node, pattern, 0);
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
         TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
@@ -148,12 +143,10 @@ public final class TaskHelper {
     /**
      * Mark the task as success.
      * @param task Task to be marked.
-     * @param data Data to be saved.
      * @param taskPersister Task persister.
      * @param finalActivityResult Activity execution result of the last node.
      */
-    public static void complete(final Task task, final StreamTransferData data, final TaskPersister taskPersister,
-            final ActivityResult finalActivityResult) {
+    public static void complete(final Task task, final TaskPersister taskPersister, final ActivityResult finalActivityResult) {
         task.setStatus(TaskStatus.COMPLETED.code());
         if (finalActivityResult == ActivityResult.FAIL) {
             task.setStatus(TaskStatus.FAILED.code());
@@ -230,7 +223,7 @@ public final class TaskHelper {
                 }
                 return activityResult;
             };
-            FutureTask<ActivityResult> task = new FutureTask<ActivityResult>(job);
+            FutureTask<ActivityResult> task = new FutureTask<>(job);
             Resource taskWrapper = Resource.builder()
                     .value(task)
                     .resourceReference(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX)
