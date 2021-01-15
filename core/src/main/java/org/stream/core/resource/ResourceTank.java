@@ -38,4 +38,11 @@ public class ResourceTank {
         return resources.get(resourceReference);
     }
 
+    /**
+     * Remove a resource.
+     * @param resourceReference Resource reference.
+     */
+    public void remove(final String resourceReference) {
+        resources.remove(resourceReference);
+    }
 }

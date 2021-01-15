@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class EventsHelper {
 
+    private EventsHelper() { }
+
     /**
      * Fire an event through the event center. If the event center is not configure, nothing will happen except one
      * warn log.

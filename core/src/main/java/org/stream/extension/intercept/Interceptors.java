@@ -17,7 +17,9 @@ import lombok.NonNull;
  */
 public final class Interceptors {
 
-    private static final Map<String, List<Interceptor>> INTERCEPTORS = new HashMap<>();
+    private static final Map<String, List<Interceptor>> REGISTERD_INTERCEPTORS = new HashMap<>();
+
+    private Interceptors() { }
 
     /**
      * Merge more interceptors.
@@ -26,11 +28,11 @@ public final class Interceptors {
     public static void merge(@NonNull  Map<String, List<Interceptor>> elements) {
         List<Interceptor> merged = new LinkedList<>();
         for (Entry<String, List<Interceptor>> entry : elements.entrySet()) {
-            if (INTERCEPTORS.containsKey(entry.getKey())) {
-                merged.addAll(INTERCEPTORS.get(entry.getKey()));
+            if (REGISTERD_INTERCEPTORS.containsKey(entry.getKey())) {
+                merged.addAll(REGISTERD_INTERCEPTORS.get(entry.getKey()));
             }
             merged.addAll(entry.getValue());
-            INTERCEPTORS.put(entry.getKey(), merged);
+            REGISTERD_INTERCEPTORS.put(entry.getKey(), merged);
         }
     }
 
@@ -63,7 +65,7 @@ public final class Interceptors {
     private static void onTemplate(final Object input, final Node node, final int type) {
         Graph graph = node.getGraph();
         String graphName = graph.getGraphName();
-        List<Interceptor> candidates = INTERCEPTORS.get(graphName);
+        List<Interceptor> candidates = REGISTERD_INTERCEPTORS.get(graphName);
         if (candidates == null) return; // No interceptors configured.
         for (Interceptor interceptor : candidates) {
             switch (type) {

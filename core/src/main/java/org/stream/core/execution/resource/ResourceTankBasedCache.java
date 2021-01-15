@@ -18,7 +18,8 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public Resource get(final ResourceURL resourceURL) {
-        return WorkFlowContext.resolveResource(resourceURL.getPath());
+        String reference = getReference(resourceURL);
+        return WorkFlowContext.resolveResource(reference);
     }
 
     /**
@@ -26,6 +27,9 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public void put(final ResourceURL resourceURL, final Resource resource) {
+        String refefence = getReference(resourceURL);
+        // Cache will help manage the resource reference.
+        resource.setResourceReference(refefence);
         WorkFlowContext.attachResource(resource);
     }
 
@@ -34,7 +38,8 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public boolean isResourceExpired(final Resource resource) {
-       return false;
+        // All the resources will be in the memory until the workflow completed.
+        return false;
     }
 
     /**
@@ -42,7 +47,11 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public void setResourceExpired(final Resource resource) {
-        return;
+        String reference = getReference(resource.getResourceURL());
+        WorkFlowContext.remove(reference);
     }
 
+    private String getReference(final ResourceURL resourceURL) {
+        return "Workflow::" + resourceURL.getResourceAuthority().getValue() + "::" + resourceURL.getPath();
+    }
 }

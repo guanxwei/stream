@@ -1,5 +1,6 @@
 package org.stream.extension.events;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -66,10 +67,7 @@ public class MemoryEventCenter implements EventCenter {
     @Override
     public void registerListener(final Class<? extends Event> eventClass, final Listener listener) {
         synchronized (monitor) {
-            if (!listeners.containsKey(eventClass)) {
-                List<Listener> eventListeners = new LinkedList<>();
-                listeners.put(eventClass, eventListeners);
-            }
+            listeners.computeIfAbsent(eventClass, k -> new LinkedList<>());
         }
         listeners.get(eventClass).add(listener);
     }
@@ -103,7 +101,7 @@ public class MemoryEventCenter implements EventCenter {
     public List<Listener> getListenerListByEventType(final Class<?> type) {
         if (!type.getSuperclass().isAssignableFrom(Event.class)) {
             // Only event type can be key of the map.
-            return null;
+            return Collections.emptyList();
         }
         return listeners.get(type);
     }

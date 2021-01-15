@@ -36,10 +36,4 @@ public class TaskReader extends AbstractResourceReader<Task> {
         String key = resourceURL.getPath();
         return taskStorage.query(key);
     }
-
-    @Override
-    protected String constructResourceReference(ResourceURL resourceURL) {
-        return "Workflow::Task::" + resourceURL.getPath();
-    }
-
 }

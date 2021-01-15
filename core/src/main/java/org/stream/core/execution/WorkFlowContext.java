@@ -199,6 +199,15 @@ public final class WorkFlowContext {
     }
 
     /**
+     * Remove the resource.
+     * @param resourceReference A reference to the resource.
+     */
+    public static void remove(final String resourceReference) {
+        assertWorkFlowNotClose();
+        CURRENT.get().getResourceTank().remove(resourceReference);
+    }
+
+    /**
      * Add a new graph to the work-flow, the work-flow will handle it sooner.
      * @param graph Graph to be visited.
      */
