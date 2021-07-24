@@ -7,9 +7,9 @@ import org.stream.extension.persist.TaskStorage;
 
 /**
  * Abstract of "towers" which are used to communicate with the remote services by {@link AutoScheduledEngine}.
- * Every actor will be wrapped in a {@link TowerActivity} instance by the work-flow engine when loading the graph.
+ * Every tower will be wrapped in a {@link TowerActivity} instance by the work-flow engine when loading the graph.
  *
- * Users should only use actor when below scenarios fulfill:
+ * Users should only use tower when below scenarios fulfill:
  * (1) Plenty of distributed services will be arranged cooperating doing one thing in the single procedure
  *     Normally one RPC framework or something like that will be used, clients use the predefine
  *     interface to communicate with the remove service,

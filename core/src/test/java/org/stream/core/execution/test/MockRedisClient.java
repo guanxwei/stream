@@ -99,7 +99,7 @@ public class MockRedisClient implements RedisClient {
      * {@inheritDoc}
      */
     @Override
-    public Long setnx(String key, String value) {
+    public Long setnxWithExpireTime(String key, String value) {
         return ITEMS.putIfAbsent(key, value) == null ? 1l : 0l;
     }
 

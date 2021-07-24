@@ -13,7 +13,7 @@ import com.caucho.hessian.io.SerializerFactory;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Hessian framework based serializer and de-serializer.
+ * Hessian framework based serialize and de-serialize.
  */
 @Slf4j
 public final class HessianIOSerializer {

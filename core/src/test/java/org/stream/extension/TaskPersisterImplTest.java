@@ -105,7 +105,7 @@ public class TaskPersisterImplTest {
     public void tetTrylockexpired() {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         taskPersisterImpl.setRedisClient(redisClient);
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(0l);
+        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(0l);
         String taskID = RandomStringUtils.randomAlphabetic(12);
         Mockito.when(redisClient.get(taskID + "_lock")).thenReturn("fdafdafaf_102102");
 
@@ -199,12 +199,12 @@ public class TaskPersisterImplTest {
         taskPersisterImpl.setRedisClient(redisClient);
         Task task = new Task();
         task.setTaskId(RandomStringUtils.randomAlphabetic(10));
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
+        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
         taskPersisterImpl.tryLock(task.getTaskId());
         assertTrue(taskPersisterImpl.tryLock(task.getTaskId()));
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> captor2 = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(redisClient).setnx(captor.capture(), captor2.capture());
+        Mockito.verify(redisClient).setnxWithExpireTime(captor.capture(), captor2.capture());
     }
 
     @Test
@@ -213,7 +213,7 @@ public class TaskPersisterImplTest {
         taskPersisterImpl.setRedisClient(redisClient);
         Task task = new Task();
         task.setTaskId(RandomStringUtils.randomAlphabetic(10));
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(1l).thenReturn(0l);
         new Thread(() -> {
             taskPersisterImpl.tryLock(task.getTaskId());
@@ -223,6 +223,6 @@ public class TaskPersisterImplTest {
         assertFalse(taskPersisterImpl.tryLock(task.getTaskId()));
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> captor2 = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(redisClient, Mockito.times(1)).setnx(captor.capture(), captor2.capture());
+        Mockito.verify(redisClient, Mockito.times(1)).setnxWithExpireTime(captor.capture(), captor2.capture());
     }
 }

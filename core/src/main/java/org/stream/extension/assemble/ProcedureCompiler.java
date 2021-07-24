@@ -1,15 +1,18 @@
 package org.stream.extension.assemble;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.CollectionUtils;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
+import org.stream.core.component.Condition;
 import org.stream.core.component.Graph;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
@@ -43,9 +46,9 @@ public class ProcedureCompiler {
     private String graphName;
     private boolean startNodeSpecified = false;
     private String currentAction;
-    private List<ProcedureStub> stubs = new LinkedList<ProcedureStub>();
-    private Map<String, Activity> activities = new HashMap<String, Activity>();
-    private Map<Activity, String> mapping = new HashMap<Activity, String>();
+    private List<ProcedureStub> stubs = new LinkedList<>();
+    private Map<String, Activity> activities = new HashMap<>();
+    private Map<Activity, String> mapping = new HashMap<>();
     private ApplicationContext applicationContext;
     private String startNode;
 
@@ -104,8 +107,7 @@ public class ProcedureCompiler {
         graphLoader.setApplicationContext(applicationContext);
         graphLoader.setCircuitChecking(true);
         graphLoader.setGraphContext(graphContext);
-        Graph graph = graphLoader.loadGraphFromSource(Jackson.json(graphConfiguration));
-        return graph;
+        return graphLoader.loadGraphFromSource(Jackson.json(graphConfiguration));
     }
 
     protected void addStub(final ProcedureStub procedureStub) {
@@ -132,15 +134,23 @@ public class ProcedureCompiler {
     }
 
     private void addNodes(final GraphConfiguration graphConfiguration) {
-        List<NodeConfiguration> nodeConfigurations = new LinkedList<NodeConfiguration>();
+        List<NodeConfiguration> nodeConfigurations = new LinkedList<>();
         stubs.forEach(stub -> {
             NodeConfiguration nodeConfiguration = new NodeConfiguration();
-            nodeConfiguration.setActivityClass(stub.getAction().getClass().getName());
+            if (stub.getAction() != null) {
+                nodeConfiguration.setActivityClass(stub.getAction().getClass().getName());
+            }
+            if (stub.getTower() != null) {
+                nodeConfiguration.setActorClass(stub.getTower().getClass().getName());
+            }
+            nodeConfiguration.setDescription(stub.getDescription());
+            nodeConfiguration.setIntervals(stub.getIntervals());
             nodeConfiguration.setNodeName(retrieveNodeName(stub));
             nodeConfiguration.setSuccessNode(stub.getNextSteps()[ProcedureStub.SUCCEED]);
             nodeConfiguration.setFailNode(stub.getNextSteps()[ProcedureStub.FAILED]);
             nodeConfiguration.setSuspendNode(stub.getNextSteps()[ProcedureStub.SUSPENED]);
             nodeConfiguration.setCheckNode(stub.getNextSteps()[ProcedureStub.CHECKED]);
+            nodeConfiguration.setConditions(builderConditions(stub.getConditions()));
             addAsyncDependency(nodeConfiguration, stub);
             nodeConfigurations.add(nodeConfiguration);
         });
@@ -175,6 +185,15 @@ public class ProcedureCompiler {
             return null;
         }
         return mapping.get(activity);
+    }
+
+    private List<Condition> builderConditions(final Map<Integer, String> conditions) {
+        if (conditions == null) {
+            return Collections.emptyList();
+        }
+        return conditions.keySet().parallelStream()
+                    .map(key -> new Condition(key, conditions.get(key)))
+                    .collect(Collectors.toList());
     }
 
     public static class DefaultErrorHanlder extends Activity {

@@ -3,6 +3,8 @@ package org.stream.assemble;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.component.Graph;
@@ -11,6 +13,9 @@ import org.stream.core.exception.StreamException;
 import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
+import org.stream.core.execution.WorkFlowContext;
+import org.stream.core.resource.Resource;
+import org.stream.core.test.base.ConditionActivity;
 import org.stream.core.test.base.PrintRecordActivity;
 import org.stream.core.test.base.SuspendActivity;
 import org.stream.core.test.base.TestActivity;
@@ -56,5 +61,32 @@ public class ProcedureTest {
 
         Engine engine = new DefaultEngine();
         engine.executeOnce(graphContext, "ProcedureTest", true);
+    }
+
+    @Test
+    public void testCondition() throws GraphLoadException, StreamException {
+        GraphContext graphContext = new GraphContext();
+        ActivityRepository activityRepository = new ActivityRepository();
+        graphContext.setActivityRepository(activityRepository);
+        Activity activity1 = new ConditionActivity();
+        Activity activity3 = new PrintRecordActivity();
+
+        Graph graph = ProcedureCompiler.builder()
+                .withName("ConditionProcedureTest")
+                .withContext(graphContext)
+                .startFrom("startNode")
+                    .act(activity1)
+                        .when(ProcedureCondition.CONDITION).conditions(ImmutableMap.of(1, "node2"))
+                    .done()
+                .addAction("node2")
+                    .act(activity3)
+                    .done()
+                .defaultErrorNode(activity3)
+                .compile();
+        assertNotNull(graph);
+        Engine engine = new DefaultEngine();
+        engine.execute(graphContext, "ConditionProcedureTest", true);
+        Resource resource = WorkFlowContext.resolveResource("PrintRecordActivity");
+        assertNotNull(resource);
     }
 }

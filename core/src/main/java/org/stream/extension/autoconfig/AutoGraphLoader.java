@@ -1,5 +1,6 @@
 package org.stream.extension.autoconfig;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.context.ApplicationContext;
@@ -8,6 +9,7 @@ import org.springframework.context.event.ApplicationContextEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.stream.core.exception.GraphLoadException;
 import org.stream.core.helper.AbstractGraphLoader;
 import org.stream.core.helper.GraphLoader;
 
@@ -31,9 +33,9 @@ public class AutoGraphLoader implements ApplicationListener<ApplicationContextEv
         }
     }
 
-    private void loadGraphsIfPossible(final ApplicationContext applicationContext) throws Exception {
+    private void loadGraphsIfPossible(final ApplicationContext applicationContext) throws GraphLoadException, IOException {
         AbstractGraphLoader graphLoader = (AbstractGraphLoader) applicationContext.getBean(GraphLoader.class);
-        if (applicationContext.getBean("graphs") != null && applicationContext.getBean("graphs") instanceof List<?>) {
+        if (applicationContext.getBean("graphs") instanceof List<?>) {
             @SuppressWarnings("unchecked")
             List<String> graphs = (List<String>) applicationContext.getBean("graphs");
             for (String path : graphs) {

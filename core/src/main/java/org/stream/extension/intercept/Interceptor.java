@@ -7,7 +7,7 @@ import org.stream.core.execution.AutoScheduledEngine;
 
 /**
  * Interceptors that will intercept the workflow execution procedure, users can use
- * this abstract to help controll the {@link Activity} behaviors. For example, if
+ * this abstract to help control the {@link Activity} behaviors. For example, if
  * some of the service providers crashed when using {@link AutoScheduledEngine}, administrator
  * may take action like fast-fail to prevent the system blocked. Then a fast-fail detect interceptor
  * can be plugged in the workflow context, once the detector finds that the downstream service crashes, it

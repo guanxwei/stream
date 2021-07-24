@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.util.CollectionUtils;
 import org.stream.core.component.Node;
 import org.stream.core.exception.WorkFlowExecutionExeception;
@@ -23,6 +22,7 @@ import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
+import org.stream.extension.settings.Settings;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -43,11 +43,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TaskPersisterImpl implements TaskPersister {
 
-    private static final String HOST_NAME = RandomStringUtils.randomAlphabetic(32);
     private Map<String, String> processingTasks = new HashMap<>();
     private Map<String, Long> lockingTimes = new HashMap<>();
-    // Lock expire time in milliseconds.
-    public static final int LOCK_EXPIRE_TIME = 6 * 1000;
 
     @Setter
     private TaskStorage messageQueueBasedTaskStorage;
@@ -143,10 +140,11 @@ public class TaskPersisterImpl implements TaskPersister {
         long current = System.currentTimeMillis();
         boolean ownered = Thread.currentThread().getName().equals(processingTasks.get(taskId));
 
-        if (ownered && current - lockingTimes.get(taskId) < LOCK_EXPIRE_TIME) {
-            if (current - lockingTimes.get(taskId) > LOCK_EXPIRE_TIME / 2 && isLegibleOwner(genLock(taskId))) {
+        // The lock was grabbed by this thread in the previous step, just skip the procedure or refresh the lock time.
+        if (ownered && current - lockingTimes.get(taskId) < Settings.LOCK_EXPIRE_TIME) {
+            if (current - lockingTimes.get(taskId) > Settings.LOCK_EXPIRE_TIME / 2 && isLegibleOwner(genLock(taskId))) {
                 // refresh locked time if we have hold the lock for a long time
-                redisClient.setWithExpireTime(genLock(taskId), genLockValue(current), LOCK_EXPIRE_TIME / 1000);
+                redisClient.setWithExpireTime(genLock(taskId), genLockValue(current), Settings.LOCK_EXPIRE_TIME / 1000);
                 lockingTimes.put(taskId, current);
                 log.info("Lock info refreshed");
             }
@@ -154,33 +152,34 @@ public class TaskPersisterImpl implements TaskPersister {
             return true;
         }
 
+        // The locked was grabbed by another thread in the same JVM.
         if (isProcessing(taskId) && !ownered) {
             log.info("Another thread in the jvm is processing the task, skip");
             // Duplicate thread in the same host.
             long lockingTime = lockingTimes.get(taskId);
-            if (System.currentTimeMillis() - lockingTime > LOCK_EXPIRE_TIME) {
-                // The owner thread must be crashed or stuck.
-                releaseLock(taskId);
+            if (System.currentTimeMillis() - lockingTime > Settings.LOCK_EXPIRE_TIME) {
+                // The owner thread must be crashed or stuck, and the lock must be expired or refreshed by other workers.
+                // Try to grab the lock, if succeed, kick off the previous owner.
+                log.warn("The processing thread must be crashed or blocked by some actions, will try to grab the lock");
+                return requireLock(taskId, current);
             }
             return false;
         }
 
-        boolean locked = redisClient.setnx(genLock(taskId), genLockValue(current)) == 1L;
+        return requireLock(taskId, current);
+    }
+
+    private boolean requireLock(final String taskId, final long currentTime) {
+        String threadName = Thread.currentThread().getName();
+        log.info("Try to grab the lock for task [{}] at time [{}] by thread [{}]", taskId, currentTime, threadName);
+        boolean locked = redisClient.setnxWithExpireTime(genLock(taskId), genLockValue(currentTime)) == 1L;
 
         if (locked) {
-            log.info("Mark as locked");
-            markAsLocked(taskId, current);
-            return true;
-        } else {
-            String value = redisClient.get(genLock(taskId));
-            long lockedTime = parseLock(value);
-            if (current - lockedTime >= LOCK_EXPIRE_TIME) {
-                log.info("Release stuck lock");
-                releaseLock(taskId);
-            }
+            log.info("Thread [{}] Grab the lock for task [{}]", Thread.currentThread().getName(), taskId);
+            markAsLocked(taskId, currentTime);
         }
 
-        return false;
+        return locked;
     }
 
     /**
@@ -191,7 +190,7 @@ public class TaskPersisterImpl implements TaskPersister {
         processingTasks.remove(taskId);
         Long lockTime = lockingTimes.remove(taskId);
         // Lock for to long time, let other workers to release the lock.
-        if (lockTime != null && System.currentTimeMillis() - lockTime > LOCK_EXPIRE_TIME) {
+        if (lockTime != null && System.currentTimeMillis() - lockTime > Settings.LOCK_EXPIRE_TIME) {
             return true;
         }
 
@@ -304,7 +303,6 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean isProcessing(final String taskId) {
-        // If the lock has been locked for a long period of time, ingore the previous locking owner.
         return processingTasks.containsKey(taskId);
     }
 
@@ -320,7 +318,7 @@ public class TaskPersisterImpl implements TaskPersister {
     }
 
     private String genLockValue(final long current) {
-        return HOST_NAME + "_" + current;
+        return Settings.HOST_NAME + "_" + current;
     }
 
     private boolean isLegibleOwner(final String lock) {
@@ -329,16 +327,8 @@ public class TaskPersisterImpl implements TaskPersister {
             return true;
         }
 
-        return ownerInfo.startsWith(HOST_NAME);
+        return ownerInfo.startsWith(Settings.HOST_NAME);
 
-    }
-
-    private long parseLock(final String ownerInfo) {
-        if (ownerInfo == null) {
-            return 0L;
-        }
-        String[] infos = ownerInfo.split("_");
-        return Long.valueOf(infos[1]);
     }
 
 }

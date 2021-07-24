@@ -1,5 +1,6 @@
 package org.stream.core.component;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -61,11 +62,14 @@ public class TowerActivity extends Activity {
             StreamTransferData streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);
             contextData.add("errorMessage", e.getMessage());
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw, true);
-            e.printStackTrace(pw);
-            String stack = sw.getBuffer().toString();
-            contextData.add("errorStack", stack);
+            try (StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw, true);) {
+                e.printStackTrace(pw);
+                String stack = sw.getBuffer().toString();
+                contextData.add("errorStack", stack);
+            } catch (IOException e1) {
+                log.error("Fail to save error stack in the activity context");
+            }
             return ActivityResult.SUSPEND;
         }
     }

@@ -3,10 +3,12 @@ package org.stream.extension.clients;
 import java.util.List;
 import java.util.Set;
 
+import org.stream.extension.settings.Settings;
+
 /**
  * Redis service client.
- * Only define partial functions that Redis provides.
- * @author 魏冠雄
+ * Only define partial functions that Redis provides. This client should only be used by the Stream framework itself.
+ * @author weiguanxiong
  *
  */
 public interface RedisClient {
@@ -59,12 +61,13 @@ public interface RedisClient {
     List<String> lrange(final String key, final long start, final long end);
 
     /**
-     * Set the key only and if only the key did not exist.
-     * @param key Key to be set.
+     * Set the key only and if only the key did not exist. Expire time will be set as {@link Settings#LOCK_EXPIRE_TIME},
+     * customers are not allowed to specify the expire time themselves.
      * @param value Value attached to the key.
+     * @param key Redis key.
      * @return Affected rows.
      */
-    Long setnx(final String key, final String value);
+    Long setnxWithExpireTime(final String key, final String value);
 
     /**
      * Save a bundle of values in the specific list.

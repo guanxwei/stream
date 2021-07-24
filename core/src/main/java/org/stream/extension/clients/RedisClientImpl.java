@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.stream.extension.persist.TaskPersisterImpl;
+import org.stream.extension.settings.Settings;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -119,9 +119,9 @@ public class RedisClientImpl implements RedisClient {
      * {@inheritDoc}
      */
     @Override
-    public Long setnx(final String key, final String value) {
+    public Long setnxWithExpireTime(final String key, final String value) {
         return "ok".equalsIgnoreCase(jedisCluster
-                .set(key, value, SetParams.setParams().nx().px(TaskPersisterImpl.LOCK_EXPIRE_TIME))) ? 1l : 0l;
+                .set(key, value, SetParams.setParams().nx().px(Settings.LOCK_EXPIRE_TIME))) ? 1l : 0l;
     }
 
     /**

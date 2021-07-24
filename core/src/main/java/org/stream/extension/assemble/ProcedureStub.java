@@ -1,10 +1,12 @@
 package org.stream.extension.assemble;
 
 import java.util.List;
+import java.util.Map;
 
 import org.stream.core.component.Activity;
 import org.stream.core.exception.StreamException;
 import org.stream.core.helper.NodeConfiguration;
+import org.stream.extension.io.Tower;
 
 import lombok.Getter;
 
@@ -23,6 +25,7 @@ public class ProcedureStub {
     public static final int FAILED = 1;
     public static final int SUSPENED = 2;
     public static final int CHECKED = 3;
+    public static final int CONDITION = 4;
 
     private ProcedureCompiler procedureCompiler;
     private int index = -100;
@@ -32,7 +35,15 @@ public class ProcedureStub {
     @Getter
     private Activity action;
     @Getter
+    private Tower tower;
+    @Getter
     private List<String> dependencies;
+    @Getter
+    private Map<Integer, String> conditions;
+    @Getter
+    private String description;
+    @Getter
+    private List<Integer> intervals;
 
     public ProcedureStub(final ProcedureCompiler procedureCompiler) {
         this.procedureCompiler = procedureCompiler;
@@ -72,6 +83,12 @@ public class ProcedureStub {
         return this;
     }
 
+    protected ProcedureStub whenCondition() throws StreamException {
+        check();
+        index = CONDITION;
+        return this;
+    }
+
     private void check() throws StreamException {
         if (activityNeeded) {
             throw new StreamException("A activity must be specified before configuring new condition steps");
@@ -79,13 +96,33 @@ public class ProcedureStub {
         activityNeeded = true;
     }
 
+    public ProcedureStub description(final String description) {
+        this.description = description;
+        return this;
+    }
+
+    public ProcedureStub intervals(final List<Integer> intervals) {
+        this.intervals = intervals;
+        return this;
+    }
+
     public ProcedureStub act(final Activity activity) {
         this.action = activity;
         return this;
     }
 
+    public ProcedureStub call(final Tower tower) {
+        this.tower = tower;
+        return this;
+    }
+
     public ProcedureStub dependsOn(final List<String> activities) throws StreamException {
         this.dependencies = activities;
+        return this;
+    }
+
+    public ProcedureStub conditions(final Map<Integer, String> conditions) {
+        this.conditions = conditions;
         return this;
     }
 

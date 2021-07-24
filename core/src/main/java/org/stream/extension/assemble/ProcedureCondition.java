@@ -38,6 +38,15 @@ public enum ProcedureCondition {
         protected void onCondition(final ProcedureStub procedureStub) throws StreamException {
             procedureStub.whenChecked();
         }
+    },
+
+    CONDITION {
+
+        @Override
+        protected void onCondition(ProcedureStub procedureStub) throws StreamException {
+            procedureStub.whenCondition();
+        }
+        
     };
 
     protected abstract void onCondition(final ProcedureStub procedureStub) throws StreamException;

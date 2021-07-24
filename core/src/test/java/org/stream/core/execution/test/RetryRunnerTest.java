@@ -351,7 +351,7 @@ public class RetryRunnerTest {
         taskPersisterImpl.setDelayQueue(Mockito.mock(DelayQueue.class));
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         taskPersisterImpl.setRedisClient(redisClient);
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
+        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
         retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern);
         Mockito.doReturn(content).when(taskPersisterImpl).get(task.getTaskId());
         try {
@@ -365,7 +365,7 @@ public class RetryRunnerTest {
         retryRunner.run();
         taskPersisterImpl.releaseLock(task.getTaskId());
 
-        Mockito.when(redisClient.setnx(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
+        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
         try {
             retryRunner.run();
         } catch (Exception e) {

@@ -1,10 +1,10 @@
 package org.stream.extension.admin;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.stream.core.exception.StreamException;
 import org.stream.extension.meta.Task;
@@ -47,13 +47,10 @@ public final class TaskAdministrator {
     public List<TaskStep> getSteps(final String taskId) {
         List<TaskStep> taskSteps = taskStepStorage.getByTaskId(taskId);
 
-        if (CollectionUtils.isNotEmpty(taskSteps)) {
-            taskSteps.parallelStream().sorted((a, b) -> {
-                return a.getCreateTime() > b.getCreateTime() ? 1 : 0;
-            });
-        }
-
-        return taskSteps;
+        return taskSteps.stream().sorted((a, b) -> {
+                    return Long.compare(a.getCreateTime(), b.getCreateTime());
+                })
+                .collect(Collectors.toList());
     }
 
     /**
