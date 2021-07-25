@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.stream.extension.clients.RedisClient;
+import org.stream.extension.settings.Settings;
 
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,7 @@ import lombok.Data;
 public class MockRedisClient implements RedisClient {
 
     private static final ConcurrentHashMap<String, String> ITEMS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Long> EXPIRES = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Set<String>> SETS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, List<String>> LISTS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, List<Item>> ZLISTS = new ConcurrentHashMap<>();
@@ -100,7 +102,11 @@ public class MockRedisClient implements RedisClient {
      */
     @Override
     public Long setnxWithExpireTime(String key, String value) {
-        return ITEMS.putIfAbsent(key, value) == null ? 1l : 0l;
+        Long result = ITEMS.putIfAbsent(key, value) == null ? 1l : 0l;
+        if (result == 1l) {
+            EXPIRES.put(key, System.currentTimeMillis() + Settings.LOCK_EXPIRE_TIME);
+        }
+        return result;
     }
 
     /**
@@ -223,5 +229,14 @@ public class MockRedisClient implements RedisClient {
     public static class Item {
         private String value;
         private double score;
+    }
+
+    @Override
+    public boolean updateKeyExpireTimeIfMatch(final String key, final String expectedValue) {
+        if (expectedValue.equals(ITEMS.get(key))) {
+            EXPIRES.put(key, System.currentTimeMillis() + Settings.LOCK_EXPIRE_TIME);
+            return true;
+        }
+        return false;
     }
 }

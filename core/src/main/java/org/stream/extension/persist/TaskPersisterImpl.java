@@ -142,11 +142,17 @@ public class TaskPersisterImpl implements TaskPersister {
 
         // The lock was grabbed by this thread in the previous step, just skip the procedure or refresh the lock time.
         if (ownered && current - lockingTimes.get(taskId) < Settings.LOCK_EXPIRE_TIME) {
-            if (current - lockingTimes.get(taskId) > Settings.LOCK_EXPIRE_TIME / 2 && isLegibleOwner(genLock(taskId))) {
+            if (current - lockingTimes.get(taskId) > Settings.LOCK_EXPIRE_TIME / 2) {
                 // refresh locked time if we have hold the lock for a long time
-                redisClient.setWithExpireTime(genLock(taskId), genLockValue(current), Settings.LOCK_EXPIRE_TIME / 1000);
-                lockingTimes.put(taskId, current);
-                log.info("Lock info refreshed");
+                String expectedValue = genLockValue(lockingTimes.get(taskId));
+                boolean refreshed = redisClient.updateKeyExpireTimeIfMatch(genLock(taskId), expectedValue);
+                if (refreshed) {
+                    lockingTimes.put(taskId, current);
+                    log.info("Lock info refreshed");
+                } else {
+                    log.warn("Fail refreshing the lock expire time, please ");
+                    return false;
+                }
             }
 
             return true;

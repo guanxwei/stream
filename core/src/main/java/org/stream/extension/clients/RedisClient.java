@@ -135,4 +135,13 @@ public interface RedisClient {
      * @return List size.
      */
     long getListSize(final String list);
+
+    /**
+     * Update the specific key's expire time if exits and the stored value matches the expected one.
+     * Add more {@link Settings#LOCK_EXPIRE_TIME} milliseconds.
+     * @param key Redis key.
+     * @param expectedValue Expected value of the specific key.
+     * @return <code>true</code> If condition fulfills and operation succeeds otherwise {@code false}
+     */
+    boolean updateKeyExpireTimeIfMatch(final String key, final String expectedValue);
 }

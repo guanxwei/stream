@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.stream.extension.settings.Settings;
 
@@ -186,5 +187,33 @@ public class RedisClientImpl implements RedisClient {
     @Override
     public long getListSize(final String list) {
         return jedisCluster.llen(list);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean updateKeyExpireTimeIfMatch(final String key, final String expectedValue) {
+        if (Settings.LUA_SUPPORTED) {
+            Long response = (Long) jedisCluster.eval(buildLuaScript(key, expectedValue), List.of(key, expectedValue), List.of());
+            return response == 1l;
+        } else {
+            String value = jedisCluster.get(key);
+            if (expectedValue.equals(value)) {
+                return jedisCluster.expire(key, Settings.LOCK_EXPIRE_TIME / 1000) == 1;
+            }
+            return false;
+        }
+    }
+
+    private String buildLuaScript(final String key, final String expectedValue) {
+        if (StringUtils.isNotBlank(Settings.UPDATE_EXPIRE_TIME_LUA_SCRIPT)) {
+            return Settings.UPDATE_EXPIRE_TIME_LUA_SCRIPT;
+        }
+        return String.format("local key = KEYS[1]" + "\n"
+                         + "local value = redis.call('GET', key)" + "\n"
+                         + "if KEYS[2] == value" + "\n"
+                         + "then" + "\n"
+                         + "return redis.call('EXPIRE', key, %d)", Settings.LOCK_EXPIRE_TIME / 1000);
     }
 }
