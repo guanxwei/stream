@@ -245,7 +245,7 @@ public class TaskPersisterImpl implements TaskPersister {
      * {@inheritDoc}
      */
     @Override
-    public void suspend(final Task task, final double time, final TaskStep taskStep) {
+    public void suspend(final Task task, final double time, final TaskStep taskStep, final Node current) {
         log.info("Suspend task [{}] at node [{}]", task.getTaskId(), task.getNodeName());
         taskStorage.update(task);
         taskStepStorage.insert(taskStep);
@@ -260,7 +260,7 @@ public class TaskPersisterImpl implements TaskPersister {
         fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, task.getTaskId()), task.getTaskId());
         releaseLock(task.getTaskId());
         if (task.getRetryTimes() == 3 || task.getRetryTimes() == 10) {
-            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowSuspendEvent.class, task.getTaskId(), Node.CURRENT.get()), false);
+            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowSuspendEvent.class, task.getTaskId(), current), false);
         }
     }
 
@@ -268,11 +268,11 @@ public class TaskPersisterImpl implements TaskPersister {
      * {@inheritDoc}
      */
     @Override
-    public void complete(final Task task) {
+    public void complete(final Task task, final Node node) {
         if (task.getStatus() == TaskStatus.FAILED.code()) {
-            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowFailedEvent.class, task.getTaskId(), Node.CURRENT.get()), false);
+            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowFailedEvent.class, task.getTaskId(), node), false);
         } else {
-            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowSucceedEvent.class, task.getTaskId(), Node.CURRENT.get()), false);
+            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowSucceedEvent.class, task.getTaskId(), node), false);
         }
         delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()), task.getTaskId());
         fifoQueue.remove(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, task.getTaskId()), task.getTaskId());

@@ -2,6 +2,8 @@ package org.stream.core.resource;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import lombok.Getter;
+
 /**
  * A tank to store {@link Resource} instances in memory.
  * @author guanxiong wei
@@ -15,6 +17,7 @@ public class ResourceTank {
      * If an internal Node of the graph will invoke another graph, then both these two graph instances will share that one resource tank,
      * determined at the entry point of the execution procedure.
      */
+    @Getter
     private ConcurrentHashMap<String, Resource> resources = new ConcurrentHashMap<>();
 
     /**

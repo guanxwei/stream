@@ -17,8 +17,8 @@ import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.GraphLoader;
 import org.stream.core.helper.LocalGraphLoader;
-import org.stream.extension.clients.MessageClient;
 import org.stream.extension.clients.KafkaClientImpl;
+import org.stream.extension.clients.MessageClient;
 import org.stream.extension.clients.MongoClient;
 import org.stream.extension.clients.MongoClientImpl;
 import org.stream.extension.clients.RedisClient;
@@ -118,7 +118,7 @@ public class StandardAutoScheduleEngineConfiguration {
         } else {
             RetryPattern retryPattern = containsBean(RetryPattern.class)
                     ? applicationContext.getBean(RetryPattern.class) : new ScheduledTimeIntervalPattern();
-            autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(taskPersister(), retryPattern, graphContext()));
+            autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(taskPersister(), retryPattern, graphContext(), autoScheduledEngine));
         }
 
         return autoScheduledEngine;

@@ -7,6 +7,7 @@ import org.stream.core.execution.NextSteps;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -65,6 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 @Builder
 @Data
 @Slf4j
+@ToString(exclude = {"graph"})
 public class Node {
 
     // Node name
@@ -89,19 +91,6 @@ public class Node {
      * Detail description of the purpose of the node.
      */
     private String description;
-
-    /**
-     * Thread local storage to hold the reference to the current invoking node.
-     */
-    public static final ThreadLocal<Node> CURRENT = new ThreadLocal<>();
-
-    /**
-     * Thread local storage to hold the current condition of the node,
-     * users can save condition status here and return {@link ActivityResult#CONDITION} in
-     * their {@link Activity#act()} method. Work-flow engine will check the condition status
-     * when the node returns {@link ActivityResult#CONDITION} and invoke the 
-     */
-    public static final ThreadLocal<Integer> CONDITION = new ThreadLocal<>();
 
     /**
      * Condition configuration detail.

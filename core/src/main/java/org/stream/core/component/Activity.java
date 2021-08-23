@@ -39,12 +39,4 @@ public abstract class Activity {
         return getClass().getName();
     }
 
-    /**
-     * Get the host node the activity is running on.
-     * @return The host node of the activity.
-     */
-    public Node getExecutionContext() {
-        return Node.CURRENT.get();
-    }
-
 }

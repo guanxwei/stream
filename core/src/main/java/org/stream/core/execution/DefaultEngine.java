@@ -139,7 +139,7 @@ public class DefaultEngine implements Engine {
         WorkFlow context = prepare(graph, autoRecord, graphName, resource);
 
         // Execute
-        execute(context, graph, autoRecord, startNode);
+        execute(context, graph, autoRecord, startNode, graphContext);
         ResourceTank resourceTank = context.getResourceTank();
 
         // Clean context.
@@ -249,11 +249,14 @@ public class DefaultEngine implements Engine {
         workFlow.getChildren().add(child);
     }
 
-    private void execute(final WorkFlow workFlow, final Graph graph, final boolean autoRecord, final String startNode) {
+    private void execute(final WorkFlow workFlow, final Graph graph,
+            final boolean autoRecord, final String startNode,
+            final GraphContext graphContext) {
 
         /**
          * Extract the start node of the graph, and invoke the perform() method.
          */
+        Node previous = null;
         Node executionNode = graph.getStartNode();
         /**
          * Update 2020/06/03, to make it possible to start the procedure at specific start node,
@@ -271,7 +274,7 @@ public class DefaultEngine implements Engine {
         }
         while (executionNode != null && !WorkFlowContext.provide().isRebooting()) {
 
-            if (isStuckInDeadLoop(executionNode, Node.CURRENT.get())) {
+            if (isStuckInDeadLoop(executionNode, previous)) {
                 WorkFlowContext.markException(new WorkFlowExecutionExeception("Next execution node should not be the same with the previous one."));
                 break;
             }
@@ -284,13 +287,22 @@ public class DefaultEngine implements Engine {
                 workFlow.keepRecord(executionRecord);
             }
 
+            previous = executionNode;
             ActivityResult activityResult = TaskHelper.perform(executionNode, ActivityResult.FAIL);
 
             if (ActivityResult.SUSPEND.equals(activityResult)) {
                 activityResult = processSuspendCase(executionNode);
             }
 
-            executionNode = TaskHelper.onCondition(executionNode, executionStateSwitcher, activityResult, graph);
+            executionNode = TaskHelper.traverse(executionNode,
+                    executionStateSwitcher,
+                    activityResult,
+                    (engine, context, graphName) -> {
+                        Resource primary = WorkFlowContext.getPrimary();
+                        return engine.execute(context, graphName, primary, false);
+                    },
+                    graphContext,
+                    this);
         }
     }
 

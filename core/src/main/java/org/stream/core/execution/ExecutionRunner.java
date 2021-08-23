@@ -19,34 +19,40 @@ import lombok.extern.slf4j.Slf4j;
 public class ExecutionRunner implements Runnable {
 
     private GraphContext graphContext;
-    private Graph graph;
     private Resource primaryResource;
     private Task task;
     private TaskPersister taskPersister;
     private RetryPattern pattern;
     private Resource dataResource;
+    private Engine engine;
 
     private ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
 
     /**
      * Constructor.
-     * @param graph Target graph.
      * @param pattern Retry suspended cases pattern.
      * @param graphContext Graph context.
      * @param primaryResource Primary resource of this execution task.
      * @param task Stream execution task.
      * @param taskPersister Task persister.
      * @param dataResource A pointer the input task resource.
+     * @param engine Workflow execution engine.
      */
-    public ExecutionRunner(final Graph graph, final RetryPattern pattern, final GraphContext graphContext,
-            final Resource primaryResource, final Task task, final TaskPersister taskPersister, final Resource dataResource) {
-        this.graph = graph;
+    public ExecutionRunner(
+            final RetryPattern pattern,
+            final GraphContext graphContext,
+            final Resource primaryResource,
+            final Task task,
+            final TaskPersister taskPersister,
+            final Resource dataResource,
+            final Engine engine) {
         this.primaryResource = primaryResource;
         this.task = task;
         this.taskPersister = taskPersister;
         this.pattern = pattern;
         this.dataResource = dataResource;
         this.graphContext = graphContext;
+        this.engine = engine;
     }
 
     /**
@@ -57,7 +63,9 @@ public class ExecutionRunner implements Runnable {
         WorkFlowContext.setUpWorkFlow().start();
         WorkFlowContext.attachResource(dataResource);
         WorkFlowContext.attachPrimaryResource(primaryResource);
+        Graph graph = graphContext.getGraph(task.getGraphName());
         Node node = graph.getStartNode();
+        Node last = null;
 
         ActivityResult activityResult = null;
         while (node != null && taskPersister.tryLock(task.getTaskId())) {
@@ -67,15 +75,24 @@ public class ExecutionRunner implements Runnable {
 
             if (activityResult.equals(ActivityResult.SUSPEND)) {
                 log.info("Task suspended, will try to run locally if possible");
-                TaskExecutionUtils.suspend(task, node, taskPersister, pattern, graphContext);
+                TaskExecutionUtils.suspend(task, node, taskPersister, pattern, graphContext, this.engine);
                 return;
             }
 
             TaskExecutionUtils.updateTask(task, node, taskPersister, graph, activityResult);
-            node = TaskHelper.onCondition(node, executionStateSwitcher, activityResult, graph);
+            last = node;
+            node = TaskHelper.traverse(node,
+                        executionStateSwitcher,
+                        activityResult,
+                        (engine, context, graphName) -> {
+                            Resource primary = WorkFlowContext.getPrimary();
+                            return engine.execute(context, graphName, primary, false);
+                        },
+                        graphContext,
+                        this.engine);
         }
 
-        TaskHelper.complete(task, taskPersister, activityResult);
+        TaskHelper.complete(task, taskPersister, activityResult, last);
         WorkFlowContext.reboot();
     }
 

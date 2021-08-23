@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.stream.core.component.ActivityRepository;
+import org.stream.core.component.Node;
 import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.helper.LocalGraphLoader;
@@ -66,7 +67,7 @@ public class AutoScheduledEngineTest {
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);
         this.graphLoader.init();
-        autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(new MockExecutorService(), taskPersister, retryPattern, graphContext));
+        autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(new MockExecutorService(), taskPersister, retryPattern, graphContext, autoScheduledEngine));
     }
 
     @Test
@@ -80,8 +81,9 @@ public class AutoScheduledEngineTest {
 
         Assert.assertNotNull(resource);
         ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
-        Mockito.verify(taskPersister).complete(captor.capture());
+        Mockito.verify(taskPersister).complete(captor.capture(), nodeCaptor.capture());
 
         Assert.assertEquals(captor.getValue().getStatus(), TaskStatus.COMPLETED.code());
         Assert.assertEquals(captor.getValue().getNodeName(), "node4");
@@ -105,7 +107,9 @@ public class AutoScheduledEngineTest {
         ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Integer> captor2 = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<TaskStep> captor3 = ArgumentCaptor.forClass(TaskStep.class);
-        Mockito.verify(taskPersister).suspend(captor.capture(), captor2.capture(), captor3.capture());
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
+
+        Mockito.verify(taskPersister).suspend(captor.capture(), captor2.capture(), captor3.capture(), nodeCaptor.capture());
 
         Assert.assertEquals(captor.getValue().getStatus(), TaskStatus.PENDING.code());
         Assert.assertEquals(captor.getValue().getNodeName(), "node5");

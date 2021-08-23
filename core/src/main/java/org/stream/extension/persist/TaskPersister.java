@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.stream.core.component.Node;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStep;
@@ -82,14 +83,16 @@ public interface TaskPersister {
      * @param task Task to be suspended.
      * @param time Time interval in {@link TimeUnit#MILLISECONDS}.
      * @param taskStep Task step detail.
+     * @param current Current node that this task is stuck at.
      */
-    void suspend(final Task task, final double time, final TaskStep taskStep);
+    void suspend(final Task task, final double time, final TaskStep taskStep, final Node current);
 
     /**
-     * Mark the task as completed.
+     * Mark the task as completed after execute the activity in node.
      * @param task Task which is completed.
+     * @param node Final node the task is executed.
      */
-    void complete(final Task task);
+    void complete(final Task task, final Node node);
 
     /**
      * Making the task persister working in debug mode.

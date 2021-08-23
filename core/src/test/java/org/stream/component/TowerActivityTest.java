@@ -6,7 +6,6 @@ import static org.testng.Assert.assertNull;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.mockito.Mockito;
-import org.stream.core.component.Node;
 import org.stream.core.component.TowerActivity;
 import org.stream.core.execution.Debuger;
 import org.stream.core.execution.WorkFlowContext;
@@ -26,10 +25,6 @@ public class TowerActivityTest {
         this.mock = Mockito.mock(Tower.class);
         this.towerActivity = new TowerActivity(mock);
         Debuger.setUpWorkFlow();
-        Node node = Node.builder()
-                .nodeName("testNode")
-                .build();
-        Node.CURRENT.set(node);
         Resource data = Resource.builder()
                 .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
                 .value(StreamTransferData.succeed()

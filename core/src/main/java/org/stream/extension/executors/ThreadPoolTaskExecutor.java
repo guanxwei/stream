@@ -10,7 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.stream.core.component.Graph;
+import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRunner;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.RetryRunner;
@@ -45,27 +45,31 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private GraphContext graphContext;
 
+    private Engine engine;
+
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
 
-    public ThreadPoolTaskExecutor(final TaskPersister taskPersister, final RetryPattern retryPattern, final GraphContext graphContext) {
-        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext);
+    public ThreadPoolTaskExecutor(final TaskPersister taskPersister,
+            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
+        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext, engine);
     }
 
     public ThreadPoolTaskExecutor(final int size, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext) {
+            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
         this(new ThreadPoolExecutor(size / 2, size, 10000, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>(200),
                 (r, e) -> {
                     log.error("Workflow executor pool overflowed");
                 }
-            ), taskPersister, retryPattern, graphContext);
+            ), taskPersister, retryPattern, graphContext, engine);
     }
 
     public ThreadPoolTaskExecutor(final ExecutorService executorService, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext) {
+            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
         this.executorService = executorService;
         this.taskPersister = taskPersister;
         this.retryPattern = retryPattern;
         this.graphContext = graphContext;
+        this.engine = engine;
         init();
     }
 
@@ -123,7 +127,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private void process(final List<String> taskIDList) {
         for (String taskID :taskIDList) {
-            RetryRunner worker = new RetryRunner(taskID, graphContext, taskPersister, retryPattern);
+            RetryRunner worker = new RetryRunner(taskID, graphContext, taskPersister, retryPattern, engine);
             executorService.submit(worker);
         }
     }
@@ -132,14 +136,22 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      * {@inheritDoc}
      */
     @Override
-    public Future<?> submit(final Graph graph, final Resource primaryResource,
-            final Task task, final StreamTransferData data) {
+    public Future<?> submit(
+            final Resource primaryResource,
+            final Task task,
+            final StreamTransferData data) {
         Resource dataResource = Resource.builder()
                 .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
                 .value(data)
                 .build();
-        ExecutionRunner runner = new ExecutionRunner(graph, retryPattern, graphContext,
-                primaryResource, task, taskPersister, dataResource);
+        ExecutionRunner runner = new ExecutionRunner(
+                retryPattern,
+                graphContext,
+                primaryResource,
+                task,
+                taskPersister,
+                dataResource,
+                engine);
         return executorService.submit(runner);
     }
 

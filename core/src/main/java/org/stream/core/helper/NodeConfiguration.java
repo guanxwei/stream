@@ -79,6 +79,11 @@ public class NodeConfiguration {
     private List<Condition> conditions;
 
     /**
+     * Target child graphs that probably be executed after this node.
+     */
+    private List<String> targetGraphs;
+
+    /**
      * Encapsulation of asynchronous Node configuration, which is used to initiate a asynchronous node.
      * @author guanxiong wei
      *

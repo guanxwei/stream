@@ -132,7 +132,7 @@ public class PremiumAutoScheduleEngineConfiguration {
         } else {
             RetryPattern retryPattern = containsBean(RetryPattern.class)
                     ? applicationContext.getBean(RetryPattern.class) : new ScheduledTimeIntervalPattern();
-            autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(taskPersister(), retryPattern, graphContext()));
+            autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(taskPersister(), retryPattern, graphContext(), autoScheduledEngine));
         }
 
         return autoScheduledEngine;

@@ -266,6 +266,13 @@ public abstract class AbstractGraphLoader implements GraphLoader {
                     // node to be continued
                     return null;
                 }
+
+                @Override
+                public Void onInvoke() {
+                    // Do nothing when we get on invoke result, let the workflow engines determine in run-time which
+                    // which child procedure to be executed.
+                    return null;
+                }
             });
         }
     }

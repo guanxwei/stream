@@ -48,6 +48,17 @@ public enum ActivityResult {
     },
 
     /**
+     * Guiding the workflow engine to invoke another procedure, then go back to the next
+     * succeed node.
+     */
+    INVOKE {
+        @Override
+        public <E> E accept(final Visitor<E> visitor) {
+            return visitor.onInvoke();
+        }
+    },
+
+    /**
      * On condition result, giving users a way to define self specific strategy to determine next steps.
      */
     CONDITION {
@@ -56,6 +67,31 @@ public enum ActivityResult {
             return visitor.onCondition();
         }
     };
+
+    public static ActivityResult condition(final int code) {
+        CONDITION_CODE.set(code);
+        return ActivityResult.CONDITION;
+    }
+
+    public static ActivityResult invoke(final String graph) {
+        INVOKE_GRAPH.set(graph);
+        return ActivityResult.INVOKE;
+    }
+
+    /**
+     * Thread local storage to hold the latest activity result condition code.
+     * Users can return {@link #CONDITION} via method {@link #condition(int)} and
+     * specify the code. Workflow engine will determine the next step by the condition code
+     * and graph definition file and clear the condition code immediately.
+     */
+    public static final ThreadLocal<Integer> CONDITION_CODE = new ThreadLocal<>();
+
+    /**
+     * Thread local storage to hold the child procedure graph name specified by the
+     * previous activity. Workflow engine will clear the graph name immediately after it
+     * retrieve the graph instance from the context.
+     */
+    public static final ThreadLocal<String> INVOKE_GRAPH = new ThreadLocal<>();
 
     // CHECKSTYLE:OFF
     public abstract <E> E accept(final Visitor<E> visitor);
@@ -85,6 +121,12 @@ public enum ActivityResult {
          * @return Processing result.
          */
         T onCheck();
+
+        /**
+         * Visit the invoke step.
+         * @return Processing result from the invoked child procedure.
+         */
+        T onInvoke();
 
         /**
          * Visit the user specific on condition step.

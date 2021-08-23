@@ -3,7 +3,6 @@ package org.stream.extension.persist;
 import java.util.Collections;
 import java.util.List;
 
-import org.stream.core.component.Node;
 import org.stream.extension.events.Event;
 import org.stream.extension.events.EventCenter;
 import org.stream.extension.events.TaskCompleteEvent;
@@ -27,7 +26,7 @@ public class KafkaBasedTaskStorage implements TaskStorage {
      */
     @Override
     public boolean persist(final Task task) {
-        eventCenter.fireEvent(Event.of(TaskCompleteEvent.class, task, Node.CURRENT.get()));
+        eventCenter.fireEvent(Event.of(TaskCompleteEvent.class, task, null));
         return true;
     }
 

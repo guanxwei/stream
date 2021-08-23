@@ -49,6 +49,7 @@ public class RetryRunner implements Runnable {
     private TaskPersister taskPersister;
     private RetryPattern retryPattern;
     private boolean completedWithFailure = false;
+    private Engine engine;
 
     private ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
 
@@ -58,13 +59,19 @@ public class RetryRunner implements Runnable {
      * @param graphContext Graph context.
      * @param taskPersister {@linkplain TaskPersister} entity.
      * @param pattern Retry pattern.
+     * @param engine workflow engine who submits the initial task and potentially used to trigger a child procedure.
      */
-    public RetryRunner(final String taskId, final GraphContext graphContext, final TaskPersister taskPersister,
-            final RetryPattern pattern) {
+    public RetryRunner(
+            final String taskId,
+            final GraphContext graphContext,
+            final TaskPersister taskPersister,
+            final RetryPattern pattern,
+            final Engine engine) {
         this.taskId = taskId;
         this.graphContext = graphContext;
         this.taskPersister = taskPersister;
         this.retryPattern = pattern;
+        this.engine = engine;
     }
 
     /**
@@ -91,14 +98,14 @@ public class RetryRunner implements Runnable {
         }
 
         if (task.getStatus() == TaskStatus.COMPLETED.code() || task.getStatus() == TaskStatus.FAILED.code()) {
-            taskPersister.complete(task);
+            taskPersister.complete(task, TaskHelper.deduceNode(task, graphContext));
             return;
         }
 
         Node node = TaskHelper.deduceNode(task, graphContext);
         if (node == null) {
             log.error("Graph has been upgraded, target node [{}] is missing", task.getNodeName());
-            taskPersister.complete(task);
+            taskPersister.complete(task, null);
             return;
         }
 
@@ -120,7 +127,7 @@ public class RetryRunner implements Runnable {
                     activityResult = ActivityResult.FAIL;
                     completedWithFailure = true;
                 } else {
-                    suspend(task, node, data);
+                    suspend(task, node, data, this.engine);
                     WorkFlowContext.reboot();
                     return;
                 }
@@ -129,14 +136,22 @@ public class RetryRunner implements Runnable {
                     TaskExecutionUtils.STATUS_MAPPING.get(activityResult), data, task);
             TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
             taskPersister.initiateOrUpdateTask(task, false, taskStep);
-            node = TaskHelper.onCondition(node, executionStateSwitcher, activityResult, node.getGraph());
+            node = TaskHelper.traverse(node,
+                        executionStateSwitcher,
+                        activityResult,
+                        (engine, context, graphName) -> {
+                            Resource primary = WorkFlowContext.getPrimary();
+                            return engine.execute(context, graphName, primary, false);
+                        },
+                        graphContext,
+                        this.engine);
         }
 
         if (activityResult != null) {
             if (completedWithFailure) {
                 activityResult = ActivityResult.FAIL;
             }
-            TaskHelper.complete(task, taskPersister, activityResult);
+            TaskHelper.complete(task, taskPersister, activityResult, node);
         }
 
         WorkFlowContext.reboot();
@@ -154,7 +169,7 @@ public class RetryRunner implements Runnable {
         }
     }
 
-    private void suspend(final Task task, final Node node, final StreamTransferData data) {
+    private void suspend(final Task task, final Node node, final StreamTransferData data, final Engine engine) {
         // Persist workflow status to persistent layer.
         TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
         task.setLastExcutionTime(System.currentTimeMillis());
@@ -163,16 +178,17 @@ public class RetryRunner implements Runnable {
         } else {
             task.setRetryTimes(0);
         }
-        updateLastExecutionTimeAndSuspend(node, task, taskStep);
+        updateLastExecutionTimeAndSuspend(node, task, taskStep, engine);
     }
 
-    private void updateLastExecutionTimeAndSuspend(final Node node, final Task task, final TaskStep taskStep) {
+    private void updateLastExecutionTimeAndSuspend(final Node node, final Task task, final TaskStep taskStep,
+            final Engine engine) {
         int interval = TaskHelper.getInterval(node, retryPattern, task.getRetryTimes());
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
         task.setNodeName(node.getNodeName());
         task.setStatus(TaskStatus.PENDING.code());
-        taskPersister.suspend(task, interval, taskStep);
-        TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern);
+        taskPersister.suspend(task, interval, taskStep, node);
+        TaskHelper.retryLocalIfPossible(interval, task.getTaskId(), graphContext, taskPersister, retryPattern, engine);
         log.info("Task [{}] suspended at node [{}] for [{}] times, will try again later after [{}] milliseconds",
                 task.getTaskId(), node.getNodeName(), task.getRetryTimes(), interval);
     }

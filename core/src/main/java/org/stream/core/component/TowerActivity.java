@@ -57,7 +57,7 @@ public class TowerActivity extends Activity {
             contextData.getObjects().remove("errorStack");
             return ActivityResult.valueOf(streamTransferData.getActivityResult());
         } catch (Exception e) {
-            log.error("Fail to call actor [{}] at node [{}]", tower.getClass().getName(), Node.CURRENT.get().getNodeName(), e);
+            log.error("Fail to call actor [{}]", tower.getClass().getName(), e);
             WorkFlowContext.markException(e);
             StreamTransferData streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);

@@ -84,14 +84,6 @@ public abstract class AsyncActivity extends Activity {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Node getExecutionContext() {
-        return node.get();
-    }
-
-    /**
      * Get the host node that triggers this asynchronous task.
      * @return The trigger node.
      */

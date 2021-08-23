@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.component.Graph;
+import org.stream.core.component.Node;
 import org.stream.core.execution.ExecutionRunner;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.TaskHelper;
@@ -92,7 +93,7 @@ public class ExecutionRunnerTest {
                 .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
-        executionRunner = new ExecutionRunner(graph, pattern, graphContext, primaryResource, task, taskPersister, dataResource);
+        executionRunner = new ExecutionRunner(pattern, graphContext, primaryResource, task, taskPersister, dataResource, null);
 
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         executionRunner.run();
@@ -110,7 +111,8 @@ public class ExecutionRunnerTest {
         Assert.assertEquals(content.getNodeName(), "node4");
         Assert.assertEquals(content.getStatus(), TaskStatus.COMPLETED.code());
 
-        Mockito.verify(taskPersister).complete(task);
+        Node node = graph.getNode("node4");
+        Mockito.verify(taskPersister).complete(task, node);
         Mockito.verify(taskPersister).persist(task);
 
         Assert.assertEquals(task.getStatus(), TaskStatus.COMPLETED.code());
@@ -142,7 +144,7 @@ public class ExecutionRunnerTest {
                 .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
-        executionRunner = new ExecutionRunner(graph, pattern, graphContext, primaryResource, task, taskPersister, dataResource);
+        executionRunner = new ExecutionRunner(pattern, graphContext, primaryResource, task, taskPersister, dataResource, null);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
 
         Mockito.when(pattern.getTimeInterval(0)).thenReturn(10);
@@ -151,8 +153,9 @@ public class ExecutionRunnerTest {
         ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<TaskStep> captor4 = ArgumentCaptor.forClass(TaskStep.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
-        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor4.capture());
+        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor4.capture(), nodeCaptor.capture());
 
         Assert.assertEquals(captor2.getValue().intValue(), 10);
         Task captured = captor1.getValue();
@@ -188,7 +191,7 @@ public class ExecutionRunnerTest {
                 .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
                 .build();
-        executionRunner = new ExecutionRunner(graph, pattern, graphContext, primaryResource, task, taskPersister, dataResource);
+        executionRunner = new ExecutionRunner(pattern, graphContext, primaryResource, task, taskPersister, dataResource, null);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
 
         Mockito.when(pattern.getTimeInterval(0)).thenReturn(10);
@@ -197,8 +200,9 @@ public class ExecutionRunnerTest {
         ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<TaskStep> captor4 = ArgumentCaptor.forClass(TaskStep.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
-        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor4.capture());
+        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor4.capture(), nodeCaptor.capture());
 
         Assert.assertEquals(captor2.getValue().intValue(), 10);
         Task captured = captor1.getValue();

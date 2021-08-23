@@ -24,6 +24,7 @@ import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
 import org.stream.extension.state.ExecutionStateSwitcher;
+import org.stream.extension.utils.TripleFunction;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,7 +73,6 @@ public final class TaskHelper {
      * @return Execution result.
      */
     public static ActivityResult perform(final Node node, final ActivityResult defaultResult) {
-        Node.CURRENT.set(node);
         TaskExecutionUtils.prepareAsyncTasks(node);
         try {
             // Invoke interceptors before we execute the actions
@@ -120,7 +120,7 @@ public final class TaskHelper {
         int interval = getInterval(node, pattern, 0);
         task.setNextExecutionTime(task.getLastExcutionTime() + interval);
         TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
-        taskPersister.suspend(task, interval, taskStep);
+        taskPersister.suspend(task, interval, taskStep, node);
 
         return interval;
     }
@@ -142,27 +142,29 @@ public final class TaskHelper {
 
     /**
      * Mark the task as success.
-     * @param task Task to be marked.
-     * @param taskPersister Task persister.
+     * @param task target task.
+     * @param taskPersister task persister used to update the task status.
      * @param finalActivityResult Activity execution result of the last node.
+     * @param node last executed activity node.
      */
-    public static void complete(final Task task, final TaskPersister taskPersister, final ActivityResult finalActivityResult) {
+    public static void complete(
+            final Task task,
+            final TaskPersister taskPersister,
+            final ActivityResult finalActivityResult,
+            final Node node) {
         task.setStatus(TaskStatus.COMPLETED.code());
         if (finalActivityResult == ActivityResult.FAIL) {
             task.setStatus(TaskStatus.FAILED.code());
         }
 
         taskPersister.persist(task);
-        taskPersister.complete(task);
+        taskPersister.complete(task, node);
     }
 
-    /**
-     * Retrieve the next node to be executed based on the result the current node returned and the configuration for the current node.
-     * @param activityResult The result current node returned.
-     * @param startNode the current node reference.
-     * @return The next node.
-     */
-    public static Node traverse(final ActivityResult activityResult, final Node startNode) {
+    private static Node traverse(final ActivityResult activityResult, final Node startNode,
+            final TripleFunction<Engine, GraphContext, String, ResourceTank> function,
+            final GraphContext context,
+            final Engine engine) {
 
         if (activityResult == null) {
             return null;
@@ -192,9 +194,21 @@ public final class TaskHelper {
 
             @Override
             public Node onCondition() {
-                int conditionCode = Node.CONDITION.get();
-                Node.CONDITION.remove();
+                int conditionCode = ActivityResult.CONDITION_CODE.get();
+                ActivityResult.CONDITION_CODE.remove();
                 return startNode.getNode(conditionCode);
+            }
+
+            @Override
+            public Node onInvoke() {
+                String graph = ActivityResult.INVOKE_GRAPH.get();
+                ActivityResult.INVOKE_GRAPH.remove();
+                ResourceTank response = function.apply(engine, context, graph);
+                response.getResources().values().forEach(resource -> {
+                    WorkFlowContext.attachResource(resource);
+                });
+                // Jump back to the succeed node of the parent graph's last executed node.
+                return onSuccess();
             }
         });
     }
@@ -266,13 +280,19 @@ public final class TaskHelper {
      * @param graphContext Graph context.
      * @param taskPersister Task persister.
      * @param pattern Retry pattern.
+     * @param engine workflow engine.
      */
-    public static void retryLocalIfPossible(final int interval, final String taskID, final GraphContext graphContext,
-            final TaskPersister taskPersister, final RetryPattern pattern) {
+    public static void retryLocalIfPossible(
+            final int interval,
+            final String taskID,
+            final GraphContext graphContext,
+            final TaskPersister taskPersister,
+            final RetryPattern pattern,
+            final Engine engine) {
         if (interval <= 1000) {
             LOCAL_RETRY_SCHEDULER.schedule(() -> {
                 log.info("Local retry for task [{}] begin after interval [{}]", taskID, interval);
-                RetryRunner retryRunner = new RetryRunner(taskID, graphContext, taskPersister, pattern);
+                RetryRunner retryRunner = new RetryRunner(taskID, graphContext, taskPersister, pattern, engine);
                 try {
                     retryRunner.run();
                 } catch (Exception e) {
@@ -290,14 +310,21 @@ public final class TaskHelper {
      * @param executionStateSwitcher Execution state switcher used to check if it is stuck at dead loop.
      *      if so change the next node to null.
      * @param activityResult The activity result returned by the previous node.
-     * @param graph Graph
+     * @param function Function that should be applied before turning back to the caller.
+     * @param context Graph context.
+     * @param engine Workflow engine.
      * @return Next node to be executed.
      */
-    public static Node onCondition(final Node previous, final ExecutionStateSwitcher executionStateSwitcher,
-            final ActivityResult activityResult, final Graph graph) {
-        Node next = TaskHelper.traverse(activityResult, previous);
+    public static Node traverse(
+            final Node previous,
+            final ExecutionStateSwitcher executionStateSwitcher,
+            final ActivityResult activityResult,
+            final TripleFunction<Engine, GraphContext, String, ResourceTank> function,
+            final GraphContext context,
+            final Engine engine) {
+        Node next = traverse(activityResult, previous, function, context, engine);
         if (executionStateSwitcher.isOpen(previous, next, activityResult)) {
-            next = executionStateSwitcher.open(graph, previous);
+            next = executionStateSwitcher.open(previous.getGraph(), previous);
         }
 
         return next;

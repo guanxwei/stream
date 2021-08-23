@@ -5,7 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import org.stream.core.component.Graph;
+import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRunner;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
@@ -34,36 +34,40 @@ public class SyncTaskExecutor implements TaskExecutor {
 
     private GraphContext graphContext;
 
-    public SyncTaskExecutor(final TaskPersister taskPersister, final RetryPattern retryPattern, final GraphContext graphContext) {
-        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext);
+    private Engine engine;
+
+    public SyncTaskExecutor(final TaskPersister taskPersister, final RetryPattern retryPattern,
+            final GraphContext graphContext, final Engine engine) {
+        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext, engine);
     }
 
     public SyncTaskExecutor(final int size, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext) {
-        this(Executors.newFixedThreadPool(size), taskPersister, retryPattern, graphContext);
+            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
+        this(Executors.newFixedThreadPool(size), taskPersister, retryPattern, graphContext, engine);
     }
 
     public SyncTaskExecutor(final ExecutorService executorService, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext) {
+            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
         // For sake of unit test, mock executor service should also be granted. 
         this.executorService = new MockExecutorService();
         this.taskPersister = taskPersister;
         this.retryPattern = retryPattern;
         this.graphContext = graphContext;
+        this.engine = engine;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Future<?> submit(final Graph graph, final Resource primaryResource,
+    public Future<?> submit(final Resource primaryResource,
             final Task task, final StreamTransferData data) {
         Resource dataResource = Resource.builder()
                 .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
                 .value(data)
                 .build();
-        ExecutionRunner runner = new ExecutionRunner(graph, retryPattern, graphContext,
-                primaryResource, task, taskPersister, dataResource);
+        ExecutionRunner runner = new ExecutionRunner(retryPattern, graphContext,
+                primaryResource, task, taskPersister, dataResource, engine);
         return executorService.submit(runner);
     }
 

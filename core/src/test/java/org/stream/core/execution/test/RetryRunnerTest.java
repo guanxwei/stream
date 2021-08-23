@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.stream.core.component.ActivityRepository;
+import org.stream.core.component.Node;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.RetryRunner;
 import org.stream.core.execution.WorkFlowContext;
@@ -91,14 +92,15 @@ public class RetryRunnerTest {
                 .build();
 
        content = task.toString();
-       retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+       retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern, null);
        Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
        Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
 
        retryRunner.run();
 
        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
-       Mockito.verify(taskPersister).complete(captor.capture());
+       ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
+       Mockito.verify(taskPersister).complete(captor.capture(), nodeCaptor.capture());
        assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
 
     }
@@ -116,13 +118,15 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern, null);
         Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
 
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(false);
         retryRunner.run();
         ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
-        Mockito.verify(taskPersister, Mockito.times(0)).complete(captor.capture());
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
+
+        Mockito.verify(taskPersister, Mockito.times(0)).complete(captor.capture(), nodeCaptor.capture());
         assertFalse(WorkFlowContext.isThereWorkingWorkFlow());
 
     }
@@ -140,7 +144,7 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern, null);
         Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
 
@@ -160,8 +164,9 @@ public class RetryRunnerTest {
         Task content = captor2.getValue();
         Assert.assertEquals(content.getNodeName(), "node4");
         Assert.assertEquals(content.getStatus(), TaskStatus.COMPLETED.code());
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
-        Mockito.verify(taskPersister).complete(captor4.capture());
+        Mockito.verify(taskPersister).complete(captor4.capture(), nodeCaptor.capture());
         Mockito.verify(taskPersister).persist(captor5.capture());
 
         Assert.assertEquals(captor4.getValue(), captor5.getValue());
@@ -182,7 +187,7 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern, null);
         Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(0)).thenReturn(10);
@@ -192,8 +197,9 @@ public class RetryRunnerTest {
         ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
-        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor6.capture());
+        Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor6.capture(), nodeCaptor.capture());
 
         Assert.assertEquals(captor2.getValue().intValue(), 10l);
         Task captured = captor1.getValue();
@@ -217,7 +223,7 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern, null);
         Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(1)).thenReturn(10);
@@ -231,11 +237,13 @@ public class RetryRunnerTest {
         ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
 
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
         Mockito.verify(taskPersister, Mockito.times(0)).suspend(captor1.capture(), captor2.capture(),
-                captor6.capture());
+                captor6.capture(), nodeCaptor.capture());
+        ArgumentCaptor<Node> nodeCaptor2 = ArgumentCaptor.forClass(Node.class);
 
-        Mockito.verify(taskPersister).complete(captor3.capture());
+        Mockito.verify(taskPersister).complete(captor3.capture(), nodeCaptor2.capture());
         Mockito.verify(taskPersister).persist(captor4.capture());
 
         Assert.assertEquals(captor3.getValue(), captor4.getValue());
@@ -256,7 +264,7 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern, null);
         Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(6)).thenReturn(10);
@@ -267,9 +275,10 @@ public class RetryRunnerTest {
         ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
         Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(),
-                captor6.capture());
+                captor6.capture(), nodeCaptor.capture());
 
         Assert.assertEquals(captor2.getValue().intValue(), 10);
         Task captured = captor1.getValue();
@@ -301,7 +310,7 @@ public class RetryRunnerTest {
         Mockito.doReturn(content).when(taskPersisterImpl).get(task.getTaskId());
         Mockito.when(pattern.getTimeInterval(6)).thenReturn(10);
         Mockito.doReturn(data).when(taskPersisterImpl).retrieveData(task.getTaskId());
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern, null);
         CountDownLatch countDownLatch = new CountDownLatch(10);
         for (int i = 0; i < 10; i++) {
             Thread t = new Thread(() -> {
@@ -320,9 +329,10 @@ public class RetryRunnerTest {
         ArgumentCaptor<Task> captor1 = ArgumentCaptor.forClass(Task.class);
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
         Mockito.verify(taskPersisterImpl).suspend(captor1.capture(), captor2.capture(),
-                captor6.capture());
+                captor6.capture(), nodeCaptor.capture());
 
         Assert.assertEquals(captor2.getValue().intValue(), 10);
         Task captured = captor1.getValue();
@@ -352,7 +362,7 @@ public class RetryRunnerTest {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         taskPersisterImpl.setRedisClient(redisClient);
         Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern, null);
         Mockito.doReturn(content).when(taskPersisterImpl).get(task.getTaskId());
         try {
             // Mock host a running action.
@@ -387,7 +397,7 @@ public class RetryRunnerTest {
                 .build();
 
         content = task.toString();
-        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern);
+        retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersister, pattern, null);
         Mockito.when(taskPersister.get(task.getTaskId())).thenReturn(content);
         Mockito.when(taskPersister.tryLock(task.getTaskId())).thenReturn(true);
         Mockito.when(pattern.getTimeInterval(1)).thenReturn(10);
@@ -401,11 +411,12 @@ public class RetryRunnerTest {
         ArgumentCaptor<TaskStep> captor6 = ArgumentCaptor.forClass(TaskStep.class);
 
         ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
+        ArgumentCaptor<Node> nodeCaptor = ArgumentCaptor.forClass(Node.class);
 
         Mockito.verify(taskPersister, Mockito.times(0)).suspend(captor1.capture(), captor2.capture(),
-                captor6.capture());
+                captor6.capture(), nodeCaptor.capture());
 
-        Mockito.verify(taskPersister).complete(captor3.capture());
+        Mockito.verify(taskPersister).complete(captor3.capture(), nodeCaptor.capture());
         Mockito.verify(taskPersister).persist(captor4.capture());
 
         Assert.assertEquals(captor3.getValue(), captor4.getValue());
