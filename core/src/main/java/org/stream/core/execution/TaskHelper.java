@@ -201,8 +201,13 @@ public final class TaskHelper {
 
             @Override
             public Node onInvoke() {
-                String graph = ActivityResult.INVOKE_GRAPH.get();
+                String target = ActivityResult.INVOKE_GRAPH.get();
                 ActivityResult.INVOKE_GRAPH.remove();
+                String graph = startNode.getSubflows().stream()
+                        .filter(flow -> flow.getTarget().equals(target))
+                        .findAny()
+                        .get()
+                        .getGraph();
                 ResourceTank response = function.apply(engine, context, graph);
                 response.getResources().values().forEach(resource -> {
                     WorkFlowContext.attachResource(resource);
@@ -310,7 +315,7 @@ public final class TaskHelper {
      * @param executionStateSwitcher Execution state switcher used to check if it is stuck at dead loop.
      *      if so change the next node to null.
      * @param activityResult The activity result returned by the previous node.
-     * @param function Function that should be applied before turning back to the caller.
+     * @param function Function that should be applied before turning back to the caller when previous node returned invoke result.
      * @param context Graph context.
      * @param engine Workflow engine.
      * @return Next node to be executed.

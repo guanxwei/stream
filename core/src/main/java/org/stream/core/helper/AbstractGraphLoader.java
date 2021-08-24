@@ -16,8 +16,6 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
-import com.google.gson.Gson;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
@@ -34,6 +32,8 @@ import org.stream.core.execution.NextSteps.NextStepType;
 import org.stream.core.execution.StepPair;
 import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
 import org.stream.extension.io.Tower;
+
+import com.google.gson.Gson;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -184,6 +184,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
                 .nodeName(currentNodeName)
                 .next(new NextSteps())
                 .graph(graph)
+                .subflows(nodeConfiguration.getSubflows())
                 .build();
 
         staticNodes.add(node);

@@ -210,10 +210,24 @@ public class RedisClientImpl implements RedisClient {
         if (StringUtils.isNotBlank(Settings.UPDATE_EXPIRE_TIME_LUA_SCRIPT)) {
             return Settings.UPDATE_EXPIRE_TIME_LUA_SCRIPT;
         }
-        return String.format("local key = KEYS[1]" + "\n"
-                         + "local value = redis.call('GET', key)" + "\n"
-                         + "if KEYS[2] == value" + "\n"
-                         + "then" + "\n"
-                         + "return redis.call('EXPIRE', key, %d)", Settings.LOCK_EXPIRE_TIME / 1000);
+        return String.format("local key = KEYS[1];\n"
+                         + "local value = redis.call('GET', key);\n"
+                         + "local result = 0;\n"
+                         + "if KEYS[2] == value\n"
+                         + "then\n"
+                         + "result = redis.call('EXPIRE', key, %d);\n"
+                         + "end;\n"
+                         + "return result;", Settings.LOCK_EXPIRE_TIME / 1000);
     }
+    /**
+        test output of the lua script.
+            local key = KEYS[1];
+            local value = redis.call('GET', key);
+            local result = 0;
+            if KEYS[2] == value
+            then
+            result = redis.call('EXPIRE', key, 6);
+            end;
+            return result;
+    **/
 }

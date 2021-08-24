@@ -1,0 +1,22 @@
+{
+  "graphName":"invokeanotherprocedure",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node3",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.InvokeAnotherActivity",
+      "subflows":[
+        {
+          "target":"child1",
+          "graph":"comprehensive4"
+        }
+      ]
+    },
+    {
+      "nodeName":"node3",
+      "activityClass":"org.stream.core.test.base.AutoScheduleNormalCaseActivity"
+    }
+  ]
+}

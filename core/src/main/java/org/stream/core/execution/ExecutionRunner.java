@@ -36,7 +36,7 @@ public class ExecutionRunner implements Runnable {
      * @param task Stream execution task.
      * @param taskPersister Task persister.
      * @param dataResource A pointer the input task resource.
-     * @param engine Workflow execution engine.
+     * @param engine Workflow execution engine, mainly used to run sub workflows.
      */
     public ExecutionRunner(
             final RetryPattern pattern,

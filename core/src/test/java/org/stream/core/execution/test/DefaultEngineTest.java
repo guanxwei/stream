@@ -1,6 +1,8 @@
 package org.stream.core.execution.test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -44,6 +46,7 @@ public class DefaultEngineTest {
         paths.add("ComprehensiveWithAsyncNodeCase.graph");
         paths.add("DefaultErrorProcessCase");
         paths.add("Condition.graph");
+        paths.add("InvokeAnotherProcedure");
 
         paths.add("ComprehensiveWithAsyncNodeCase.graph");
 
@@ -215,5 +218,12 @@ public class DefaultEngineTest {
         defaultEngine.execute(graphContext, "condition", true);
         Assert.assertNull(WorkFlowContext.getPrimary());
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
+    }
+
+    @Test
+    public void testInvoke() {
+        defaultEngine.execute(graphContext, "invokeanotherprocedure", true);
+        assertNull(WorkFlowContext.getPrimary());
+        assertNotNull(WorkFlowContext.resolveResource("PrintRecordActivity"));
     }
 }

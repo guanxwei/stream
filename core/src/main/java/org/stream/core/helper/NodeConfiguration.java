@@ -5,6 +5,7 @@ import java.util.List;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Condition;
+import org.stream.core.component.SubFlow;
 import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.extension.io.Tower;
 
@@ -81,7 +82,7 @@ public class NodeConfiguration {
     /**
      * Target child graphs that probably be executed after this node.
      */
-    private List<String> targetGraphs;
+    private List<SubFlow> subflows;
 
     /**
      * Encapsulation of asynchronous Node configuration, which is used to initiate a asynchronous node.

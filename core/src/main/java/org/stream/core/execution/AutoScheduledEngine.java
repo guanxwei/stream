@@ -195,7 +195,7 @@ public class AutoScheduledEngine implements Engine {
          */
         String taskId = taskIDGenerator.generateTaskID(primaryResource);
 
-        log.info("Begin to process the incoming request [{}] with task id [{}]", Jackson.json(resource), taskId);
+        log.info("Task id [{}] assigned to the request", taskId);
 
         Graph graph = graphContext.getGraph(graphName);
 

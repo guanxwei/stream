@@ -98,6 +98,11 @@ public class Node {
     private List<Condition> conditions;
 
     /**
+     * Sub workflow configuration.
+     */
+    private List<SubFlow> subflows;
+
+    /**
      * Perform the configured activity's job.
      * @return Activity execution result.
      */
