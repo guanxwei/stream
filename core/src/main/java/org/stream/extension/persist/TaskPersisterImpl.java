@@ -287,7 +287,5 @@ public class TaskPersisterImpl implements TaskPersister {
         }
 
         return ownerInfo.startsWith(Settings.HOST_NAME);
-
     }
-
 }
