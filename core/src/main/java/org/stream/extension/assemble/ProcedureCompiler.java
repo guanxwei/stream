@@ -14,6 +14,7 @@ import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Condition;
 import org.stream.core.component.Graph;
+import org.stream.core.component.SubFlow;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
@@ -151,6 +152,7 @@ public class ProcedureCompiler {
             nodeConfiguration.setSuspendNode(stub.getNextSteps()[ProcedureStub.SUSPENED]);
             nodeConfiguration.setCheckNode(stub.getNextSteps()[ProcedureStub.CHECKED]);
             nodeConfiguration.setConditions(builderConditions(stub.getConditions()));
+            nodeConfiguration.setSubflows(buildSubflows(stub.getSubflows()));
             addAsyncDependency(nodeConfiguration, stub);
             nodeConfigurations.add(nodeConfiguration);
         });
@@ -194,6 +196,15 @@ public class ProcedureCompiler {
         return conditions.keySet().parallelStream()
                     .map(key -> new Condition(key, conditions.get(key)))
                     .collect(Collectors.toList());
+    }
+
+    private List<SubFlow> buildSubflows(final Map<String, String> subflows) {
+        if (CollectionUtils.isEmpty(subflows)) {
+            return Collections.emptyList();
+        }
+        return subflows.keySet().parallelStream()
+                .map(key -> new SubFlow(key, subflows.get(key)))
+                .collect(Collectors.toList());
     }
 
     public static class DefaultErrorHanlder extends Activity {

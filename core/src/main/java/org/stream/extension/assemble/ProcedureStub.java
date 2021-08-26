@@ -26,6 +26,7 @@ public class ProcedureStub {
     public static final int SUSPENED = 2;
     public static final int CHECKED = 3;
     public static final int CONDITION = 4;
+    public static final int SUBFLOW = 5;
 
     private ProcedureCompiler procedureCompiler;
     private int index = -100;
@@ -44,6 +45,8 @@ public class ProcedureStub {
     private String description;
     @Getter
     private List<Integer> intervals;
+    @Getter
+    private Map<String, String> subflows;
 
     public ProcedureStub(final ProcedureCompiler procedureCompiler) {
         this.procedureCompiler = procedureCompiler;
@@ -89,6 +92,12 @@ public class ProcedureStub {
         return this;
     }
 
+    protected ProcedureStub whenSubflow() throws StreamException {
+        check();
+        index = SUBFLOW;
+        return this;
+    }
+
     private void check() throws StreamException {
         if (activityNeeded) {
             throw new StreamException("A activity must be specified before configuring new condition steps");
@@ -123,6 +132,11 @@ public class ProcedureStub {
 
     public ProcedureStub conditions(final Map<Integer, String> conditions) {
         this.conditions = conditions;
+        return this;
+    }
+
+    public ProcedureStub subflows(final Map<String, String> subflows) {
+        this.subflows = subflows;
         return this;
     }
 

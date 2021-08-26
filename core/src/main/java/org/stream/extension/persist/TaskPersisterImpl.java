@@ -1,13 +1,10 @@
 package org.stream.extension.persist;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.springframework.util.CollectionUtils;
+import org.mockito.Mockito;
 import org.stream.core.component.Node;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.extension.clients.RedisClient;
@@ -46,8 +43,9 @@ public class TaskPersisterImpl implements TaskPersister {
     private Map<String, String> processingTasks = new HashMap<>();
     private Map<String, Long> lockingTimes = new HashMap<>();
 
+    // Default use a mock client, do nothing.
     @Setter
-    private TaskStorage messageQueueBasedTaskStorage;
+    private TaskStorage messageQueueBasedTaskStorage = Mockito.mock(TaskStorage.class);
 
     @Setter
     private TaskStorage taskStorage;
@@ -93,43 +91,6 @@ public class TaskPersisterImpl implements TaskPersister {
         }
 
         return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Collection<String> getPendingList(final int type, final int queue) {
-        assert application != null;
-
-        String queueName = QueueHelper.getQueueNameFromIndex(QueueHelper.getPrefix(type), application, queue);
-        Collection<String> result = Collections.emptyList();
-        try {
-            switch (type) {
-            case 1:
-                result = delayQueue.getItems(queueName, System.currentTimeMillis());
-                break;
-            case 2:
-                result = fifoQueue.pop(queueName, 10);
-                break;
-            case 3:
-                List<Task> tasks = taskStorage.queryStuckTasks();
-                if (!CollectionUtils.isEmpty(tasks)) {
-                    result = tasks.parallelStream()
-                            .map(Task::getTaskId)
-                            .collect(Collectors.toList());
-                }
-                break;
-            default:
-                break;
-            }
-
-            return result;
-        } catch (Exception e) {
-            log.warn("Fail to load pending tasks for type [{}]", type, e);
-        }
-
-        return Collections.emptyList();
     }
 
     /**
@@ -294,14 +255,6 @@ public class TaskPersisterImpl implements TaskPersister {
     @Override
     public List<Task> retrieveStuckTasksFromDB() {
         return taskStorage.queryStuckTasks();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getQueues() {
-        return QueueHelper.DEFAULT_QUEUES;
     }
 
     /**

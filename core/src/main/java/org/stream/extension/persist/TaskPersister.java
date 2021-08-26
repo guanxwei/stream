@@ -1,6 +1,5 @@
 package org.stream.extension.persist;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,16 +28,6 @@ public interface TaskPersister {
      * @return Jsonfied task entity.
      */
     String get(final String key);
-
-    /**
-     * Get pending on retry tasks from Redis.
-     * @param type List type.
-     *         1 : retry list
-     *         2 : back-up list
-     * @param queue The target queue.
-     * @return Task list.
-     */
-    Collection<String> getPendingList(final int type, final int queue);
 
     /**
      * Try to lock the task Id to avoid contention.
@@ -112,13 +101,6 @@ public interface TaskPersister {
      * @return Stuck task list.
      */
     List<Task> retrieveStuckTasksFromDB();
-
-    /**
-     * Return queues the tasks are persisted, the main reason why the storage is divided into several queues
-     * is to speed up processing.
-     * @return Queues the tasks are persisted
-     */
-    int getQueues();
 
     /**
      * Get the application name, the application's name should be unique.

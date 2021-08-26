@@ -24,7 +24,7 @@ public class TaskPersisterTest {
             queues.add(queue);
         }
         System.out.println(Jackson.json(queues));
-        for (int i = 0; i < taskPersisterImpl.getQueues(); i++) {
+        for (int i = 0; i < QueueHelper.DEFAULT_QUEUES; i++) {
             String queue = QueueHelper.getQueueNameFromIndex(QueueHelper.RETRY_KEY,
                     taskPersisterImpl.getApplication(), i);
             assertTrue(queues.contains(queue));

@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRunner;
 import org.stream.core.execution.GraphContext;
+import org.stream.core.execution.RetryRunner;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Resource;
 import org.stream.extension.executors.MockExecutorService;
@@ -95,5 +96,16 @@ public class SyncTaskExecutor implements TaskExecutor {
     public int getPoolSize() {
         ThreadPoolExecutor pool = (ThreadPoolExecutor) executorService;
         return pool.getPoolSize();
+    }
+
+    @Override
+    public Future<?> retry(String id) {
+        return executorService.submit(new RetryRunner(id, graphContext, taskPersister, retryPattern, engine));
+    }
+
+    @Override
+    public void shutDownHook() {
+        // TODO Auto-generated method stub
+        
     }
 }

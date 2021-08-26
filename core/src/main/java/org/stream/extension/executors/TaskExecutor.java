@@ -26,6 +26,13 @@ public interface TaskExecutor {
             final StreamTransferData data);
 
     /**
+     * Retry the pending task.
+     * @param id target task id
+     * @return a future contains the execution result.
+     */
+    Future<?> retry(final String id);
+
+    /**
      * Get active task number that being executed by the work flow engine.
      * @return Active task number.
      */
@@ -42,4 +49,9 @@ public interface TaskExecutor {
      * @return Return thread pool size.
      */
     int getPoolSize();
+
+    /**
+     * Add shut down hook for the task executor.
+     */
+    void shutDownHook();
 }

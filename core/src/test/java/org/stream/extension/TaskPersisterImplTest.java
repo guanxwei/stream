@@ -1,6 +1,5 @@
 package org.stream.extension;
 
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
@@ -126,29 +125,6 @@ public class TaskPersisterImplTest {
     public void testGet() {
         taskPersisterImpl.get("test");
         Mockito.verify(taskStorage).query("test");
-    }
-
-    @Test
-    public void testGetPendingList1() {
-        taskPersisterImpl.getPendingList(1, 1);
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<Double> captor2 = ArgumentCaptor.forClass(Double.class);
-
-        Mockito.verify(delayQueue).getItems(captor.capture(), captor2.capture());
-        assertEquals(QueueHelper.getQueueNameFromIndex(QueueHelper.RETRY_KEY, application, 1), captor.getValue());
-    }
-
-    @Test
-    public void testGetPendingList2() {
-        taskPersisterImpl.getPendingList(2, 1);
-        Mockito.verify(fifoQueue).pop(
-                QueueHelper.getQueueNameFromIndex(QueueHelper.BACKUP_KEY, application, 1), 10);
-    }
-
-    @Test
-    public void testGetPendingList3() {
-        taskPersisterImpl.getPendingList(3, 1);
-        Mockito.verify(taskStorage).queryStuckTasks();
     }
 
     @Test
