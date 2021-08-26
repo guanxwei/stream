@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * Abstract of MongoDB client.
- * @author 魏冠雄
+ * @author guanxiongwei
  *
  */
 public interface MongoClient {
