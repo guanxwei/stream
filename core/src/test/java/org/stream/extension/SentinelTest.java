@@ -8,8 +8,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.stream.core.execution.Sentinel;
-import org.stream.core.execution.test.MockRedisClient;
 import org.stream.extension.executors.TaskExecutor;
+import org.stream.extension.lock.Lock;
 import org.stream.extension.persist.DelayQueue;
 import org.stream.extension.persist.FifoQueue;
 import org.stream.extension.persist.QueueHelper;
@@ -32,12 +32,14 @@ public class SentinelTest {
     private FifoQueue fifoQueue;
     @Mock
     private TaskStorage taskStorage;
+    @Mock
+    private Lock lock;
 
     @BeforeMethod
     public void BeforeMethod() {
         MockitoAnnotations.initMocks(this);
         taskPersister.setApplication("application");
-        taskPersister.setRedisClient(new MockRedisClient());
+        taskPersister.setLock(lock);
         sentinel.setTaskPersister(taskPersister);
     }
 

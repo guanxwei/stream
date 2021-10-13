@@ -18,6 +18,11 @@ package org.stream.extension.persist;
 
 import java.util.Collection;
 
+/**
+ * 
+ * @author guanxiongwei
+ *
+ */
 public interface DelayedQueueStorage {
 
     /**

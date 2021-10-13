@@ -12,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.test.MockRedisClient;
 import org.stream.extension.clients.RedisClient;
+import org.stream.extension.lock.providers.RedisClusterBasedLock;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.persist.DelayQueue;
@@ -47,12 +48,16 @@ public class TaskPersisterImplTest {
 
     private String application = "test";
 
+    private RedisClusterBasedLock lock;
+
     @BeforeMethod
     public void BeforeMethod() {
         MockitoAnnotations.initMocks(this);
         taskPersisterImpl.setApplication(application);
         redisClient = new MockRedisClient();
-        taskPersisterImpl.setRedisClient(redisClient);
+        lock = new RedisClusterBasedLock();
+        lock.setRedisClient(redisClient);
+        taskPersisterImpl.setLock(lock);
     }
 
     @Test
@@ -61,7 +66,7 @@ public class TaskPersisterImplTest {
         assertTrue(taskPersisterImpl.tryLock(taskID));
         String queue = QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskID);
         String queue2 = QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskID);
-        assertTrue(taskPersisterImpl.isProcessing(taskID));
+        assertTrue(lock.isLegibleOwner(taskID));
         Mockito.verify(delayQueue).deleteItem(queue, taskID);
         Mockito.verify(fifoQueue).push(queue2, taskID);
     }
@@ -73,7 +78,7 @@ public class TaskPersisterImplTest {
             assertTrue(taskPersisterImpl.tryLock(taskID));
             String queue = QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskID);
             String queue2 = QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskID);
-            assertTrue(taskPersisterImpl.isProcessing(taskID));
+            assertTrue(lock.isLegibleOwner(taskID));
             Mockito.verify(delayQueue).deleteItem(queue, taskID);
             Mockito.verify(fifoQueue).push(queue2, taskID);
         }) ;
@@ -92,7 +97,7 @@ public class TaskPersisterImplTest {
         assertTrue(taskPersisterImpl.tryLock(taskID));
         String queue = QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskID);
         String queue2 = QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskID);
-        assertTrue(taskPersisterImpl.isProcessing(taskID));
+        assertTrue(lock.isLegibleOwner(taskID));
         Mockito.verify(delayQueue).deleteItem(queue, taskID);
         Mockito.verify(fifoQueue).push(queue2, taskID);
         taskPersisterImpl.releaseLock(taskID);
@@ -103,7 +108,7 @@ public class TaskPersisterImplTest {
     @Test
     public void tetTrylockexpired() {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
-        taskPersisterImpl.setRedisClient(redisClient);
+        lock.setRedisClient(redisClient);
         Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(0l);
         String taskID = RandomStringUtils.randomAlphabetic(12);
         Mockito.when(redisClient.get(taskID + "_lock")).thenReturn("fdafdafaf_102102");
@@ -130,10 +135,10 @@ public class TaskPersisterImplTest {
     @Test
     public void testReleaseLock() {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
-        taskPersisterImpl.setRedisClient(redisClient);
+        lock.setRedisClient(redisClient);
         taskPersisterImpl.releaseLock("test");
         Mockito.verify(redisClient).del("test_lock");
-        assertFalse(taskPersisterImpl.isProcessing("test"));
+        assertTrue(lock.isLegibleOwner("test"));
     }
 
     @Test
@@ -161,7 +166,7 @@ public class TaskPersisterImplTest {
     @Test(expectedExceptions = WorkFlowExecutionExeception.class)
     public void testInitiateOrUpdateTask3() {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
-        taskPersisterImpl.setRedisClient(redisClient);
+        lock.setRedisClient(redisClient);
         Task task = new Task();
         task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         TaskStep taskStep = new TaskStep();
@@ -172,7 +177,7 @@ public class TaskPersisterImplTest {
     @Test
     public void testFastReentry() {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
-        taskPersisterImpl.setRedisClient(redisClient);
+        lock.setRedisClient(redisClient);
         Task task = new Task();
         task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
@@ -186,7 +191,7 @@ public class TaskPersisterImplTest {
     @Test
     public void testOnehostTwoThread() throws Throwable {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
-        taskPersisterImpl.setRedisClient(redisClient);
+        lock.setRedisClient(redisClient);
         Task task = new Task();
         task.setTaskId(RandomStringUtils.randomAlphabetic(10));
         Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString()))

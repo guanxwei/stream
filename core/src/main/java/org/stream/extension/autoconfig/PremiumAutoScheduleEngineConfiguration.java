@@ -47,6 +47,8 @@ import org.stream.extension.events.MemoryEventCenter;
 import org.stream.extension.events.TaskCompleteEvent;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
+import org.stream.extension.lock.Lock;
+import org.stream.extension.lock.providers.RedisClusterBasedLock;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.pattern.defaults.ScheduledTimeIntervalPattern;
 import org.stream.extension.persist.KafkaBasedTaskStorage;
@@ -113,7 +115,7 @@ public class PremiumAutoScheduleEngineConfiguration {
     public TaskPersister taskPersister() throws Exception {
         TaskPersisterImpl taskPersisterImpl = new TaskPersisterImpl();
         taskPersisterImpl.setApplication(environment.getProperty("application"));
-        taskPersisterImpl.setRedisClient(redisService());
+        taskPersisterImpl.setLock(lock());
         taskPersisterImpl.setMessageQueueBasedTaskStorage(messageQueueBasedTaskStorage());
         taskPersisterImpl.setTaskStepStorage(taskStepStorage);
         taskPersisterImpl.setTaskStorage(taskStorage);
@@ -122,7 +124,12 @@ public class PremiumAutoScheduleEngineConfiguration {
     }
 
     @Bean
-    public RedisClient redisService() {
+    public Lock lock() {
+        return new RedisClusterBasedLock();
+    }
+
+    @Bean
+    public RedisClient redisClient() {
         String redisNodes = environment.getProperty("fast.stream.redisclustuer.nodes");
         int timeout = environment.getProperty("fast.stream.redisclustuer.timetout", Integer.class);
         int maxRetryTimes = environment.getProperty("fast.stream.redisclustuer.maxRetryTimes", Integer.class);

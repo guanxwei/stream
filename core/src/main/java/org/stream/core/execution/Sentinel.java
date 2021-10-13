@@ -25,6 +25,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.util.CollectionUtils;
 import org.stream.core.helper.Jackson;
 import org.stream.extension.executors.TaskExecutor;
@@ -64,14 +66,20 @@ public class Sentinel {
     /**
      * Initiation method to prepare back-end workers to process pending on retry work-flow instances.
      */
+    @PostConstruct
     public void init() {
         initiate(1, 1000);
+        log.info("Sentinel for delayed tasks initiated");
         initiate(2, 5000);
+        log.info("Sentinel for stuck tasks initiated");
         initiate(3, 30000);
+        log.info("Sentinel for backup works initiated");
         taskExecutor.shutDownHook();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("Shutting down the machine, will clean the pending tasks before exit");
             shutdown = true;
         }));
+        log.info("Sentinels all initiated");
     }
 
     private void initiate(final int type, final int time) {
