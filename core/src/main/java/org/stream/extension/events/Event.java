@@ -17,6 +17,7 @@
 package org.stream.extension.events;
 
 import org.stream.core.component.Node;
+import org.stream.extension.utils.actionable.Tellme;
 
 import lombok.Data;
 
@@ -74,10 +75,10 @@ public abstract class Event {
             };
             event.setTime(System.currentTimeMillis());
             event.setTrigger(trigger);
-            if (node != null) {
+            Tellme.when(node != null).then(() -> {
                 event.setGraph(node.getGraph().getGraphName());
                 event.setNode(node.getNodeName());
-            }
+            });
 
             return event;
         }

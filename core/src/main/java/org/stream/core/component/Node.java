@@ -144,7 +144,7 @@ public class Node {
     }
 
     /**
-     * Retrieve a node from the graph by node name.
+     * Retrieve a next step node from the graph by returned condition code.
      * @param conditionCode Condition code.
      * @return Next step node.
      */

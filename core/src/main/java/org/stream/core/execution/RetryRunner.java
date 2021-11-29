@@ -102,26 +102,7 @@ public class RetryRunner implements Runnable {
             return;
         }
         Task task = Task.parse(taskPersister.get(taskId));
-
-        if (task == null) {
-            taskPersister.removeHub(taskId);
-            return;
-        }
-
-        if (task.getNextExecutionTime() > System.currentTimeMillis()) {
-            log.warn("Retry runner got stuck!");
-            return;
-        }
-
-        if (task.getStatus() == TaskStatus.COMPLETED.code() || task.getStatus() == TaskStatus.FAILED.code()) {
-            taskPersister.complete(task, TaskHelper.deduceNode(task, graphContext));
-            return;
-        }
-
-        Node node = TaskHelper.deduceNode(task, graphContext);
-        if (node == null) {
-            log.error("Graph has been upgraded, target node [{}] is missing", task.getNodeName());
-            taskPersister.complete(task, null);
+        if (!check(task)) {
             return;
         }
 
@@ -135,6 +116,8 @@ public class RetryRunner implements Runnable {
                 .build());
 
         ActivityResult activityResult = null;
+        Node node = TaskHelper.deduceNode(task, graphContext);
+
         while (node != null && taskPersister.tryLock(task.getTaskId())) {
             log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());
             activityResult = TaskHelper.perform(node, ActivityResult.SUSPEND);
@@ -171,6 +154,32 @@ public class RetryRunner implements Runnable {
         }
 
         WorkFlowContext.reboot();
+    }
+
+    private boolean check(final Task task) {
+        if (task == null) {
+            taskPersister.removeHub(taskId);
+            return false;
+        }
+
+        if (task.getNextExecutionTime() > System.currentTimeMillis()) {
+            log.warn("Retry runner got stuck!");
+            return false;
+        }
+
+        if (task.getStatus() == TaskStatus.COMPLETED.code() || task.getStatus() == TaskStatus.FAILED.code()) {
+            taskPersister.complete(task, TaskHelper.deduceNode(task, graphContext));
+            return false;
+        }
+
+        Node node = TaskHelper.deduceNode(task, graphContext);
+        if (node == null) {
+            log.error("Graph has been upgraded, target node [{}] is missing", task.getNodeName());
+            taskPersister.complete(task, null);
+            return false;
+        }
+
+        return true;
     }
 
     private Resource preparePrimaryResource(final StreamTransferData streamTransferData, final Task task)  {
