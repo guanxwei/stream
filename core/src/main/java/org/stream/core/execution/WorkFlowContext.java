@@ -27,11 +27,13 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
+import org.stream.core.resource.ResourceURL;
 import org.stream.extension.io.StreamTransferData;
 
 import com.mongodb.annotations.ThreadSafe;
@@ -199,6 +201,17 @@ public final class WorkFlowContext {
     public static void attachResource(final Resource resource) {
         assertWorkFlowNotClose();
 
+        Resource primary = getPrimary();
+        if (primary != null
+                && StringUtils.equals(resource.getResourceReference(), primary.getResourceReference())) {
+            throw new WorkFlowExecutionExeception("Attempt to change primary resource!"); 
+        }
+
+        if (primary != null && resource.getResourceURL() != null && primary.getResourceURL() != null
+                && StringUtils.equals(primary.getResourceURL().getPath(), resource.getResourceURL().getPath())) {
+            throw new WorkFlowExecutionExeception("Attempt to change primary resource!");
+        }
+
         CURRENT.get().attachResource(resource);
     }
 
@@ -211,6 +224,17 @@ public final class WorkFlowContext {
         assertWorkFlowNotClose();
 
         return CURRENT.get().resolveResource(resourceReference);
+    }
+
+    /**
+     * Extract a resource object from the resource tank.
+     * @param url Resource url.
+     * @return Resource corresponding to the reference.
+     */
+    public static Resource resolveResource(final ResourceURL url) {
+        assertWorkFlowNotClose();
+
+        return CURRENT.get().resolveResource(url);
     }
 
     /**

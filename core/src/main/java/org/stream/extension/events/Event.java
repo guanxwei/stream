@@ -18,6 +18,7 @@ package org.stream.extension.events;
 
 import org.stream.core.component.Node;
 import org.stream.extension.utils.actionable.Tellme;
+import org.stream.extension.utils.actionable.Value;
 
 import lombok.Data;
 
@@ -58,30 +59,33 @@ public abstract class Event {
      * @param node Current node.
      * @return New instance of the target event sub-class.
      */
+    @SuppressWarnings("unchecked")
     public static Event of(final Class<? extends Event> clazz, final Object trigger, final Node node) {
-        try {
-            Event event = clazz.getDeclaredConstructor().newInstance();
-            event.setGraph(node.getGraph().getGraphName());
-            event.setNode(node.getNodeName());
-            event.setTime(System.currentTimeMillis());
-            event.setTrigger(trigger);
-            return event;
-        } catch (Exception e) {
-            Event event = new Event() {
-                @Override
-                public String type() {
-                    return "Anony";
-                }
-            };
-            event.setTime(System.currentTimeMillis());
-            event.setTrigger(trigger);
-            Tellme.when(node != null).then(() -> {
-                event.setGraph(node.getGraph().getGraphName());
-                event.setNode(node.getNodeName());
-            });
-
-            return event;
-        }
-
+        Value value = Value.of(null);
+        Tellme.tryIt(() -> {
+                    value.change(clazz.getDeclaredConstructor().newInstance());
+                    Event event = value.get(clazz);
+                    event.setGraph(node.getGraph().getGraphName());
+                    event.setNode(node.getNodeName());
+                    event.setTime(System.currentTimeMillis());
+                    event.setTrigger(trigger);
+                })
+                .incase(Exception.class)
+                .fix((e) -> {
+                    Event event = new Event() {
+                        @Override
+                        public String type() {
+                            return "Anony";
+                        }
+                    };
+                    event.setTime(System.currentTimeMillis());
+                    event.setTrigger(trigger);
+                    Tellme.when(node != null).then(() -> {
+                        event.setGraph(node.getGraph().getGraphName());
+                        event.setNode(node.getNodeName());
+                    });
+                    value.change(event);
+                });
+        return value.get(clazz);
     }
 }

@@ -16,6 +16,7 @@
 
 package org.stream.core.execution;
 
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -194,7 +195,7 @@ public final class TaskHelper {
 
             @Override
             public Node onFail() {
-                // 如果没有配置fail节点，默认使用default error node处理.循环 Default error 处理完只能返回success，否者会陷入死.
+                // Return the configured failed node, if the node is not configured return the graph default error process node.
                 return startNode.getNext().onFail() == null ? startNode.getGraph().getDefaultErrorNode() : startNode.getNext().onFail();
             }
 
@@ -225,8 +226,11 @@ public final class TaskHelper {
                         .get()
                         .getGraph();
                 ResourceTank response = function.apply(engine, context, graph);
+                Resource primary = WorkFlowContext.getPrimary();
                 response.getResources().values().forEach(resource -> {
-                    WorkFlowContext.attachResource(resource);
+                    if (!Objects.equals(primary, resource)) {
+                        WorkFlowContext.attachResource(resource);
+                    }
                 });
                 // Jump back to the succeed node of the parent graph's last executed node.
                 return onSuccess();

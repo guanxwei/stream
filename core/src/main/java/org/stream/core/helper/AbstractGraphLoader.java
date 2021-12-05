@@ -87,11 +87,14 @@ public abstract class AbstractGraphLoader implements GraphLoader {
             graph.setOriginalDefinition(sourcePath);
             return graph;
         } catch (Exception e) {
+            GraphLoadException throwable = null;
             if (e instanceof GraphLoadException) {
-                throw (GraphLoadException) e;
+                throwable = (GraphLoadException) e;
             } else {
-                throw new GraphLoadException(e);
+                throwable = new GraphLoadException(e);
             }
+
+            throw throwable;
         }
     }
 

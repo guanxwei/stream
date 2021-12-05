@@ -39,6 +39,7 @@ import org.stream.extension.meta.TaskStep;
 import org.stream.extension.persist.TaskPersister;
 import org.stream.extension.utils.TaskIDGenerator;
 import org.stream.extension.utils.UUIDTaskIDGenerator;
+import org.stream.extension.utils.actionable.Tellme;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -193,6 +194,7 @@ public class AutoScheduledEngine implements Engine {
         Thread.interrupted();
     }
 
+    @SuppressWarnings("unchecked")
     private String start(final String graphName, final GraphContext graphContext, final Object resource,
             final String startNode) {
 
@@ -215,17 +217,20 @@ public class AutoScheduledEngine implements Engine {
 
         Graph graph = graphContext.getGraph(graphName);
 
-        try {
-            StreamTransferData data = new StreamTransferData();
-            Task task = initiateTask(taskId, graphName, primaryResource, data, graphContext, startNode);
-            EventsHelper.fireEvent(eventCenter, Event.of(WorkflowInitiatedEvent.class, task.getTaskId(),
-                    graph.getStartNode()), false);
-            log.info("New task [{}] initiated", task.getTaskId());
-            taskExecutor.submit(primaryResource, task, data);
-            log.info("Task [{}] submited", taskId);
-        } catch (Exception e) {
-            throw new WorkFlowExecutionExeception(e);
-        }
+        Tellme.tryIt(() -> {
+                    StreamTransferData data = new StreamTransferData();
+                    Task task = initiateTask(taskId, graphName, primaryResource, data, graphContext, startNode);
+                    EventsHelper.fireEvent(eventCenter, Event.of(WorkflowInitiatedEvent.class, task.getTaskId(),
+                            graph.getStartNode()), false);
+                    log.info("New task [{}] initiated", task.getTaskId());
+                    taskExecutor.submit(primaryResource, task, data);
+                    log.info("Task [{}] submited", taskId);
+                })
+                .incase(DuplicateTaskException.class)
+                .fix((e) -> {
+                    log.error("Duplicated task");
+                    throw new WorkFlowExecutionExeception(e);
+                });
 
         return taskId;
     }

@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
-package org.stream.core.exception;
+package org.stream.extension.utils.actionable.state;
+
+import org.stream.extension.utils.actionable.operation.Operation;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * Duplicated task exception. Thrown when the task is re-submitted to the auto scheduled workflow engine.
+ * False state.
  * @author guanxiongwei
  *
  */
-public class DuplicateTaskException extends RuntimeException {
+@Slf4j
+public class FalseState implements State {
 
     /**
-     * Serial version id.
+     * {@inheritDoc}
      */
-    private static final long serialVersionUID = 1744179138612021587L;
-
+    @Override
+    public void then(final Operation operation) {
+        log.info("False condition, do nothing");
+    }
 }

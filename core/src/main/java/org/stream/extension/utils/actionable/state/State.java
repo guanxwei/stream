@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package org.stream.core.exception;
+package org.stream.extension.utils.actionable.state;
+
+import org.stream.extension.utils.actionable.operation.Operation;
 
 /**
- * Duplicated task exception. Thrown when the task is re-submitted to the auto scheduled workflow engine.
+ * State.
  * @author guanxiongwei
  *
  */
-public class DuplicateTaskException extends RuntimeException {
+public interface State {
 
     /**
-     * Serial version id.
+     * Function to be executed when this state fulfilles condition.
+     * @param operation Action.
      */
-    private static final long serialVersionUID = 1744179138612021587L;
-
+    void then(final Operation operation);
 }

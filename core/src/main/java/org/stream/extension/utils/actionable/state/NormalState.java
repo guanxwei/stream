@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package org.stream.core.exception;
+package org.stream.extension.utils.actionable.state;
+
+import org.stream.extension.utils.actionable.operation.ExceptionOperation;
 
 /**
- * Duplicated task exception. Thrown when the task is re-submitted to the auto scheduled workflow engine.
+ * Normal state.
  * @author guanxiongwei
  *
  */
-public class DuplicateTaskException extends RuntimeException {
+public class NormalState implements ExceptionalState {
 
     /**
-     * Serial version id.
+     * {@inheritDoc}
      */
-    private static final long serialVersionUID = 1744179138612021587L;
+    @Override
+    public void fix(final ExceptionOperation operation) {
+        return;
+    }
 
 }

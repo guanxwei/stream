@@ -19,6 +19,7 @@ package org.stream.extension.persist;
 import java.util.List;
 
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.stream.core.component.Node;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.extension.events.Event;
@@ -57,15 +58,19 @@ public class TaskPersisterImpl implements TaskPersister {
     @Setter
     private TaskStorage messageQueueBasedTaskStorage = Mockito.mock(TaskStorage.class);
 
+    @Autowired
     @Setter
     private TaskStorage taskStorage;
 
+    @Autowired
     @Setter
     private TaskStepStorage taskStepStorage;
 
+    @Autowired
     @Setter
     private DelayQueue delayQueue;
 
+    @Autowired
     @Setter
     private FifoQueue fifoQueue;
 
@@ -75,9 +80,11 @@ public class TaskPersisterImpl implements TaskPersister {
     @Getter
     private String application;
 
+    @Autowired
     @Setter
     private EventCenter eventCenter;
 
+    @Autowired
     @Setter
     private Lock lock;
 

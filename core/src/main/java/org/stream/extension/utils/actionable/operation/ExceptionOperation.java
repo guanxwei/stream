@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package org.stream.core.exception;
+package org.stream.extension.utils.actionable.operation;
+
+import org.stream.extension.utils.actionable.Tellme;
+import org.stream.extension.utils.actionable.state.ExceptionState;
 
 /**
- * Duplicated task exception. Thrown when the task is re-submitted to the auto scheduled workflow engine.
+ * Special operation only suitable for {@link ExceptionState}.
  * @author guanxiongwei
  *
  */
-public class DuplicateTaskException extends RuntimeException {
+public interface ExceptionOperation {
 
     /**
-     * Serial version id.
+     * Try to fix the arisen exception.
+     * @param e Exception thrown when invoked the {@link Tellme#tryIt(Risk)}.
      */
-    private static final long serialVersionUID = 1744179138612021587L;
-
+    void fix(final Exception e);
 }

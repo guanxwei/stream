@@ -63,7 +63,15 @@ public enum ProcedureCondition {
             procedureStub.whenCondition();
         }
     },
-    
+
+    SUBFLOW {
+
+        @Override
+        protected void onCondition(final ProcedureStub procedureStub) throws StreamException {
+            procedureStub.whenSubflow();
+        }
+    },
+
     INVOKE {
 
         @Override

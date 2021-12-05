@@ -29,6 +29,7 @@ import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
+import org.stream.core.resource.ResourceURL;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -196,6 +197,20 @@ public class WorkFlow {
         Resource resource = resourceTank.resolve(resourceReference);
         if (resource == null && parent != null) {
             resource = parent.resolveResource(resourceReference);
+        }
+
+        return resource;
+    }
+
+    /**
+     * Extract a resource through resource url.
+     * @param url Resource url.
+     * @return Resolved resource.
+     */
+    protected Resource resolveResource(final ResourceURL url) {
+        Resource resource = resourceTank.resolve(url.getPath());
+        if (resource == null && parent != null) {
+            resource = parent.resolveResource(url);
         }
 
         return resource;

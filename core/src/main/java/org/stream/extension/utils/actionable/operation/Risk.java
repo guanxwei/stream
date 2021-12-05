@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package org.stream.core.exception;
+package org.stream.extension.utils.actionable.operation;
 
 /**
- * Duplicated task exception. Thrown when the task is re-submitted to the auto scheduled workflow engine.
+ * Risk.
  * @author guanxiongwei
  *
  */
-public class DuplicateTaskException extends RuntimeException {
+public interface Risk {
 
     /**
-     * Serial version id.
+     * Take the risk!
      */
-    private static final long serialVersionUID = 1744179138612021587L;
-
+    void go() throws Exception;
 }

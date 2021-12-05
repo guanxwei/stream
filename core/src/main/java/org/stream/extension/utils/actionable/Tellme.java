@@ -1,13 +1,34 @@
+/*
+ * Copyright (C) 2021 guanxiongwei
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.stream.extension.utils.actionable;
 
-import lombok.extern.slf4j.Slf4j;
+import org.stream.extension.utils.actionable.operation.Risk;
+import org.stream.extension.utils.actionable.state.ExceptionState;
+import org.stream.extension.utils.actionable.state.ExceptionalState;
+import org.stream.extension.utils.actionable.state.FalseState;
+import org.stream.extension.utils.actionable.state.NormalState;
+import org.stream.extension.utils.actionable.state.State;
+import org.stream.extension.utils.actionable.state.TrueState;
 
 /**
  * Tellme class. Just tell this class what to do when the condition fulfilles.
  * @author guanxiongwei
  *
  */
-@Slf4j
 public final class Tellme {
 
     private Tellme() { }
@@ -41,62 +62,12 @@ public final class Tellme {
         return new FalseState();
     }
 
-    /**
-     * State.
-     * @author guanxiongwei
-     *
-     */
-    public static abstract class State {
-
-        /**
-         * Function to be executed when this state fulfilles condition.
-         * @param operation Action.
-         */
-        public abstract void then(final Operation operation);
-    }
-
-    /**
-     * False state.
-     * @author guanxiongwei
-     *
-     */
-    public static class FalseState extends State {
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void then(final Operation operation) {
-            log.info("False condition, do nothing");
+    public static ExceptionalState tryIt(final Risk risk) {
+        try {
+            risk.go();
+            return new NormalState();
+        } catch (Exception e) {
+            return new ExceptionState(e);
         }
-    }
-
-    /**
-     * True state.
-     * @author guanxiongwei
-     *
-     */
-    public static class TrueState extends State {
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void then(final Operation operation) {
-            operation.operate();
-        }
-    }
-
-    /**
-     * Operation.
-     * @author guanxiongwei
-     *
-     */
-    public interface Operation {
-
-        /**
-         * Do something.
-         */
-        void operate();
     }
 }
