@@ -53,29 +53,26 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private GraphContext graphContext;
 
-    private Engine engine;
-
     public ThreadPoolTaskExecutor(final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
-        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext, engine);
+            final RetryPattern retryPattern, final GraphContext graphContext) {
+        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext);
     }
 
     public ThreadPoolTaskExecutor(final int size, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
+            final RetryPattern retryPattern, final GraphContext graphContext) {
         this(new ThreadPoolExecutor(size / 2, size, 10000, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>(200),
                 (r, e) -> {
                     log.error("Workflow executor pool overflowed");
                 }
-            ), taskPersister, retryPattern, graphContext, engine);
+            ), taskPersister, retryPattern, graphContext);
     }
 
     public ThreadPoolTaskExecutor(final ExecutorService executorService, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
+            final RetryPattern retryPattern, final GraphContext graphContext) {
         this.executorService = executorService;
         this.taskPersister = taskPersister;
         this.retryPattern = retryPattern;
         this.graphContext = graphContext;
-        this.engine = engine;
     }
 
     /**
@@ -85,7 +82,8 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
     public Future<?> submit(
             final Resource primaryResource,
             final Task task,
-            final StreamTransferData data) {
+            final StreamTransferData data,
+            final Engine engine) {
         Resource dataResource = Resource.builder()
                 .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
                 .value(data)
@@ -131,7 +129,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      * {@inheritDoc}
      */
     @Override
-    public Future<?> retry(final String id) {
+    public Future<?> retry(final String id, final Engine engine) {
         RetryRunner worker = new RetryRunner(id, graphContext, taskPersister, retryPattern, engine);
         return executorService.submit(worker);
     }

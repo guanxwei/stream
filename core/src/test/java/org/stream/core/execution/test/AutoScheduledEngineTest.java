@@ -67,7 +67,7 @@ public class AutoScheduledEngineTest {
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);
         this.graphLoader.init();
-        autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(new MockExecutorService(), taskPersister, retryPattern, graphContext, autoScheduledEngine));
+        autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(new MockExecutorService(), taskPersister, retryPattern, graphContext));
     }
 
     @Test

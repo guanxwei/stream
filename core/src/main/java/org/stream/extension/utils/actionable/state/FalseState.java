@@ -32,7 +32,19 @@ public class FalseState implements State {
      * {@inheritDoc}
      */
     @Override
-    public void then(final Operation operation) {
+    public State then(final Operation operation) {
         log.info("False condition, do nothing");
+        return this;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public State otherwise(Operation operation) {
+        operation.operate();
+        return this;
+    }
+
+    
 }

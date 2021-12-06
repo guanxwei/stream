@@ -50,17 +50,25 @@ public class Sentinel {
 
     @Setter
     private TaskExecutor taskExecutor;
+
     @Setter
     private TaskPersister taskPersister;
+
     @Setter
     private DelayQueue delayQueue;
+
     @Setter
     private FifoQueue fifoQueue;
+
     @Setter
     private TaskStorage taskStorage;
 
+    @Setter
+    private Engine engine;
+
     private volatile boolean shutdown = false;
 
+    @Setter
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
 
     /**
@@ -97,7 +105,7 @@ public class Sentinel {
                                 queueName);
                         for (String id : contents) {
                             log.info("Submit retry job for task [{}]", id);
-                            taskExecutor.retry(id);
+                            taskExecutor.retry(id, engine);
                         }
                     }
                 }

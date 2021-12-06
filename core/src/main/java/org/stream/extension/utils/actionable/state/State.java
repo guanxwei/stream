@@ -26,8 +26,16 @@ import org.stream.extension.utils.actionable.operation.Operation;
 public interface State {
 
     /**
-     * Function to be executed when this state fulfilles condition.
-     * @param operation Action.
+     * Function to be executed when this state fulfills condition.
+     * @param operation Action to be executed.
+     * @return Current state.
      */
-    void then(final Operation operation);
+    State then(final Operation operation);
+
+    /**
+     * Function to be executed when this state not fulfills condition.
+     * @param operation Action to be executed.
+     * @return Current state.
+     */
+    State otherwise(final Operation operation);
 }

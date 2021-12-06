@@ -264,17 +264,12 @@ public final class WorkFlowContext {
     public static void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionExeception {
         assertWorkFlowNotClose();
 
-        if (resource == null) {
-            return;
-        }
-
         if (CURRENT.get().getPrimary() == null) {
             CURRENT.get().setPrimaryResourceReference(resource.getResourceReference());
             attachResource(resource);
         } else {
             throw new WorkFlowExecutionExeception("Attempt to change primary resource!");
         }
-
     }
 
     /**

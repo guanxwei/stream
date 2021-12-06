@@ -25,6 +25,7 @@ public interface Risk {
 
     /**
      * Take the risk!
+     * @throws Exception any exception.
      */
     void go() throws Exception;
 }

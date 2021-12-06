@@ -14,31 +14,30 @@
  * limitations under the License.
  */
 
-package org.stream.core.execution.resource;
+package org.stream.core.resource.sample;
 
-import org.stream.core.execution.WorkFlowContext;
 import org.stream.core.resource.Cache;
 import org.stream.core.resource.Resource;
-import org.stream.core.resource.ResourceTank;
 import org.stream.core.resource.ResourceURL;
-
-import lombok.extern.slf4j.Slf4j;
+import org.stream.extension.clients.RedisClient;
 
 /**
- * A cache implementation using {@link ResourceTank} to store resources.
- * @author weiguanxiong.
+ * A cache using redis as remote data storage.
+ * @author guanxiongwei
  *
  */
-@Slf4j
-public class ResourceTankBasedCache implements Cache {
+public class RedisCache implements Cache {
+
+    @javax.annotation.Resource
+    private RedisClient redisClient;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public Resource get(final ResourceURL resourceURL) {
-        String reference = getReference(resourceURL);
-        return WorkFlowContext.resolveResource(reference);
+        String content = redisClient.get(resourceURL.getPath());
+        return Resource.parse(content);
     }
 
     /**
@@ -46,10 +45,7 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public void put(final ResourceURL resourceURL, final Resource resource) {
-        String refefence = getReference(resourceURL);
-        // Cache will help manage the resource reference.
-        resource.setResourceReference(refefence);
-        WorkFlowContext.attachResource(resource);
+        redisClient.set(resourceURL.getPath(), resource.toString());
     }
 
     /**
@@ -57,8 +53,10 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public boolean isResourceExpired(final Resource resource) {
-        // All the resources will be in the memory until the workflow completed.
-        return false;
+
+        assert resource.getResourceURL() != null;
+
+        return redisClient.get(resource.getResourceURL().getPath()) != null;
     }
 
     /**
@@ -66,20 +64,14 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public void setResourceExpired(final Resource resource) {
-        String reference = getReference(resource.getResourceURL());
-        WorkFlowContext.remove(reference);
+        redisClient.del(resource.getResourceURL().getPath());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void put(final ResourceURL resourceURL, final Resource resource, final int ttl) {
-        log.warn("TTL will be ingnored, caches only lives in the workflow lifecycle");
-        put(resourceURL, resource);
-    }
-
-    private String getReference(final ResourceURL resourceURL) {
-        return "Workflow::" + resourceURL.getResourceAuthority().getValue() + "::" + resourceURL.getPath();
+    public void put(ResourceURL resourceURL, Resource resource, int ttl) {
+        redisClient.setWithExpireTime(resourceURL.getPath(), resource.toString(), ttl);
     }
 }

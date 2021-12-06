@@ -28,15 +28,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.stream.core.component.ActivityRepository;
-import org.stream.core.execution.AutoScheduledEngine;
-import org.stream.core.execution.DynamicGraphContext;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
+import org.stream.core.execution.Sentinel;
 import org.stream.core.helper.GraphLoader;
 import org.stream.core.helper.HttpGraphLoader;
-import org.stream.core.helper.LocalGraphLoader;
-import org.stream.extension.clients.MessageClient;
+import org.stream.core.resource.Cache;
+import org.stream.core.resource.ResourceCatalog;
+import org.stream.core.resource.sample.RedisCache;
+import org.stream.extension.builder.AutoScheduleEngineBuilder;
 import org.stream.extension.clients.KafkaClientImpl;
+import org.stream.extension.clients.MessageClient;
 import org.stream.extension.clients.MongoClient;
 import org.stream.extension.clients.MongoClientImpl;
 import org.stream.extension.clients.RedisClient;
@@ -49,9 +51,14 @@ import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
 import org.stream.extension.lock.Lock;
 import org.stream.extension.lock.providers.RedisClusterBasedLock;
+import org.stream.extension.monitor.StatusMonitor;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.pattern.defaults.ScheduledTimeIntervalPattern;
+import org.stream.extension.persist.DelayQueue;
+import org.stream.extension.persist.FifoQueue;
 import org.stream.extension.persist.KafkaBasedTaskStorage;
+import org.stream.extension.persist.RedisBasedDelayQueue;
+import org.stream.extension.persist.RedisBasedFifoQueue;
 import org.stream.extension.persist.RedisService;
 import org.stream.extension.persist.TaskPersister;
 import org.stream.extension.persist.TaskPersisterImpl;
@@ -82,28 +89,16 @@ public class PremiumAutoScheduleEngineConfiguration {
 
     @Bean
     public GraphContext graphContext() {
-        DynamicGraphContext graphContext = new DynamicGraphContext();
+        GraphContext graphContext = new GraphContext();
         graphContext.setActivityRepository(activityRepository());
         return graphContext;
     }
 
     @Bean
     public GraphLoader graphLoader() {
-        LocalGraphLoader localGraphLoader = new LocalGraphLoader();
-        localGraphLoader.setApplicationContext(applicationContext);
-        localGraphLoader.setGraphContext(graphContext());
-        localGraphLoader.setCircuitChecking(true);
-        return localGraphLoader;
-    }
-
-    @Bean
-    public GraphLoader httpGraphLoader() {
-        HttpGraphLoader httpGraphLoader = new HttpGraphLoader();
-        httpGraphLoader.setApplicationContext(applicationContext);
-        httpGraphLoader.setCircuitChecking(true);
-        httpGraphLoader.setGraphContext(graphContext());
-
-        return httpGraphLoader;
+        HttpGraphLoader loader = new HttpGraphLoader();
+        loader.setGraphContext(graphContext());
+        return loader;
     }
 
     @Bean
@@ -141,24 +136,15 @@ public class PremiumAutoScheduleEngineConfiguration {
 
     @Bean
     public Engine engine() throws Exception {
-        AutoScheduledEngine autoScheduledEngine = new AutoScheduledEngine();
-        autoScheduledEngine.setApplication(environment.getProperty("application"));
-        autoScheduledEngine.setMaxRetry(20);
-        autoScheduledEngine.setTaskPersister(taskPersister());
-        if (containsBean(TaskIDGenerator.class)) {
-            autoScheduledEngine.setTaskIDGenerator(applicationContext.getBean(TaskIDGenerator.class));
-        } else {
-            autoScheduledEngine.setTaskIDGenerator(new UUIDTaskIDGenerator());
-        }
-        if (containsBean(TaskExecutor.class)) {
-            autoScheduledEngine.setTaskExecutor(applicationContext.getBean(TaskExecutor.class));
-        } else {
-            RetryPattern retryPattern = containsBean(RetryPattern.class)
-                    ? applicationContext.getBean(RetryPattern.class) : new ScheduledTimeIntervalPattern();
-            autoScheduledEngine.setTaskExecutor(new ThreadPoolTaskExecutor(taskPersister(), retryPattern, graphContext(), autoScheduledEngine));
-        }
-
-        return autoScheduledEngine;
+        return AutoScheduleEngineBuilder.builder()
+                .application(environment.getProperty("application"))
+                .eventCenter(eventCenter())
+                .resourceCatalog(resourceCatalog())
+                .statusMonitor(statusMonitor())
+                .taskExecutor(taskExecutor())
+                .taskIDGenerator(containsBean(TaskIDGenerator.class) ? applicationContext.getBean(TaskIDGenerator.class) : new UUIDTaskIDGenerator())
+                .taskPersister(taskPersister())
+                .build();
     }
 
     @Bean
@@ -182,7 +168,7 @@ public class PremiumAutoScheduleEngineConfiguration {
         MemoryEventCenter eventCenter = new MemoryEventCenter();
         eventCenter.setKafkaClient(kafkaClient());
         eventCenter.setTopic(environment.getProperty("fast.stream.kafka.topic"));
-        //eventCenter.registerListener(TaskCompleteEvent.class, mongodbBasedEventCompleteListener());
+        eventCenter.registerListener(TaskCompleteEvent.class, mongodbBasedEventCompleteListener());
 
         eventCenter.init();
         return eventCenter;
@@ -196,7 +182,7 @@ public class PremiumAutoScheduleEngineConfiguration {
         return mangoDBBasedTaskCompleteListener;
     }
 
-    //@Bean
+    @Bean
     public MongoClient mongoClient() throws Exception {
         MongoClientImpl mongoClientImpl = new MongoClientImpl();
         String servers = environment.getProperty("fast.stream.mongo.servers");
@@ -217,6 +203,60 @@ public class PremiumAutoScheduleEngineConfiguration {
         KafkaBasedTaskStorage kafkaBasedTaskStorage = new KafkaBasedTaskStorage();
         kafkaBasedTaskStorage.setEventCenter(eventCenter());
         return kafkaBasedTaskStorage;
+    }
+
+    @Bean
+    public Cache cache() {
+        return new RedisCache();
+    }
+
+    @Bean
+    public ResourceCatalog resourceCatalog() {
+        ResourceCatalog resourceCatalog = new ResourceCatalog();
+        resourceCatalog.setCache(cache());
+        return resourceCatalog;
+    }
+
+    @Bean
+    public StatusMonitor statusMonitor() {
+        return new StatusMonitor();
+    }
+
+    @Bean
+    public RetryPattern retryPattern() {
+        return new ScheduledTimeIntervalPattern();
+    }
+
+    @Bean
+    public TaskExecutor taskExecutor() throws Exception {
+        return new ThreadPoolTaskExecutor(taskPersister(), retryPattern(), graphContext());
+    }
+
+    @Bean
+    public DelayQueue delayQueue() {
+        RedisBasedDelayQueue delayQueue = new RedisBasedDelayQueue();
+        delayQueue.setRedisClient(redisClient());
+        return delayQueue;
+    }
+
+    
+    @Bean
+    public Sentinel sentinel() throws Exception {
+        Sentinel sentinel = new Sentinel();
+        sentinel.setDelayQueue(delayQueue());
+        sentinel.setEngine(engine());
+        sentinel.setFifoQueue(fifoQueue());
+        sentinel.setTaskExecutor(taskExecutor());
+        sentinel.setTaskPersister(taskPersister());
+        sentinel.setTaskStorage(taskStorage);
+        return sentinel;
+    }
+
+    @Bean
+    public FifoQueue fifoQueue() {
+        RedisBasedFifoQueue fifoQueue = new RedisBasedFifoQueue();
+        fifoQueue.setRedisClient(redisClient());
+        return fifoQueue;
     }
 
     private <T> boolean containsBean(final Class<T> clazz) {

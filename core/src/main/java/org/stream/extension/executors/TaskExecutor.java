@@ -18,6 +18,7 @@ package org.stream.extension.executors;
 
 import java.util.concurrent.Future;
 
+import org.stream.core.execution.Engine;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
@@ -30,23 +31,26 @@ import org.stream.extension.meta.Task;
 public interface TaskExecutor {
 
     /**
-     * Submit the given task to underlying executors.
+     * Submit the given task to underlying execution engine.
      * @param primaryResource Primary resource to be used for the work flow instance.
      * @param task Task to be executed.
      * @param data Stream transfer with initiate information.
+     * @param engine The workflow instance initiating this task.
      * @return A future may contains the execution result.
      */
     Future<?> submit(
             final Resource primaryResource,
             final Task task,
-            final StreamTransferData data);
+            final StreamTransferData data,
+            final Engine engine);
 
     /**
      * Retry the pending task.
      * @param id target task id
+     * @param engine Workflow engine.
      * @return a future contains the execution result.
      */
-    Future<?> retry(final String id);
+    Future<?> retry(final String id, final Engine engine);
 
     /**
      * Get active task number that being executed by the work flow engine.

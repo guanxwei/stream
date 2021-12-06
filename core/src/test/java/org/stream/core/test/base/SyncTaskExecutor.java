@@ -35,26 +35,23 @@ public class SyncTaskExecutor implements TaskExecutor {
 
     private GraphContext graphContext;
 
-    private Engine engine;
-
     public SyncTaskExecutor(final TaskPersister taskPersister, final RetryPattern retryPattern,
-            final GraphContext graphContext, final Engine engine) {
-        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext, engine);
+            final GraphContext graphContext) {
+        this(DEFAULT_POOL_SIZE, taskPersister, retryPattern, graphContext);
     }
 
     public SyncTaskExecutor(final int size, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
-        this(Executors.newFixedThreadPool(size), taskPersister, retryPattern, graphContext, engine);
+            final RetryPattern retryPattern, final GraphContext graphContext) {
+        this(Executors.newFixedThreadPool(size), taskPersister, retryPattern, graphContext);
     }
 
     public SyncTaskExecutor(final ExecutorService executorService, final TaskPersister taskPersister,
-            final RetryPattern retryPattern, final GraphContext graphContext, final Engine engine) {
+            final RetryPattern retryPattern, final GraphContext graphContext) {
         // For sake of unit test, mock executor service should also be granted. 
         this.executorService = new MockExecutorService();
         this.taskPersister = taskPersister;
         this.retryPattern = retryPattern;
         this.graphContext = graphContext;
-        this.engine = engine;
     }
 
     /**
@@ -62,7 +59,7 @@ public class SyncTaskExecutor implements TaskExecutor {
      */
     @Override
     public Future<?> submit(final Resource primaryResource,
-            final Task task, final StreamTransferData data) {
+            final Task task, final StreamTransferData data, final Engine engine) {
         Resource dataResource = Resource.builder()
                 .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
                 .value(data)
@@ -99,7 +96,7 @@ public class SyncTaskExecutor implements TaskExecutor {
     }
 
     @Override
-    public Future<?> retry(String id) {
+    public Future<?> retry(final String id, final Engine engine) {
         return executorService.submit(new RetryRunner(id, graphContext, taskPersister, retryPattern, engine));
     }
 

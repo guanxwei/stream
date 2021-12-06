@@ -101,6 +101,15 @@ public final class TaskExecutionUtils {
                 .build();
     }
 
+    /**
+     * Suspend the task.
+     * @param task Target task.
+     * @param node Current execution node.
+     * @param taskPersister Task persister to update the task status.
+     * @param pattern Retry pattern, determine when to retry the target.
+     * @param graphContext Graph context.
+     * @param engine Workflow execution engine.
+     */
     public static void suspend(
             final Task task,
             final Node node,

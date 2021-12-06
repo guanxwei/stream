@@ -26,17 +26,21 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Sample implementation of {@link Cache}.
  * Only used for purpose of illustration, please do not use in online environments.
  * @author guanxiong wei
  *
  */
+@Slf4j
 public class MemoryCache implements Cache {
 
     private static final LoadingCache<String, Resource> CACHE = CacheBuilder.newBuilder()
                 .concurrencyLevel(200)
-                .expireAfterAccess(3000, TimeUnit.MILLISECONDS)
+                .expireAfterAccess(60 * 1000, TimeUnit.MILLISECONDS)
+                .maximumSize(1000)
                 .build(new CacheLoader<String, Resource>() {
                         public Resource load(final String reference) throws Exception {
                             return null;
@@ -73,6 +77,16 @@ public class MemoryCache implements Cache {
     @Override
     public void setResourceExpired(final Resource resource) {
         CACHE.invalidate(resource.getResourceURL().getPath());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void put(final ResourceURL resourceURL, final Resource resource, final int ttl) {
+        log.warn("TTL parameter does not work, cache not supported, the cache will be removed automatically"
+                + " after 1 minute since the last time it is accessed");
+        CACHE.put(resourceURL.getPath(), resource);
     }
 
 }

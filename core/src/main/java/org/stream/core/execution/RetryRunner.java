@@ -143,7 +143,7 @@ public class RetryRunner implements Runnable {
                             return engine.execute(context, graphName, primary, false);
                         },
                         graphContext,
-                        this.engine);
+                        engine);
         }
 
         if (activityResult != null) {

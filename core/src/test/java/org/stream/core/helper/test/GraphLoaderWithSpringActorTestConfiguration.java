@@ -80,7 +80,7 @@ public class GraphLoaderWithSpringActorTestConfiguration {
         defaultEngine.setApplication("testApplication");
         defaultEngine.setTaskIDGenerator(new UUIDTaskIDGenerator());
         defaultEngine.setTaskPersister(taskPersister());
-        defaultEngine.setTaskExecutor(new SyncTaskExecutor(taskPersister(), retryPattern(), graphContext(), defaultEngine));
+        defaultEngine.setTaskExecutor(new SyncTaskExecutor(taskPersister(), retryPattern(), graphContext()));
         return defaultEngine;
     }
 }

@@ -223,7 +223,7 @@ public class AutoScheduledEngine implements Engine {
                     EventsHelper.fireEvent(eventCenter, Event.of(WorkflowInitiatedEvent.class, task.getTaskId(),
                             graph.getStartNode()), false);
                     log.info("New task [{}] initiated", task.getTaskId());
-                    taskExecutor.submit(primaryResource, task, data);
+                    taskExecutor.submit(primaryResource, task, data, this);
                     log.info("Task [{}] submited", taskId);
                 })
                 .incase(DuplicateTaskException.class)

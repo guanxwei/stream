@@ -29,7 +29,16 @@ public class TrueState implements State {
      * {@inheritDoc}
      */
     @Override
-    public void then(final Operation operation) {
+    public State then(final Operation operation) {
         operation.operate();
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public State otherwise(final Operation operation) {
+        return this;
     }
 }

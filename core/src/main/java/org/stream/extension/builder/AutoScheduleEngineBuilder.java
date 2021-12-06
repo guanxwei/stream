@@ -17,8 +17,11 @@
 package org.stream.extension.builder;
 
 import org.stream.core.execution.AutoScheduledEngine;
+import org.stream.core.resource.ResourceCatalog;
+import org.stream.extension.events.EventCenter;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.monitor.StatusMonitor;
+import org.stream.extension.persist.RedisService;
 import org.stream.extension.persist.TaskPersister;
 import org.stream.extension.utils.TaskIDGenerator;
 
@@ -37,6 +40,14 @@ public final class AutoScheduleEngineBuilder {
     private String application;
 
     private StatusMonitor statusMonitor;
+
+    private ResourceCatalog resourceCatalog;
+
+    private EventCenter eventCenter;
+
+    private RedisService redisService;
+
+    private int maxRetry = 20;
 
     public static AutoScheduleEngineBuilder builder() {
         return new AutoScheduleEngineBuilder();
@@ -67,13 +78,32 @@ public final class AutoScheduleEngineBuilder {
         return this;
     }
 
+    public AutoScheduleEngineBuilder resourceCatalog(final ResourceCatalog resourceCatalog) {
+        this.resourceCatalog = resourceCatalog;
+        return this;
+    }
+
+    public AutoScheduleEngineBuilder eventCenter(final EventCenter eventCenter) {
+        this.eventCenter = eventCenter;
+        return this;
+    }
+
+    public AutoScheduleEngineBuilder redisService(final RedisService redisService) {
+        this.redisService = redisService;
+        return this;
+    }
+
     public AutoScheduledEngine build() {
-        this.autoScheduledEngine = new AutoScheduledEngine();
-        this.autoScheduledEngine.setApplication(application);
-        this.autoScheduledEngine.setTaskExecutor(taskExecutor);
-        this.autoScheduledEngine.setTaskIDGenerator(taskIDGenerator);
-        this.autoScheduledEngine.setTaskPersister(taskPersister);
-        this.statusMonitor.setTaskExecutor(taskExecutor);
-        return this.autoScheduledEngine;
+        autoScheduledEngine = new AutoScheduledEngine();
+        autoScheduledEngine.setApplication(application);
+        autoScheduledEngine.setTaskExecutor(taskExecutor);
+        autoScheduledEngine.setTaskIDGenerator(taskIDGenerator);
+        autoScheduledEngine.setTaskPersister(taskPersister);
+        autoScheduledEngine.setEventCenter(eventCenter);
+        autoScheduledEngine.setResourceCatalog(resourceCatalog);
+        autoScheduledEngine.setMaxRetry(maxRetry);
+        statusMonitor.setTaskExecutor(taskExecutor);
+        statusMonitor.setRedisService(redisService);
+        return autoScheduledEngine;
     }
 }

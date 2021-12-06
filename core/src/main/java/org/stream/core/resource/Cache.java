@@ -31,11 +31,19 @@ public interface Cache {
     Resource get(final ResourceURL resourceURL);
 
     /**
-     * Put a resource to the cache pool, so that it can be retrieved faster in the following operations.
+     * Put a resource to the cache pool and keep it living for ever.
      * @param resourceURL the url referred to the resource.
      * @param resource resource need to be put to the cache pool.
      */
     void put(final ResourceURL resourceURL, final Resource resource);
+
+    /**
+     * Put a resource to the cache pool and set the time to live.
+     * @param resourceURL Resource url.
+     * @param resource Resource.
+     * @param ttl Time to live in seconds.
+     */
+    void put(final ResourceURL resourceURL, final Resource resource, final int ttl);
 
     /**
      * Check if the resource has been marked as expired. Concrete implementation can determine their own mechanism to realize this character,
