@@ -25,6 +25,7 @@ import org.stream.extension.meta.TaskStep;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.pattern.defaults.EqualTimeIntervalPattern;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.settings.Settings;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -77,7 +78,7 @@ public class AutoScheduledEngineTest {
                 .resourceReference(RandomStringUtils.randomAlphabetic(10))
                 .build();
         ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule1", primary, false);
-        Resource resource = tank.resolve(AutoScheduledEngine.TASK_REFERENCE);
+        Resource resource = tank.resolve(Settings.TASK_REFERENCE);
 
         Assert.assertNotNull(resource);
         ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
@@ -101,7 +102,7 @@ public class AutoScheduledEngineTest {
         Mockito.when(taskPersister.tryLock(Mockito.anyString())).thenReturn(true);
         ResourceTank tank = autoScheduledEngine.execute(graphContext, "autoSchedule2", primary, false);
 
-        Resource resource = tank.resolve(AutoScheduledEngine.TASK_REFERENCE);
+        Resource resource = tank.resolve(Settings.TASK_REFERENCE);
 
         Assert.assertNotNull(resource);
         ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);

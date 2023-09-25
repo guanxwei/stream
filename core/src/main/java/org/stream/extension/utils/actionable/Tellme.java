@@ -34,7 +34,7 @@ public final class Tellme {
     private Tellme() { }
 
     /**
-     * Start a new state.
+     * Start a new state, return a state based on the input condition.
      * @param condition Condition.
      * @return New state.
      */
@@ -46,6 +46,13 @@ public final class Tellme {
         return new FalseState();
     }
 
+    /**
+     * Start a new state if the input two object equals returns a
+     * true state otherwise return a false state.
+     * @param real Object to be checked.
+     * @param expected Target object.
+     * @return New state.
+     */
     public static State equals(final Object real, final Object expected) {
         if (expected != null & expected.equals(real)) {
             return new TrueState();

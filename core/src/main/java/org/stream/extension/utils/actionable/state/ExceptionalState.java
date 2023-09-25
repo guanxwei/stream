@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.stream.extension.utils.actionable.operation.ExceptionOperation;
+import org.stream.extension.utils.actionable.operation.Operation;
 
 /**
  * Exceptional state.
@@ -48,4 +49,11 @@ public interface ExceptionalState {
      * @param operation Cause exception.
      */
     void fix(final ExceptionOperation operation);
+
+    /**
+     * Do it anyway.
+     * @param fix Operation to be taken to fix the catched exception.
+     * @param remedy Operation before leaving the try it block.
+     */
+    void anyway(final Operation fix, final Operation remedy);
 }

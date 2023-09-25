@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefaultEngine implements Engine {
 
-    private static final  ThreadLocal<Integer> ENTRANCE_TAG = new ThreadLocal<>();
+    private static final ThreadLocal<Integer> ENTRANCE_TAG = new ThreadLocal<>();
 
     static {
         ENTRANCE_TAG.set(0);

@@ -17,12 +17,16 @@
 package org.stream.extension.utils.actionable.state;
 
 import org.stream.extension.utils.actionable.operation.ExceptionOperation;
+import org.stream.extension.utils.actionable.operation.Operation;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Normal state.
  * @author guanxiongwei
  *
  */
+@Slf4j
 public class NormalState implements ExceptionalState {
 
     /**
@@ -30,7 +34,16 @@ public class NormalState implements ExceptionalState {
      */
     @Override
     public void fix(final ExceptionOperation operation) {
-        return;
+        log.info("Normal state, ignore fix operation");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void anyway(final Operation fix, final Operation remedy) {
+        log.info("Normal state fix operation will be ignored, perform the remedy action directly");
+        remedy.operate();
     }
 
 }

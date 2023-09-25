@@ -154,7 +154,7 @@ public class Node {
             return graph.getDefaultErrorNode();
         }
         for (Condition condition : conditions) {
-            if (condition.getCondition() == conditionCode) {
+            if (condition.getCode() == conditionCode) {
                 return graph.getNode(condition.getNextStep());
             }
         }

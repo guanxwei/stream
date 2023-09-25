@@ -33,7 +33,7 @@ public class Condition {
     /**
      * Condition value.
      */
-    private int condition;
+    private int code;
 
     /**
      * Next step.

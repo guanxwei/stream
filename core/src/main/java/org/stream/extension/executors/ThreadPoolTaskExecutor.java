@@ -32,6 +32,7 @@ import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.meta.Task;
 import org.stream.extension.pattern.RetryPattern;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.utils.actionable.Tellme;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,10 +41,24 @@ import lombok.extern.slf4j.Slf4j;
  * @author weiguanxiong.
  *
  */
+@SuppressWarnings("unchecked")
 @Slf4j
 public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private static final int DEFAULT_POOL_SIZE = 200;
+    private static int DEFAULT_QUEUE_SIZE;
+    private static final String DEFAULT_QUEUE_SIZE_SETTING = "stream.queue.size";
+
+    static {
+        Tellme.tryIt(() -> {
+                DEFAULT_QUEUE_SIZE = Integer.parseInt(DEFAULT_QUEUE_SIZE_SETTING);
+            })
+            .incase(Exception.class)
+            .fix((e) -> {
+                DEFAULT_QUEUE_SIZE = 200;
+                log.warn("Unexpected setting", e);
+            });
+    }
 
     private ExecutorService executorService;
 
@@ -60,7 +75,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     public ThreadPoolTaskExecutor(final int size, final TaskPersister taskPersister,
             final RetryPattern retryPattern, final GraphContext graphContext) {
-        this(new ThreadPoolExecutor(size / 2, size, 10000, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>(200),
+        this(new ThreadPoolExecutor(size / 2, size, 10000, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>(DEFAULT_QUEUE_SIZE),
                 (r, e) -> {
                     log.error("Workflow executor pool overflowed");
                 }

@@ -37,6 +37,7 @@ import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
 import org.stream.extension.meta.TaskStep;
 import org.stream.extension.persist.TaskPersister;
+import org.stream.extension.settings.Settings;
 import org.stream.extension.utils.TaskIDGenerator;
 import org.stream.extension.utils.UUIDTaskIDGenerator;
 import org.stream.extension.utils.actionable.Tellme;
@@ -60,18 +61,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class AutoScheduledEngine implements Engine {
-
-    private static final String PRIMARY_MISSING_ERROR = "Auto scheduled engine does not support cases without primary resource!";
-
-    /**
-     * Preserved resource reference for AutoScheduledEngine's primary resource.
-     */
-    public static final String ORIGINAL_RESOURCE_REFERENCE = "stream::scheduled::workflow::primary";
-
-    /**
-     * Task reference.
-     */
-    public static final String TASK_REFERENCE = "stream::autoschedule::task::reference";
 
     @Setter
     private int maxRetry = 10;
@@ -99,7 +88,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -111,7 +100,7 @@ public class AutoScheduledEngine implements Engine {
         String taskId = start(graphName, graphContext, primaryResource.getValue(), null);
         Resource taskResource = Resource.builder()
                 .value(taskId)
-                .resourceReference(TASK_REFERENCE)
+                .resourceReference(Settings.TASK_REFERENCE)
                 .build();
         ResourceTank tank = new ResourceTank();
         tank.addResource(taskResource);
@@ -132,7 +121,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -141,7 +130,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final String startNode,
             final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -153,7 +142,7 @@ public class AutoScheduledEngine implements Engine {
         String taskId = start(graphName, graphContext, primaryResource.getValue(), startNode);
         Resource taskResource = Resource.builder()
                 .value(taskId)
-                .resourceReference(TASK_REFERENCE)
+                .resourceReference(Settings.TASK_REFERENCE)
                 .build();
         ResourceTank tank = new ResourceTank();
         tank.addResource(taskResource);
@@ -175,7 +164,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName, final String startNode,
             final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**

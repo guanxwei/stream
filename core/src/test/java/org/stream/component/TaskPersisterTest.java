@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.stream.core.helper.Jackson;
 import org.stream.extension.persist.QueueHelper;
 import org.stream.extension.persist.TaskPersisterImpl;
 import org.testng.annotations.Test;
@@ -23,7 +22,6 @@ public class TaskPersisterTest {
             String queue = QueueHelper.RETRY_KEY + "testApplication" + "_" + i;
             queues.add(queue);
         }
-        System.out.println(Jackson.json(queues));
         for (int i = 0; i < QueueHelper.DEFAULT_QUEUES; i++) {
             String queue = QueueHelper.getQueueNameFromIndex(QueueHelper.RETRY_KEY,
                     taskPersisterImpl.getApplication(), i);

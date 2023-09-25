@@ -16,13 +16,21 @@
 
 package org.stream.extension.settings;
 
+import java.net.InetAddress;
+import java.util.UUID;
+
 import org.apache.commons.lang3.RandomStringUtils;
+import org.stream.extension.utils.actionable.Tellme;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A setting property only class. Holding all the well-designed settings here.
  * @author guanxiongwei
  *
  */
+@SuppressWarnings("unchecked")
+@Slf4j
 public final class Settings {
 
     private Settings() {}
@@ -48,4 +56,46 @@ public final class Settings {
      * is done will remove this tricky code.
      */
     public static final String UPDATE_EXPIRE_TIME_LUA_SCRIPT = System.getProperty("Rua.Script.Update.Expire.Time");
+
+    /**
+     * Error message when primary resource missed.
+     */
+    public static final String PRIMARY_MISSING_ERROR = "Auto scheduled engine does not support cases without primary resource!";
+
+    /**
+     * Preserved resource reference for AutoScheduledEngine's primary resource.
+     */
+    public static final String ORIGINAL_RESOURCE_REFERENCE = "stream::scheduled::workflow::primary";
+
+    /**
+     * Task reference.
+     */
+    public static final String TASK_REFERENCE = "stream::autoschedule::task::reference";
+
+    /**
+     * A-Synchronized executor pool size setting name.
+     */
+    public static final String STREAM_POOL_SIZE = "stream.async.pool.size";
+
+    /**
+     * Work flow close error message.
+     */
+    public static final String WORK_FLOW_CLOSE_ERROR_MESSAGE = "The work-flow instance has been closed!";
+
+    /**
+     * Auto schedule engine instance name.
+     */
+    public  static String instance;
+
+    static {
+        Tellme.tryIt(() -> {
+            instance = InetAddress.getLocalHost().getHostName();
+        })
+        .incase(Exception.class)
+        .fix((e) -> {
+            log.warn("Failed to get machine name, will generate one for this engine instance");
+            instance = UUID.randomUUID().toString();
+            log.warn("Engine instance name {}", instance);
+        });
+    }
 }

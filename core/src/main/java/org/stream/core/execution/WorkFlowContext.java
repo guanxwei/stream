@@ -35,6 +35,7 @@ import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceURL;
 import org.stream.extension.io.StreamTransferData;
+import org.stream.extension.settings.Settings;
 
 import com.mongodb.annotations.ThreadSafe;
 
@@ -62,17 +63,14 @@ public final class WorkFlowContext {
     // Asynchronous task execution pool.
     private static final ExecutorService EXECUTOR_SERVICE_FOR_ASYNC_TASKS;
 
-    private static final String STREAM_POOL_SIZE = "stream.async.pool.size";
-    private static final String WORK_FLOW_CLOSE_ERROR_MESSAGE = "The work-flow instance has been closed!";
-
     // In case users want to define the pool size according to requirement.
     static {
-        if (System.getProperty(STREAM_POOL_SIZE) == null) {
+        if (System.getProperty(Settings.STREAM_POOL_SIZE) == null) {
             EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
                     Runtime.getRuntime().availableProcessors() * 2, 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
         } else {
-            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Integer.parseInt(System.getProperty(STREAM_POOL_SIZE)),
-                    Integer.parseInt(System.getProperty(STREAM_POOL_SIZE)), 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
+            EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Integer.parseInt(System.getProperty(Settings.STREAM_POOL_SIZE)),
+                    Integer.parseInt(System.getProperty(Settings.STREAM_POOL_SIZE)), 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
         }
     }
 
@@ -350,7 +348,7 @@ public final class WorkFlowContext {
 
     private static void assertWorkFlowNotClose() {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception(WORK_FLOW_CLOSE_ERROR_MESSAGE);
+            throw new WorkFlowExecutionExeception(Settings.WORK_FLOW_CLOSE_ERROR_MESSAGE);
         }
     }
 }
