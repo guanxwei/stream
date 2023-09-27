@@ -85,14 +85,12 @@ public final class Settings {
     /**
      * Auto schedule engine instance name.
      */
-    public  static String instance;
+    public static String instance;
 
     static {
-        Tellme.tryIt(() -> {
-            instance = InetAddress.getLocalHost().getHostName();
-        })
+        Tellme.tryIt(() -> instance = InetAddress.getLocalHost().getHostName())
         .incase(Exception.class)
-        .fix((e) -> {
+        .fix(e -> {
             log.warn("Failed to get machine name, will generate one for this engine instance");
             instance = UUID.randomUUID().toString();
             log.warn("Engine instance name {}", instance);

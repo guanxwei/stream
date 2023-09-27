@@ -19,6 +19,8 @@ package org.stream.core.helper;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
+import org.stream.core.exception.JasonException;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -53,7 +55,7 @@ public class Jackson {
         try {
             return OBJECT_MANAGER.writeValueAsString(obj);
         } catch (Exception e) {
-            throw new RuntimeException("toJson出错：" + e.getMessage(), e);
+            throw new JasonException("Failed to translate the object to json string:" + e.getMessage(), e);
         }
     }
 
@@ -68,7 +70,7 @@ public class Jackson {
         try {
             return OBJECT_MANAGER.readValue(json, typeref);
         } catch (Exception e) {
-            throw new RuntimeException("readObject TypeReference出错：" + e.getMessage(), e);
+            throw new JasonException("Failed to parse object from the input string：" + e.getMessage(), e);
         }
     }
 
@@ -83,7 +85,7 @@ public class Jackson {
         try {
             return OBJECT_MANAGER.readValue(json, clz);
         } catch (Exception e) {
-            throw new RuntimeException("readObject出错：" + e.getMessage(), e);
+            throw new JasonException("Failed to parse object from the input string：" + e.getMessage(), e);
         }
     }
 
@@ -101,7 +103,7 @@ public class Jackson {
             }
             return OBJECT_MANAGER.readValue(json, clz);
         } catch (Exception e) {
-            throw new RuntimeException("readObject出错：" + e.getMessage(), e);
+            throw new JasonException("Failed to parse object from the input string：" + e.getMessage(), e);
         }
     }
 
@@ -157,7 +159,7 @@ public class Jackson {
             JsonNode root = OBJECT_MANAGER.readTree(json);
             return parseNodeValue(findNode(root, path), clazz);
         } catch (IOException ioe) {
-            throw new RuntimeException(ioe.getMessage(), ioe);
+            throw new JasonException(ioe.getMessage(), ioe);
         }
     }
 
@@ -184,7 +186,7 @@ public class Jackson {
         try {
             return parseNodeValue(findNode(this.jsonNode, path), clazz);
         } catch (IOException ioe) {
-            throw new RuntimeException(ioe.getMessage(), ioe);
+            throw new JasonException(ioe.getMessage(), ioe);
         }
     }
 

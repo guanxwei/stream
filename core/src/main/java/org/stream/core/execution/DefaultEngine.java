@@ -231,7 +231,7 @@ public class DefaultEngine implements Engine {
         if (workFlow.getStatus().equals(WorkFlowStatus.WAITING)) {
             useCurrentWorkflowDirectly(workFlow, graph, autoRecord);
         } else {
-            useCurrentWorkflowAsParentWorkflow(workFlow, graph, workFlow.getGraphContext());
+            useCurrentWorkflowAsParentWorkflow(workFlow, graph);
         }
     }
 
@@ -251,7 +251,7 @@ public class DefaultEngine implements Engine {
         workFlow.setResourceTank(new ResourceTank());
     }
 
-    private void useCurrentWorkflowAsParentWorkflow(final WorkFlow workFlow, final Graph graph, final GraphContext graphContext) {
+    private void useCurrentWorkflowAsParentWorkflow(final WorkFlow workFlow, final Graph graph) {
 
         /**
          * Currently the work-flow is running for another task, we are triggered within the running work-flow context.

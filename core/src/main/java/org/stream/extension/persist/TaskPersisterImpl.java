@@ -115,7 +115,7 @@ public class TaskPersisterImpl implements TaskPersister {
      */
     @Override
     public boolean tryLock(final String taskId) {
-        return lock.tryLock(taskId, (id, time) -> markAsLocked(id, time));
+        return lock.tryLock(taskId, this::markAsLocked);
     }
 
     /**
@@ -217,7 +217,7 @@ public class TaskPersisterImpl implements TaskPersister {
         return taskStorage.queryStuckTasks();
     }
 
-    private boolean markAsLocked(final String taskId, final long current) {
+    private boolean markAsLocked(final String taskId, final Long current) {
         fifoQueue.push(QueueHelper.getQueueNameFromTaskID(QueueHelper.BACKUP_KEY, application, taskId), taskId);
         delayQueue.deleteItem(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, taskId), taskId);
         return true;

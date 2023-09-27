@@ -35,11 +35,9 @@ public class SmartLocalGraphLoader extends LocalGraphLoader {
     public SmartLocalGraphLoader() throws IOException {
         ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources("classpath*:*graph/*.graph");
-        if (resources != null) {
-            for (Resource resource : resources) {
+        for (Resource resource : resources) {
                 String name = resource.getFilename();
                 graphFilePaths.add(name);
-            }
         }
     }
 }

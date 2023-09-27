@@ -61,10 +61,8 @@ public class AutoGraphLoader implements ApplicationListener<ApplicationContextEv
             ClassLoader classLoader = getClass().getClassLoader();
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(classLoader);
             Resource[] resources = resolver.getResources("classpath:graph/*.graph");
-            if (resources != null) {
-                for (Resource resource : resources) {
+            for (Resource resource : resources) {
                     graphLoader.loadGraphFromSource(resource.getFilename());
-                }
             }
         }
     }
