@@ -150,7 +150,7 @@ public class Node {
      */
     public Node getNode(final int conditionCode) {
         if (CollectionUtils.isEmpty(conditions)) {
-            log.error("Condition are not configured, please update your graph before using condition strategy");
+            log.error("Condition is not configured, please update your graph before using condition strategy");
             return graph.getDefaultErrorNode();
         }
         for (Condition condition : conditions) {

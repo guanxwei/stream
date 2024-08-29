@@ -142,7 +142,7 @@ public class DefaultEngine implements Engine {
             final boolean autoRecord, final boolean autoClean, final String startNode) {
 
         // Deduce work-flow procedure definition graph.
-        Graph graph = deduceGraph(graphName, graphContext);
+        var graph = deduceGraph(graphName, graphContext);
 
         // Pre-set work-flow context flags.
         boolean isWorkflowEntryGraph = false;
@@ -152,11 +152,11 @@ public class DefaultEngine implements Engine {
         }
 
         // Prepare work-flow runtime context.
-        WorkFlow context = prepare(graph, autoRecord, graphName, resource);
+        var context = prepare(graph, autoRecord, graphName, resource);
 
         // Execute
         execute(context, graph, autoRecord, startNode, graphContext);
-        ResourceTank resourceTank = context.getResourceTank();
+        var resourceTank = context.getResourceTank();
 
         // Clean context.
         clear(context, autoClean, isWorkflowEntryGraph);
@@ -166,7 +166,7 @@ public class DefaultEngine implements Engine {
     }
 
     private Graph deduceGraph(final String graphName, final GraphContext graphContext) {
-        Graph graph = graphContext.getGraph(graphName);
+        var graph = graphContext.getGraph(graphName);
         if (graph == null) {
             throw new WorkFlowExecutionExeception("Graph is not present! Please double check the graph name you provide.");
         }
@@ -210,7 +210,7 @@ public class DefaultEngine implements Engine {
 
     private WorkFlow initiate(final Graph graph, final boolean autoRecord, final String graphName) {
         //Currently there is no working work-flow in the same thread, we should create a new work-flow.
-        WorkFlow workFlow = WorkFlowContext.setUpWorkFlow();
+        var workFlow = WorkFlowContext.setUpWorkFlow();
         workFlow.start();
         workFlow.visitGraph(graph);
         if (autoRecord) {
@@ -258,7 +258,7 @@ public class DefaultEngine implements Engine {
          * So we should be treated as sub-workflow.
          * 
          */
-        WorkFlow child = WorkFlowContext.setUpWorkFlow();
+        var child = WorkFlowContext.setUpWorkFlow();
         child.start();
         child.setParent(workFlow);
         child.visitGraph(graph);
@@ -304,7 +304,7 @@ public class DefaultEngine implements Engine {
             }
 
             previous = executionNode;
-            ActivityResult activityResult = TaskHelper.perform(executionNode, ActivityResult.FAIL);
+            var activityResult = TaskHelper.perform(executionNode, ActivityResult.FAIL);
 
             if (ActivityResult.SUSPEND.equals(activityResult)) {
                 activityResult = processSuspendCase(executionNode);

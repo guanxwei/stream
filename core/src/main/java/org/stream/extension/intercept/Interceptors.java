@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.stream.core.component.ActivityResult;
-import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 
 import lombok.NonNull;
@@ -79,9 +78,10 @@ public final class Interceptors {
     }
 
     private static void onTemplate(final Object input, final Node node, final int type) {
-        Graph graph = node.getGraph();
-        String graphName = graph.getGraphName();
-        List<Interceptor> candidates = REGISTERD_INTERCEPTORS.get(graphName);
+        var graph = node.getGraph();
+        var graphName = graph.getGraphName();
+        
+        var candidates = REGISTERD_INTERCEPTORS.get(graphName);
         if (candidates == null) return; // No interceptors configured.
         for (Interceptor interceptor : candidates) {
             switch (type) {

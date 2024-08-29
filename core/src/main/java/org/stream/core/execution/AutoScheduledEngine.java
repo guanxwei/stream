@@ -18,8 +18,6 @@ package org.stream.core.execution;
 
 import java.io.Serializable;
 
-import org.stream.core.component.Graph;
-import org.stream.core.component.Node;
 import org.stream.core.exception.DuplicateTaskException;
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.helper.Jackson;
@@ -35,7 +33,6 @@ import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.StreamTransferDataStatus;
 import org.stream.extension.meta.Task;
 import org.stream.extension.meta.TaskStatus;
-import org.stream.extension.meta.TaskStep;
 import org.stream.extension.persist.TaskPersister;
 import org.stream.extension.settings.Settings;
 import org.stream.extension.utils.TaskIDGenerator;
@@ -97,12 +94,12 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final Resource primaryResource,
             final boolean autoRecord) {
-        String taskId = start(graphName, graphContext, primaryResource.getValue(), null);
-        Resource taskResource = Resource.builder()
+        var taskId = start(graphName, graphContext, primaryResource.getValue(), null);
+        var taskResource = Resource.builder()
                 .value(taskId)
                 .resourceReference(Settings.TASK_REFERENCE)
                 .build();
-        ResourceTank tank = new ResourceTank();
+        var tank = new ResourceTank();
         tank.addResource(taskResource);
         return tank;
     }
@@ -139,12 +136,12 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final Resource primaryResource,
             final String startNode, final boolean autoRecord) {
-        String taskId = start(graphName, graphContext, primaryResource.getValue(), startNode);
-        Resource taskResource = Resource.builder()
+        var taskId = start(graphName, graphContext, primaryResource.getValue(), startNode);
+        var taskResource = Resource.builder()
                 .value(taskId)
                 .resourceReference(Settings.TASK_REFERENCE)
                 .build();
-        ResourceTank tank = new ResourceTank();
+        var tank = new ResourceTank();
         tank.addResource(taskResource);
         return tank;
     }
@@ -191,7 +188,7 @@ public class AutoScheduledEngine implements Engine {
             throw new WorkFlowExecutionExeception("Primary resource should be serializable when you are using auto schedule engine");
         }
 
-        Resource primaryResource = Resource.builder()
+        var primaryResource = Resource.builder()
                 .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
                 .value(resource)
                 .build();
@@ -200,11 +197,11 @@ public class AutoScheduledEngine implements Engine {
          * Give a chance to the application to generate the task id according to the input primary resource
          * to implement idempotency mechanism and many other things.
          */
-        String taskId = taskIDGenerator.generateTaskID(primaryResource);
+        var taskId = taskIDGenerator.generateTaskID(primaryResource);
 
         log.info("Task id [{}] assigned to the request", taskId);
 
-        Graph graph = graphContext.getGraph(graphName);
+        var graph = graphContext.getGraph(graphName);
 
         Tellme.tryIt(() -> {
                     StreamTransferData data = new StreamTransferData();
@@ -226,7 +223,7 @@ public class AutoScheduledEngine implements Engine {
 
     private Task initiateTask(final String taskId, final String graphName, final Resource primaryResource,
             final StreamTransferData data, final GraphContext graphContext, final String startNode) throws Exception {
-        Graph graph = graphContext.getGraph(graphName);
+        var graph = graphContext.getGraph(graphName);
         if (graph == null) {
             throw new WorkFlowExecutionExeception("Graph not existes! Please double check！");
         }
@@ -235,13 +232,13 @@ public class AutoScheduledEngine implements Engine {
             throw new DuplicateTaskException();
         }
 
-        Node firstNode = startNode == null ? graph.getStartNode() : graph.getNode(startNode);
+        var firstNode = startNode == null ? graph.getStartNode() : graph.getNode(startNode);
         if (firstNode == null) {
             log.error("Can not find the target node [{}] from the graph [{}]", startNode, graph.getGraphName());
             throw new WorkFlowExecutionExeception(String.format("Start node [%s] node exists in graph [%s]",
                     startNode, graphName));
         }
-        Task task = Task.builder()
+        var task = Task.builder()
                 .application(application)
                 .graphName(graphName)
                 .initiatedTime(System.currentTimeMillis())
@@ -254,7 +251,7 @@ public class AutoScheduledEngine implements Engine {
                 .taskId(taskId)
                 .build();
         data.add("primaryClass", primaryResource.getValue().getClass().getName());
-        TaskStep taskStep = TaskExecutionUtils.constructStep(graph, firstNode,
+        var taskStep = TaskExecutionUtils.constructStep(graph, firstNode,
                 StreamTransferDataStatus.SUCCESS, data, task);
         taskPersister.initiateOrUpdateTask(task, true, taskStep);
         return task;

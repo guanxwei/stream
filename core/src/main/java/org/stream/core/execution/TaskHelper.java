@@ -262,13 +262,13 @@ public final class TaskHelper {
                 }
                 return activityResult;
             };
-            FutureTask<ActivityResult> task = new FutureTask<>(job);
-            Resource taskWrapper = Resource.builder()
+            var task = new FutureTask<>(job);
+            var taskWrapper = Resource.builder()
                     .value(task)
                     .resourceReference(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX)
                     .build();
             workFlow.attachResource(taskWrapper);
-            workFlow.addAsyncTasks(async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX);
+            workFlow.addAsyncTasks(node.getNodeName(), async.getNodeName() + ResourceHelper.ASYNC_TASK_SUFFIX);
             WorkFlowContext.submit(task);
         });
     }

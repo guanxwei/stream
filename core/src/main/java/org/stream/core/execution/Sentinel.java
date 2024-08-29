@@ -127,7 +127,7 @@ public class Sentinel {
 
         assert taskPersister.getApplication() != null;
 
-        String queueName = QueueHelper.getQueueNameFromIndex(QueueHelper.getPrefix(type), taskPersister.getApplication(), queue);
+        var queueName = QueueHelper.getQueueNameFromIndex(QueueHelper.getPrefix(type), taskPersister.getApplication(), queue);
         Collection<String> result = Collections.emptyList();
         try {
             switch (type) {

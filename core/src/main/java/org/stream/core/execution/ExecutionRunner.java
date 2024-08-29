@@ -17,7 +17,6 @@
 package org.stream.core.execution;
 
 import org.stream.core.component.ActivityResult;
-import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.resource.Resource;
 import org.stream.extension.meta.Task;
@@ -79,8 +78,8 @@ public class ExecutionRunner implements Runnable {
         WorkFlowContext.setUpWorkFlow().start();
         WorkFlowContext.attachResource(dataResource);
         WorkFlowContext.attachPrimaryResource(primaryResource);
-        Graph graph = graphContext.getGraph(task.getGraphName());
-        Node node = graph.getStartNode();
+        var graph = graphContext.getGraph(task.getGraphName());
+        var node = graph.getStartNode();
         Node last = null;
 
         ActivityResult activityResult = null;

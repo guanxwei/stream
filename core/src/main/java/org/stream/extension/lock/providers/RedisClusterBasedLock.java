@@ -133,14 +133,14 @@ public class RedisClusterBasedLock implements Lock {
         log.info("Try to grab the lock for task [{}] at time [{}] by thread [{}]", taskId, currentTime, threadName);
         boolean locked = redisClient.setnxWithExpireTime(genLock(taskId), genLockValue(currentTime)) == 1L;
 
-        Tellme.when(locked).then(() -> {
-            log.info("Thread [{}] Grab the lock for task [{}]", Thread.currentThread().getName(), taskId);
-            lockingTimes.put(taskId, currentTime);
-            processingTasks.put(taskId, threadName);
-            postAction.apply(taskId, currentTime);
-        });
-
-        Tellme.when(!locked).then(() -> log.info("Another worker is processing the task"));
+        Tellme.when(locked)
+            .then(() -> {
+                log.info("Thread [{}] Grab the lock for task [{}]", Thread.currentThread().getName(), taskId);
+                lockingTimes.put(taskId, currentTime);
+                processingTasks.put(taskId, threadName);
+                postAction.apply(taskId, currentTime);
+            })
+            .otherwise(() -> log.info("Another worker is processing the task"));
 
         return locked;
     }

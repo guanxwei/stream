@@ -53,6 +53,7 @@ public final class Tellme {
      * @param expected Target object.
      * @return New state.
      */
+    @SuppressWarnings("null")
     public static State equals(final Object real, final Object expected) {
         if (expected != null & expected.equals(real)) {
             return new TrueState();

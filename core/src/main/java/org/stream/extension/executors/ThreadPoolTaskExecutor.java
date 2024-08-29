@@ -46,16 +46,17 @@ import lombok.extern.slf4j.Slf4j;
 public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     private static final int DEFAULT_POOL_SIZE = 200;
-    private static int DEFAULT_QUEUE_SIZE;
     private static final String DEFAULT_QUEUE_SIZE_SETTING = "stream.queue.size";
+
+    private static int defaultQueueSize;
 
     static {
         Tellme.tryIt(() -> {
-                DEFAULT_QUEUE_SIZE = Integer.parseInt(DEFAULT_QUEUE_SIZE_SETTING);
+                defaultQueueSize = Integer.parseInt(DEFAULT_QUEUE_SIZE_SETTING);
             })
             .incase(Exception.class)
-            .fix((e) -> {
-                DEFAULT_QUEUE_SIZE = 200;
+            .fix(e -> {
+                defaultQueueSize = 200;
                 log.warn("Unexpected setting", e);
             });
     }
@@ -75,7 +76,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
 
     public ThreadPoolTaskExecutor(final int size, final TaskPersister taskPersister,
             final RetryPattern retryPattern, final GraphContext graphContext) {
-        this(new ThreadPoolExecutor(size / 2, size, 10000, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>(DEFAULT_QUEUE_SIZE),
+        this(new ThreadPoolExecutor(size / 2, size, 10000, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>(defaultQueueSize),
                 (r, e) -> {
                     log.error("Workflow executor pool overflowed");
                 }
@@ -99,11 +100,11 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
             final Task task,
             final StreamTransferData data,
             final Engine engine) {
-        Resource dataResource = Resource.builder()
+        var dataResource = Resource.builder()
                 .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
                 .value(data)
                 .build();
-        ExecutionRunner runner = new ExecutionRunner(
+        var runner = new ExecutionRunner(
                 retryPattern,
                 graphContext,
                 primaryResource,
@@ -119,7 +120,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      */
     @Override
     public int getActiveTasks() {
-        ThreadPoolExecutor pool = (ThreadPoolExecutor) executorService;
+        var pool = (ThreadPoolExecutor) executorService;
         return pool.getActiveCount();
     }
 
@@ -128,7 +129,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      */
     @Override
     public int getQueuedTasks() {
-        ThreadPoolExecutor pool = (ThreadPoolExecutor) executorService;
+        var pool = (ThreadPoolExecutor) executorService;
         return pool.getQueue().size();
     }
 
@@ -136,7 +137,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      * {@inheritDoc}
      */
     public int getPoolSize() {
-        ThreadPoolExecutor pool = (ThreadPoolExecutor) executorService;
+        var pool = (ThreadPoolExecutor) executorService;
         return pool.getPoolSize();
     }
 
@@ -145,7 +146,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
      */
     @Override
     public Future<?> retry(final String id, final Engine engine) {
-        RetryRunner worker = new RetryRunner(id, graphContext, taskPersister, retryPattern, engine);
+        var worker = new RetryRunner(id, graphContext, taskPersister, retryPattern, engine);
         return executorService.submit(worker);
     }
 

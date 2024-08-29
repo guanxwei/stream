@@ -137,7 +137,7 @@ public class WorkFlow {
      * The references to the async tasks submitted by this work-flow instance.
      */
     @Getter(value = AccessLevel.PROTECTED)
-    private List<String> asyncTaksReferences;
+    private Map<String, List<String>> asyncTaksReferences;
 
     /**
      * Default constructor.
@@ -146,7 +146,7 @@ public class WorkFlow {
         this.workFlowId = UUID.randomUUID().toString();
         this.status = WorkFlowStatus.WAITING;
         this.graphs = new HashMap<>();
-        this.asyncTaksReferences = new LinkedList<>();
+        this.asyncTaksReferences = new HashMap<>();
         resourceTank = new ResourceTank();
     }
 
@@ -194,7 +194,7 @@ public class WorkFlow {
      * @return Resource instance corresponding to the reference.
      */
     protected Resource resolveResource(final String resourceReference) {
-        Resource resource = resourceTank.resolve(resourceReference);
+        var resource = resourceTank.resolve(resourceReference);
         if (resource == null && parent != null) {
             resource = parent.resolveResource(resourceReference);
         }
@@ -208,7 +208,7 @@ public class WorkFlow {
      * @return Resolved resource.
      */
     protected Resource resolveResource(final ResourceURL url) {
-        Resource resource = resourceTank.resolve(url.getPath());
+        var resource = resourceTank.resolve(url.getPath());
         if (resource == null && parent != null) {
             resource = parent.resolveResource(url);
         }
@@ -286,8 +286,10 @@ public class WorkFlow {
      * Add an asynchronous task for the current work-flow.
      * @param taskReference Reference to the task.
      */
-    protected void addAsyncTasks(final String taskReference) {
-        this.asyncTaksReferences.add(taskReference);
+    protected void addAsyncTasks(final String nodeName, final String taskReference) {
+        var list = this.asyncTaksReferences.getOrDefault(nodeName, new LinkedList<>());
+        list.add(taskReference);
+        this.asyncTaksReferences.putIfAbsent(nodeName, list);
     }
 
     // CHECKSTYLE:OFF

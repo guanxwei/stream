@@ -73,10 +73,10 @@ public final class TaskExecutionUtils {
      */
     public static void updateTask(final Task task, final Node node, final TaskPersister taskPersister, final Graph graph,
             final ActivityResult activityResult) {
-        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE,
+        var data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE,
                 StreamTransferData.class);
         TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
-        TaskStep taskStep = constructStep(graph, node, STATUS_MAPPING.get(activityResult), data, task);
+        var taskStep = constructStep(graph, node, STATUS_MAPPING.get(activityResult), data, task);
         taskPersister.initiateOrUpdateTask(task, false, taskStep);
     }
 

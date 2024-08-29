@@ -23,7 +23,6 @@ import java.io.StringWriter;
 
 import org.stream.core.exception.WorkFlowExecutionExeception;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.resource.Resource;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.Tower;
 
@@ -61,11 +60,11 @@ public class TowerActivity extends Activity {
             throw new WorkFlowExecutionExeception("Actor must be specified");
         }
 
-        Resource resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
-        StreamTransferData contextData = resource.resolveValue(StreamTransferData.class);
+        var resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);
+        var contextData = resource.resolveValue(StreamTransferData.class);
         try {
-            StreamTransferData request = StreamTransferData.succeed(contextData.getObjects());
-            Resource primary = WorkFlowContext.getPrimary();
+            var request = StreamTransferData.succeed(contextData.getObjects());
+            var primary = WorkFlowContext.getPrimary();
             request.add("primary", (Serializable) primary.getValue());
             StreamTransferData streamTransferData = tower.call(request);
             StreamTransferData.merge(contextData, streamTransferData);
@@ -75,13 +74,13 @@ public class TowerActivity extends Activity {
         } catch (Exception e) {
             log.error("Fail to call actor [{}]", tower.getClass().getName(), e);
             WorkFlowContext.markException(e);
-            StreamTransferData streamTransferData = StreamTransferData.failed();
+            var streamTransferData = StreamTransferData.failed();
             StreamTransferData.merge(contextData, streamTransferData);
             contextData.add("errorMessage", e.getMessage());
             try (StringWriter sw = new StringWriter();
                     PrintWriter pw = new PrintWriter(sw, true);) {
                 e.printStackTrace(pw);
-                String stack = sw.getBuffer().toString();
+                var stack = sw.getBuffer().toString();
                 contextData.add("errorStack", stack);
             } catch (IOException e1) {
                 log.error("Fail to save error stack in the activity context");

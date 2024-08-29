@@ -16,16 +16,18 @@
 
 package org.stream.core.execution;
 
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.stream.core.component.ActivityResult;
@@ -93,6 +95,11 @@ public final class WorkFlowContext {
     public static final String WORK_FLOW_TRANSTER_DATA_REFERENCE = "Stream::Workflow::Transfer::Data::Reference";
 
     /**
+     * The reference to the async dependencies, the resource is a list, a list of async dependency tasks' references.
+     */
+    public static final String WORK_FLOW_NODE_ASYNC_TASKS = "Stream::Workflow::Aysnc::Dependencies";
+
+    /**
      * Check if there is working work-flow in the current thread context.
      * We'd make sure that each thread has only one working work-flow instance, since version 0.1.6 we have supported
      * sub-work-flow normally, so there would be more than one working work-flow instance within the same thread, but there
@@ -114,9 +121,9 @@ public final class WorkFlowContext {
      * @return The work-flow reference.
      */
     protected static WorkFlow setUpWorkFlow() {
-        WorkFlow newWorkFlow = new WorkFlow();
+        var newWorkFlow = new WorkFlow();
         newWorkFlow.setChildren(new LinkedList<>());
-        Date createTime = Calendar.getInstance().getTime();
+        var createTime = Calendar.getInstance().getTime();
         newWorkFlow.setCreateTime(createTime);
         WORKFLOWS.put(newWorkFlow.getWorkFlowId(), newWorkFlow);
         CURRENT.set(newWorkFlow);
@@ -138,7 +145,7 @@ public final class WorkFlowContext {
         close(true);
         WORKFLOWS.remove(CURRENT.get().getWorkFlowId());
         CURRENT.get().getRecords().clear();
-        WorkFlow parent = CURRENT.get().getParent();
+        var parent = CURRENT.get().getParent();
         // Hand over responsibility to the father instance. If there is no parent instance, exit directly.
         CURRENT.set(parent);
     }
@@ -169,17 +176,17 @@ public final class WorkFlowContext {
      * @param mayInterruptIfRunning Parameter to indicate if we need to wait until all the asynchronous tasks are shutdown.
      */
     public static void close(final boolean mayInterruptIfRunning) {
-        WorkFlow current = CURRENT.get();
-        List<String> asyncTasks = current.getAsyncTaksReferences();
-        asyncTasks.forEach(task -> {
-            Resource taskWrapper = CURRENT.get().resolveResource(task);
-            @SuppressWarnings("unchecked")
-            FutureTask<ActivityResult> future = (FutureTask<ActivityResult>) taskWrapper.getValue();
+        var current = CURRENT.get();
+        List<String> asyncTasks = new ArrayList<>(10);
+        provide().getAsyncTaksReferences().values().forEach(list -> asyncTasks.addAll(list));
+        asyncTasks.forEach(reference -> {
+            var task = current.resolveResource(reference);
+            var future = task.resolveValue(FutureTask.class);
             if (!future.isDone() && !future.isCancelled()) {
                 future.cancel(mayInterruptIfRunning);
             }
         });
-        CURRENT.get().setStatus(WorkFlowStatus.CLOSED);
+        current.setStatus(WorkFlowStatus.CLOSED);
     }
 
     /**
@@ -199,7 +206,7 @@ public final class WorkFlowContext {
     public static void attachResource(final Resource resource) {
         assertWorkFlowNotClose();
 
-        Resource primary = getPrimary();
+        var primary = getPrimary();
         if (primary != null
                 && StringUtils.equals(resource.getResourceReference(), primary.getResourceReference())) {
             throw new WorkFlowExecutionExeception("Attempt to change primary resource!"); 
@@ -344,6 +351,30 @@ public final class WorkFlowContext {
         Resource resource = resolveResource(reference);
 
         return resource.resolveValue(clazz);
+    }
+
+    /**
+     * Wait until all the async dependencies finish their work.
+     * If their is no dependency works for this node, return directly.
+     * 
+     * @param expireTime Expire time in milliseconds.
+     * @param nodeName The node name.
+     * @throws TimeoutException 
+     * @throws ExecutionException 
+     * @throws InterruptedException 
+     */
+    public static void waitUnitilAsyncWorksFinished(final long expireTime, final String nodeName) throws InterruptedException, ExecutionException, TimeoutException {
+        var list = provide().getAsyncTaksReferences().get(nodeName);
+
+        var begin = System.currentTimeMillis();
+        var left = expireTime;
+        if (list != null && list.size() > 0) {
+            for (String reference : list) {
+                var resource = resolve(reference, FutureTask.class);
+                resource.get(left, TimeUnit.MILLISECONDS);
+                left -= System.currentTimeMillis() - begin;
+            }
+        }
     }
 
     private static void assertWorkFlowNotClose() {

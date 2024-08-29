@@ -101,12 +101,12 @@ public class RetryRunner implements Runnable {
             log.info("Task [{}] is being processed, yield", taskId);
             return;
         }
-        Task task = Task.parse(taskPersister.get(taskId));
+        var task = Task.parse(taskPersister.get(taskId));
         if (!check(task)) {
             return;
         }
 
-        StreamTransferData data = taskPersister.retrieveData(task.getTaskId());
+        var data = taskPersister.retrieveData(task.getTaskId());
         Resource primaryResource = preparePrimaryResource(data, task);
 
         TaskHelper.prepare(task.getGraphName(), primaryResource, graphContext);
@@ -116,7 +116,7 @@ public class RetryRunner implements Runnable {
                 .build());
 
         ActivityResult activityResult = null;
-        Node node = TaskHelper.deduceNode(task, graphContext);
+        var node = TaskHelper.deduceNode(task, graphContext);
 
         while (node != null && taskPersister.tryLock(task.getTaskId())) {
             log.info("Retry runner execute node [{}] for task [{}]", node.getNodeName(), task.getTaskId());
@@ -131,7 +131,7 @@ public class RetryRunner implements Runnable {
                     return;
                 }
             }
-            TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node,
+            var taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node,
                     TaskExecutionUtils.STATUS_MAPPING.get(activityResult), data, task);
             TaskHelper.updateTask(task, node, TaskStatus.PROCESSING.code());
             taskPersister.initiateOrUpdateTask(task, false, taskStep);
@@ -172,7 +172,7 @@ public class RetryRunner implements Runnable {
             return false;
         }
 
-        Node node = TaskHelper.deduceNode(task, graphContext);
+        var node = TaskHelper.deduceNode(task, graphContext);
         if (node == null) {
             log.error("Graph has been upgraded, target node [{}] is missing", task.getNodeName());
             taskPersister.complete(task, null);
@@ -183,7 +183,7 @@ public class RetryRunner implements Runnable {
     }
 
     private Resource preparePrimaryResource(final StreamTransferData streamTransferData, final Task task)  {
-        String className = streamTransferData.as("primaryClass", String.class);
+        var className = streamTransferData.as("primaryClass", String.class);
         try {
             return Resource.builder()
                    .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
@@ -196,7 +196,7 @@ public class RetryRunner implements Runnable {
 
     private void suspend(final Task task, final Node node, final StreamTransferData data, final Engine engine) {
         // Persist workflow status to persistent layer.
-        TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
+        var taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
         task.setLastExcutionTime(System.currentTimeMillis());
         if (task.getNodeName().contentEquals(node.getNodeName())) {
             task.setRetryTimes(task.getRetryTimes() + 1);

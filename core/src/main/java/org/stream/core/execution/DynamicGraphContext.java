@@ -35,7 +35,7 @@ public class DynamicGraphContext extends GraphContext {
     @Override
     public void addGraph(final Graph graph) {
         if (graphs.containsKey(graph.getGraphName())) {
-            Graph originalGraph = graphs.get(graph.getGraphName());
+            var originalGraph = graphs.get(graph.getGraphName());
             log.info("Graph [{}] is changed, original definition \n [{}] \n while updated definition is \n [{}]",
                     graph.getGraphName(), originalGraph.getOriginalDefinition(), graph.getOriginalDefinition());
         }
