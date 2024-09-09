@@ -25,11 +25,14 @@ import org.stream.extension.utils.actionable.state.State;
 import org.stream.extension.utils.actionable.state.TrueState;
 
 /**
- * Tellme class. Just tell this class what to do when the condition fulfilles.
+ * Tellme class. Just tell this class what to do when the condition fulfills.
  * @author guanxiongwei
  *
  */
 public final class Tellme {
+
+    public static final ThreadLocal<Boolean> HAVING_FINALLY = ThreadLocal.withInitial(() -> false);
+    public static final ThreadLocal<Throwable> CACHED_EXCEPTION = new ThreadLocal<>();
 
     private Tellme() { }
 
@@ -62,6 +65,11 @@ public final class Tellme {
         return new FalseState();
     }
 
+    /**
+     * Do something when the input valuable is null.
+     * @param real Targe object.
+     * @return Execution state baesd on the input object.
+     */
     public static State whenNull(final Object real) {
         if (real == null) {
             return new TrueState();
@@ -70,7 +78,13 @@ public final class Tellme {
         return new FalseState();
     }
 
+    /**
+     * Try to take risk.
+     * @param risk Risk to be taken.
+     * @return Execution state, which could be exceptional.
+     */
     public static ExceptionalState tryIt(final Risk risk) {
+        HAVING_FINALLY.set(true);
         try {
             risk.go();
             return new NormalState();

@@ -55,7 +55,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
                 defaultQueueSize = Integer.parseInt(DEFAULT_QUEUE_SIZE_SETTING);
             })
             .incase(Exception.class)
-            .fix(e -> {
+            .thenFix(e -> {
                 defaultQueueSize = 200;
                 log.warn("Unexpected setting", e);
             });

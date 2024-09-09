@@ -14,36 +14,24 @@
  * limitations under the License.
  */
 
-package org.stream.extension.utils.actionable.state;
+package org.stream.extension.utils.actionable.exception;
 
-import org.stream.extension.utils.actionable.operation.ExceptionOperation;
-import org.stream.extension.utils.actionable.operation.Operation;
-
-import lombok.extern.slf4j.Slf4j;
+import org.stream.extension.utils.actionable.state.ExceptionalState;
 
 /**
- * Normal state.
+ * Exception will only be thrown from the {@linkplain ExceptionalState#reagardless(org.stream.extension.utils.actionable.operation.Operation)}.
+ * It will wrap the exceptions thrown from the fixes.
+ * 
  * @author guanxiongwei
- *
+ * @since 09/09/2024
  */
-@Slf4j
-public class NormalState implements ExceptionalState {
+public class FixException extends RuntimeException {
 
     /**
-     * {@inheritDoc}
+     * Constructor with throwable info from fixes.
+     * @param t throwable info from fixes.
      */
-    @Override
-    public ExceptionalState thenFix(ExceptionOperation operation) {
-        log.info("Normal state, ignore fix operation");
-        return this;
+    public FixException(final Throwable t) {
+        super(t);
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void reagardless(final Operation operation) {
-        operation.operate();
-    }
-
 }

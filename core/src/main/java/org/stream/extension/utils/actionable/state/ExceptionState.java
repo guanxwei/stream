@@ -16,6 +16,8 @@
 
 package org.stream.extension.utils.actionable.state;
 
+import org.stream.extension.utils.actionable.Tellme;
+import org.stream.extension.utils.actionable.exception.FixException;
 import org.stream.extension.utils.actionable.operation.ExceptionOperation;
 import org.stream.extension.utils.actionable.operation.Operation;
 
@@ -39,22 +41,40 @@ public class ExceptionState implements ExceptionalState {
         this.cause = e;
     }
 
+        /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ExceptionalState thenFix(ExceptionOperation operation) {
+        if (Tellme.CACHED_EXCEPTION.get() != null) {
+            // Another worker has done it's job, we should pass the work to the regardless method.
+            return this;
+        }
+        if (Tellme.HAVING_FINALLY.get() == true) {
+            // we should run in safe mode, cache the exception here so that regardless method has chance to do it's work.
+            try {
+                return fix(operation);
+            } catch(Throwable t) {
+                Tellme.CACHED_EXCEPTION.set(t);
+                return this;
+            }
+        } else {
+            return fix(operation);
+        }
+
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void fix(final ExceptionOperation operation) {
-        // The cause is in the interested list, then do something.
-        if (contains(cause)) {
-            operation.fix(this.cause);
-            return;
+    public void reagardless(final Operation operation) {
+        operation.operate();
+        Throwable t = Tellme.CACHED_EXCEPTION.get();
+        if (t != null) {
+            Tellme.CACHED_EXCEPTION.remove();
+            throw new FixException(t);
         }
-
-        if (this.cause instanceof RuntimeException) {
-            throw (RuntimeException)this.cause;
-        }
-
-        throw new RuntimeException(this.cause);
     }
 
     private boolean contains(final Exception e) {
@@ -69,20 +89,16 @@ public class ExceptionState implements ExceptionalState {
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void anyway(final Operation fix, final Operation remedy) {
-        try {
-            fix.operate();
-        } catch (Exception e) {
-            try {
-                remedy.operate();
-            } catch (Exception e0) {
-                log.error("Exception should not be thrown in the remedy action, now we catch it but not throw it", e);
-            }
-            throw e;
+    private ExceptionalState fix(ExceptionOperation operation) {
+        // The cause is in the interested list, then do something.
+        if (contains(cause)) {
+            operation.fix(this.cause);
+            // Clear the context, so that later fixes have chance to fix the exception
+            TARGETS.remove();
+            return new ExceptionState(cause);
         }
+
+        // If we can not fix the exception, just let it go.
+        return this;
     }
 }

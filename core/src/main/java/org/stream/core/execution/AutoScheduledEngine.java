@@ -213,7 +213,7 @@ public class AutoScheduledEngine implements Engine {
                     log.info("Task [{}] submited", taskId);
                 })
                 .incase(DuplicateTaskException.class)
-                .fix((e) -> {
+                .thenFix(e -> {
                     log.error("Duplicated task");
                     throw new WorkFlowExecutionExeception(e);
                 });

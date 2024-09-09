@@ -41,7 +41,7 @@ public class FalseState implements State {
      * {@inheritDoc}
      */
     @Override
-    public State otherwise(Operation operation) {
+    public State otherwise(final Operation operation) {
         operation.operate();
         return this;
     }

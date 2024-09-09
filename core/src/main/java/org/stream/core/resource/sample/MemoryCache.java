@@ -18,6 +18,8 @@ package org.stream.core.resource.sample;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nonnull;
+
 import org.stream.core.resource.Cache;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceURL;
@@ -42,7 +44,7 @@ public class MemoryCache implements Cache {
                 .expireAfterAccess(60 * 1000, TimeUnit.MILLISECONDS)
                 .maximumSize(1000)
                 .build(new CacheLoader<String, Resource>() {
-                        public Resource load(final String reference) throws Exception {
+                        public Resource load(final @Nonnull String reference) throws Exception {
                             return null;
                         }
                 });

@@ -45,15 +45,16 @@ public interface ExceptionalState {
     }
 
     /**
-     * Fix the exception.
-     * @param operation Cause exception.
+     * Fix the exception, and users can keep on adding more exceptional cases and fix solutions.
+     * @param operation Fix operation.
+     * @return Exceptional state so that users can keep adding more exceptional cases.
      */
-    void fix(final ExceptionOperation operation);
+    ExceptionalState thenFix(final ExceptionOperation operation);
 
     /**
-     * Do it anyway.
-     * @param fix Operation to be taken to fix the catched exception.
-     * @param remedy Operation before leaving the try it block.
+     * Do something before we leave the tellme especially if there is new exception thrown from the fixes.
+     * 
+     * @param operation Operation to be executed before we leave the tellme statement.
      */
-    void anyway(final Operation fix, final Operation remedy);
+    void reagardless(final Operation operation);
 }

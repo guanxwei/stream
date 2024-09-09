@@ -71,7 +71,7 @@ public abstract class Event {
                     event.setTrigger(trigger);
                 })
                 .incase(Exception.class)
-                .fix((e) -> {
+                .thenFix(e -> {
                     Event event = new Event() {
                         @Override
                         public String type() {

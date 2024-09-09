@@ -90,7 +90,7 @@ public final class Settings {
     static {
         Tellme.tryIt(() -> instance = InetAddress.getLocalHost().getHostName())
         .incase(Exception.class)
-        .fix(e -> {
+        .thenFix(e -> {
             log.warn("Failed to get machine name, will generate one for this engine instance");
             instance = UUID.randomUUID().toString();
             log.warn("Engine instance name {}", instance);

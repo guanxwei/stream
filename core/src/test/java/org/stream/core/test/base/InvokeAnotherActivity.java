@@ -9,5 +9,4 @@ public class InvokeAnotherActivity extends Activity {
     public ActivityResult act() {
         return ActivityResult.invoke("child1");
     }
-
 }

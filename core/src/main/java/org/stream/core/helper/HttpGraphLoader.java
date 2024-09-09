@@ -19,7 +19,8 @@ package org.stream.core.helper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.stream.core.exception.GraphLoadException;
@@ -35,7 +36,8 @@ public class HttpGraphLoader extends AbstractGraphLoader {
     @Override
     protected InputStream loadInputStream(final String sourcePath) throws GraphLoadException {
         try {
-            URL url = new URL(sourcePath);
+            URI uri = new URI(sourcePath);
+            URL url = uri.toURL();
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setConnectTimeout(3000);
             httpURLConnection.connect();
@@ -44,7 +46,7 @@ public class HttpGraphLoader extends AbstractGraphLoader {
                 throw new GraphLoadException("Fail to connection to remote server");
             }
             return httpURLConnection.getInputStream();
-        } catch (MalformedURLException e) {
+        } catch (URISyntaxException e) {
             throw new GraphLoadException("Unavaliable uri", e);
         } catch (IOException e) {
             throw new GraphLoadException("Fail to connection to remote server", e);
