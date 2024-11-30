@@ -16,6 +16,7 @@
 
 package org.stream.extension.clients;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.stream.extension.settings.Settings;
+
+import com.google.common.collect.ImmutableList;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -211,7 +214,7 @@ public class RedisClientImpl implements RedisClient {
     @Override
     public boolean updateKeyExpireTimeIfMatch(final String key, final String expectedValue) {
         if (Settings.LUA_SUPPORTED) {
-            Long response = (Long) jedisCluster.eval(buildLuaScript(key, expectedValue), List.of(key, expectedValue), List.of());
+            Long response = (Long) jedisCluster.eval(buildLuaScript(key, expectedValue), ImmutableList.of(key, expectedValue), Collections.emptyList());
             return response == 1l;
         } else {
             String value = jedisCluster.get(key);
