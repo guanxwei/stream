@@ -24,6 +24,8 @@ import org.stream.extension.utils.actionable.state.NormalState;
 import org.stream.extension.utils.actionable.state.State;
 import org.stream.extension.utils.actionable.state.TrueState;
 
+import java.util.Objects;
+
 /**
  * Tellme class. Just tell this class what to do when the condition fulfills.
  * @author guanxiongwei
@@ -58,7 +60,7 @@ public final class Tellme {
      */
     @SuppressWarnings("null")
     public static State equals(final Object real, final Object expected) {
-        if (expected != null & expected.equals(real)) {
+        if (Objects.equals(real, expected)) {
             return new TrueState();
         }
 
@@ -67,8 +69,8 @@ public final class Tellme {
 
     /**
      * Do something when the input valuable is null.
-     * @param real Targe object.
-     * @return Execution state baesd on the input object.
+     * @param real Target object.
+     * @return Execution state based on the input object.
      */
     public static State whenNull(final Object real) {
         if (real == null) {

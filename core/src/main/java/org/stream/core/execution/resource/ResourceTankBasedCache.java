@@ -46,9 +46,9 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public void put(final ResourceURL resourceURL, final Resource resource) {
-        String refefence = getReference(resourceURL);
+        String reference = getReference(resourceURL);
         // Cache will help manage the resource reference.
-        resource.setResourceReference(refefence);
+        resource.setResourceReference(reference);
         WorkFlowContext.attachResource(resource);
     }
 
@@ -75,7 +75,7 @@ public class ResourceTankBasedCache implements Cache {
      */
     @Override
     public void put(final ResourceURL resourceURL, final Resource resource, final int ttl) {
-        log.warn("TTL will be ingnored, caches only lives in the workflow lifecycle");
+        log.warn("TTL will be ignored, caches only lives in the workflow lifecycle");
         put(resourceURL, resource);
     }
 

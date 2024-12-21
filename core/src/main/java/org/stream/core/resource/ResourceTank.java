@@ -25,6 +25,7 @@ import lombok.Getter;
  * @author guanxiong wei
  *
  */
+@Getter
 public class ResourceTank {
 
     /**
@@ -33,8 +34,7 @@ public class ResourceTank {
      * If an internal Node of the graph will invoke another graph, then both these two graph instances will share that one resource tank,
      * determined at the entry point of the execution procedure.
      */
-    @Getter
-    private ConcurrentHashMap<String, Resource> resources = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Resource> resources = new ConcurrentHashMap<>();
 
     /**
      * Add a new resource object into the resource tank.

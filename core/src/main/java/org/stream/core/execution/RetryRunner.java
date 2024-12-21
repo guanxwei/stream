@@ -18,7 +18,7 @@ package org.stream.core.execution;
 
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.helper.Jackson;
 import org.stream.core.helper.NodeConfiguration;
 import org.stream.core.resource.Resource;
@@ -39,20 +39,20 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Runnable implementation to process suspended tasks.
- *
+ * <p>
  *
  * Updated 2018/09/12:
  * Stream updated the max retry times to 24, which means Stream framework will retry single one node at most 24 times and
- * Stream framework will treat suspend activity result as failed result once max retry times reaches.
- * Stream framework will invoke {@link RetryPattern} to deduce the next time point the work-flow will be retried.
- *
+ * Stream framework will treat a suspend activity result as a failed result once max retry times reaches.
+ * Stream framework will invoke {@link RetryPattern} to deduce point the next time the work-flow will be retried.
+ * <p>
  * Stream provides two default implemented retry patterns, for detail please refer to {@link EqualTimeIntervalPattern} and
  * {@link ScheduledTimeIntervalPattern}.
- *
+ * <p>
  * Users can also use their own retry pattern by implements interface {@link RetryPattern} and initiate it with the 
  * {@link ThreadPoolTaskExecutor} as their implementation.
- *
- * Update 20180920, users can also set retry interval by adding configuration to the nodes in graphs, for detail please refer to
+ * <p>
+ * Update 20180920, users can also set a retry interval by adding configuration to the nodes in graphs, for detail please refer to
  * {@link NodeConfiguration}.
  */
 @Slf4j
@@ -60,14 +60,14 @@ public class RetryRunner implements Runnable {
 
     private static final int MAX_RETRY = 24;
 
-    private String taskId;
-    private GraphContext graphContext;
-    private TaskPersister taskPersister;
-    private RetryPattern retryPattern;
+    private final String taskId;
+    private final GraphContext graphContext;
+    private final TaskPersister taskPersister;
+    private final RetryPattern retryPattern;
     private boolean completedWithFailure = false;
-    private Engine engine;
+    private final Engine engine;
 
-    private ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
+    private final ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
 
     /**
      * Constructor.
@@ -197,7 +197,7 @@ public class RetryRunner implements Runnable {
     private void suspend(final Task task, final Node node, final StreamTransferData data, final Engine engine) {
         // Persist workflow status to persistent layer.
         var taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
-        task.setLastExcutionTime(System.currentTimeMillis());
+        task.setLastExecutionTime(System.currentTimeMillis());
         if (task.getNodeName().contentEquals(node.getNodeName())) {
             task.setRetryTimes(task.getRetryTimes() + 1);
         } else {
@@ -209,7 +209,7 @@ public class RetryRunner implements Runnable {
     private void updateLastExecutionTimeAndSuspend(final Node node, final Task task, final TaskStep taskStep,
             final Engine engine) {
         int interval = TaskHelper.getInterval(node, retryPattern, task.getRetryTimes());
-        task.setNextExecutionTime(task.getLastExcutionTime() + interval);
+        task.setNextExecutionTime(task.getLastExecutionTime() + interval);
         task.setNodeName(node.getNodeName());
         task.setStatus(TaskStatus.PENDING.code());
         taskPersister.suspend(task, interval, taskStep, node);
@@ -219,7 +219,7 @@ public class RetryRunner implements Runnable {
     }
 
     /**
-     * Get time window depends on the current pattern and the times have tried.
+     * Get the time window depends on the current pattern and the times have tried.
      * @param time Times that have been tried.
      * @param retryPattern Retry pattern.
      * @return Next time window
@@ -228,6 +228,6 @@ public class RetryRunner implements Runnable {
         if (retryPattern != null) {
             return retryPattern.getTimeInterval(time);
         }
-        throw new WorkFlowExecutionExeception("Retry pattern should not be null");
+        throw new WorkFlowExecutionException("Retry pattern should not be null");
     }
 }

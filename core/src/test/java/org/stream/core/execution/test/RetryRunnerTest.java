@@ -48,18 +48,16 @@ public class RetryRunnerTest {
     @Mock
     private RetryPattern pattern;
 
-    private LocalGraphLoader graphLoader;
     private GraphContext graphContext;
-    private List<String> paths;
 
     private Resource primaryResource;
 
-    private StreamTransferData data = new StreamTransferData();
+    private final StreamTransferData data = new StreamTransferData();
 
     @org.testng.annotations.BeforeMethod
     public void BeforeMethod() throws Exception {
         MockitoAnnotations.initMocks(this);
-        this.paths = new LinkedList<String>();
+        List<String> paths = new LinkedList<>();
         paths.add("AutoScheduleNormal.graph");
         paths.add("AutoScheduleFull.graph");
         paths.add("AutoScheduleSuspend.graph");
@@ -67,11 +65,11 @@ public class RetryRunnerTest {
         paths.add("AutoScheduleSuspend3.graph");
 
         this.graphContext = new GraphContext();
-        this.graphLoader = new LocalGraphLoader();
+        LocalGraphLoader graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);
-        this.graphLoader.init();
+        graphLoader.init();
         primaryResource = Resource.builder()
                 .resourceReference("Auto::Scheduled::Workflow::PrimaryResource::Reference")
                 .value("resource")
@@ -85,7 +83,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
                 .status(TaskStatus.COMPLETED.code())
@@ -111,7 +109,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
                 .status(TaskStatus.PENDING.code())
@@ -137,7 +135,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule1")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
                 .status(TaskStatus.PENDING.code())
@@ -159,7 +157,7 @@ public class RetryRunnerTest {
         Mockito.verify(taskPersister).initiateOrUpdateTask(captor2.capture(), captor3.capture(),
                 captor6.capture());
 
-        Assert.assertEquals(captor3.getValue().booleanValue(), false);
+        assertFalse(captor3.getValue());
         //Assert.assertEquals(captor1.getValue(), task.getTaskId());
 
         Task content = captor2.getValue();
@@ -180,7 +178,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node4")
                 .retryTimes(3)
                 .status(TaskStatus.PENDING.code())
@@ -202,7 +200,7 @@ public class RetryRunnerTest {
 
         Mockito.verify(taskPersister).suspend(captor1.capture(), captor2.capture(), captor6.capture(), nodeCaptor.capture());
 
-        Assert.assertEquals(captor2.getValue().intValue(), 10l);
+        Assert.assertEquals(captor2.getValue().intValue(), 10L);
         Task captured = captor1.getValue();
 
         Assert.assertEquals(captured.getNodeName(), "node5");
@@ -216,7 +214,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(24)
                 .status(TaskStatus.PENDING.code())
@@ -257,7 +255,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(5)
                 .status(TaskStatus.PENDING.code())
@@ -295,7 +293,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(5)
                 .status(TaskStatus.PENDING.code())
@@ -352,7 +350,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule2")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(5)
                 .status(TaskStatus.PENDING.code())
@@ -366,7 +364,7 @@ public class RetryRunnerTest {
         RedisClusterBasedLock lock = new RedisClusterBasedLock();
         lock.setRedisClient(redisClient);
         taskPersisterImpl.setLock(lock);
-        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1l).thenReturn(0l);
+        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1L).thenReturn(0L);
         retryRunner = new RetryRunner(task.getTaskId(), graphContext, taskPersisterImpl, pattern, null);
         Mockito.doReturn(content).when(taskPersisterImpl).get(task.getTaskId());
         try {
@@ -380,7 +378,7 @@ public class RetryRunnerTest {
         retryRunner.run();
         taskPersisterImpl.releaseLock(task.getTaskId());
 
-        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1l);
+        Mockito.when(redisClient.setnxWithExpireTime(Mockito.anyString(), Mockito.anyString())).thenReturn(1L);
         try {
             retryRunner.run();
         } catch (Exception e) {
@@ -394,7 +392,7 @@ public class RetryRunnerTest {
         Task task = Task.builder()
                 .graphName("autoSchedule3")
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis() - 5 * 1000)
+                .lastExecutionTime(System.currentTimeMillis() - 5 * 1000)
                 .nodeName("node5")
                 .retryTimes(24)
                 .status(TaskStatus.PENDING.code())

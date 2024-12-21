@@ -29,11 +29,11 @@ public final class EventsHelper {
     private EventsHelper() { }
 
     /**
-     * Fire an event through the event center. If the event center is not configure, nothing will happen except one
-     * warn log.
+     * Fire an event through the event center. If the event center is not configured, nothing will happen except one
+     * warns log.
      * @param eventCenter Target event center.
      * @param event Event to be fired.
-     * @param sync Flag indicates if the event should be sent immediately.
+     * @param sync The Flag indicates if the event should be sent immediately.
      */
     public static void fireEvent(final EventCenter eventCenter, final Event event, final boolean sync) {
         if (eventCenter != null) {

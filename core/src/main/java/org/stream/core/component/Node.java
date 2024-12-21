@@ -29,13 +29,13 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Encapsulation of graph nodes.
  * Each node holds a concrete entity {@link Activity} who is responsible to do the designed work.
- *
+ * <p>
  * The work-flow engines will invoke the nodes in a graph one by one following
  * the order defined in *.graph files except asynchronous tasks.
- *
+ * <p>
  * Stream work flow framework provides a mechanism to help customers
  * leverage from concurrent processing. Customer can make a node as asynchronous just by adding
- * it the to the target node as it's asyncDependencies. AsyncDependencies nodes will be executed
+ * it to the target node as its asyncDependencies. AsyncDependencies nodes will be executed
  * parallel when executing the target node.
  * <p> For example <p>
  * <code>
@@ -72,11 +72,11 @@ import lombok.extern.slf4j.Slf4j;
           <br>]
         <br>}
  * </code>
- * <br>The only difference between the normals nodes is that these nodes' activities should extend {@link AsyncActivity}.
+ * <br>The only difference between the normal nodes is that these nodes' activities should extend {@link AsyncActivity}.
  * For detail, please refer to the sample graph files located in the test resource folder.
- *
- * Nodes will be treated as singleton instances in single JVM context and can be shared in multiple graphs running in multiple threads
- * while having no side-effect.
+ * <p>
+ * Nodes will be treated as singleton instances in a single JVM context and can be shared in multiple graphs running in multiple threads
+ * while having no side effect.
  *
  */
 @Builder
@@ -100,8 +100,16 @@ public class Node {
     // Asynchronous dependencies.
     private List<Node> asyncDependencies;
 
+    // Asynchronous dependencies that should be run as daemon works. Workflow engine should not cancel them when they finish the current execution flow.
+    private List<Node> daemons;
+
     // Retry intervals.
     private List<Integer> intervals;
+
+    // The flag indicated it the node is degradable,
+    // once the engine found that this node is not available and the flag is set as true,
+    // the engine may skip execute this node until it's available again.
+    private boolean degradable;
 
     /**
      * Detail description of the purpose of the node.

@@ -32,7 +32,7 @@ public abstract class AbstractResourceReader<T> implements ResourceReader {
     }
 
     /**
-     * Read a object from the resource specific storage.
+     * Read an object from the resource-specific storage.
      * @param resourceURL A reference to the object.
      * @return An object read from the storage.
      */

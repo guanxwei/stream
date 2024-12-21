@@ -32,7 +32,7 @@ import lombok.NonNull;
  */
 public final class Interceptors {
 
-    private static final Map<String, List<Interceptor>> REGISTERD_INTERCEPTORS = new HashMap<>();
+    private static final Map<String, List<Interceptor>> REGISTERED_INTERCEPTORS = new HashMap<>();
 
     private Interceptors() { }
 
@@ -43,16 +43,16 @@ public final class Interceptors {
     public static void merge(@NonNull  Map<String, List<Interceptor>> elements) {
         List<Interceptor> merged = new LinkedList<>();
         for (Entry<String, List<Interceptor>> entry : elements.entrySet()) {
-            if (REGISTERD_INTERCEPTORS.containsKey(entry.getKey())) {
-                merged.addAll(REGISTERD_INTERCEPTORS.get(entry.getKey()));
+            if (REGISTERED_INTERCEPTORS.containsKey(entry.getKey())) {
+                merged.addAll(REGISTERED_INTERCEPTORS.get(entry.getKey()));
             }
             merged.addAll(entry.getValue());
-            REGISTERD_INTERCEPTORS.put(entry.getKey(), merged);
+            REGISTERED_INTERCEPTORS.put(entry.getKey(), merged);
         }
     }
 
     /**
-     * Invoke interceptors before we executing the target node.
+     * Invoke interceptors before we're executing the target node.
      * @param node Node to be executed.
      */
     public static void before(final Node node) {
@@ -69,7 +69,7 @@ public final class Interceptors {
     }
 
     /**
-     * Action to be triggered when unexpected error arosen from the node.
+     * Action to be triggered when an unexpected error arose from the node.
      * @param node Current node.
      * @param t Throwable from the node.
      */
@@ -81,7 +81,7 @@ public final class Interceptors {
         var graph = node.getGraph();
         var graphName = graph.getGraphName();
         
-        var candidates = REGISTERD_INTERCEPTORS.get(graphName);
+        var candidates = REGISTERED_INTERCEPTORS.get(graphName);
         if (candidates == null) return; // No interceptors configured.
         for (Interceptor interceptor : candidates) {
             switch (type) {

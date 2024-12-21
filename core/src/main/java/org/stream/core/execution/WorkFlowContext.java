@@ -20,19 +20,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceURL;
@@ -43,12 +36,12 @@ import com.mongodb.annotations.ThreadSafe;
 
 /**
  * Encapsulation of work-flow execution context.
- *
+ * <p>
  * A work-flow context is mainly used to create a new work-flow, provide existed work-flow, or even reboot the work-flow.
  * Work-flow context also provides many convenient methods to manage the resources attached to the work-flow.
  * The work-flow context is the only bridge between the user's code and the work-flow instance.
- *
- * Each thread has it's own context attached to one work-flow with its
+ * <p>
+ * Each thread has its own context attached to one work-flow with its
  * child sub work-flows, so the methods in this class are thread safe.
  */
 @ThreadSafe
@@ -69,10 +62,10 @@ public final class WorkFlowContext {
     static {
         if (System.getProperty(Settings.STREAM_POOL_SIZE) == null) {
             EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
-                    Runtime.getRuntime().availableProcessors() * 2, 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
+                    Runtime.getRuntime().availableProcessors() * 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
         } else {
             EXECUTOR_SERVICE_FOR_ASYNC_TASKS = new ThreadPoolExecutor(Integer.parseInt(System.getProperty(Settings.STREAM_POOL_SIZE)),
-                    Integer.parseInt(System.getProperty(Settings.STREAM_POOL_SIZE)), 0l, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
+                    Integer.parseInt(System.getProperty(Settings.STREAM_POOL_SIZE)), 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(200));
         }
     }
 
@@ -97,7 +90,7 @@ public final class WorkFlowContext {
     /**
      * The reference to the async dependencies, the resource is a list, a list of async dependency tasks' references.
      */
-    public static final String WORK_FLOW_NODE_ASYNC_TASKS = "Stream::Workflow::Aysnc::Dependencies";
+    public static final String WORK_FLOW_NODE_ASYNC_TASKS = "Stream::Workflow::Async::Dependencies";
 
     /**
      * Check if there is working work-flow in the current thread context.
@@ -116,11 +109,11 @@ public final class WorkFlowContext {
      * Set up a new work-flow instance for the current thread. The new created work-flow instance's status will be {@link WorkFlowStatus#WAITING}.
      * Clients should manually start the work-flow by invoking the method {@link WorkFlow#start()}, normally the {@linkplain Engine} implementation will help
      * invoke this method when create a new work-flow instance.
-     *
+     * <p>
      * Users should not invoke this method in any cases.
      * @return The work-flow reference.
      */
-    protected static WorkFlow setUpWorkFlow() {
+    static WorkFlow setUpWorkFlow() {
         var newWorkFlow = new WorkFlow();
         newWorkFlow.setChildren(new LinkedList<>());
         var createTime = Calendar.getInstance().getTime();
@@ -134,7 +127,7 @@ public final class WorkFlowContext {
      * Provide the current working work-flow reference.
      * @return The work-flow instance adhered to the current thread.
      */
-    protected static WorkFlow provide() {
+    static WorkFlow provide() {
         return CURRENT.get();
     }
 
@@ -178,7 +171,7 @@ public final class WorkFlowContext {
     public static void close(final boolean mayInterruptIfRunning) {
         var current = CURRENT.get();
         List<String> asyncTasks = new ArrayList<>(10);
-        provide().getAsyncTaksReferences().values().forEach(list -> asyncTasks.addAll(list));
+        provide().getAsyncTaskReferences().values().forEach(asyncTasks::addAll);
         asyncTasks.forEach(reference -> {
             var task = current.resolveResource(reference);
             var future = task.resolveValue(FutureTask.class);
@@ -209,12 +202,12 @@ public final class WorkFlowContext {
         var primary = getPrimary();
         if (primary != null
                 && StringUtils.equals(resource.getResourceReference(), primary.getResourceReference())) {
-            throw new WorkFlowExecutionExeception("Attempt to change primary resource!"); 
+            throw new WorkFlowExecutionException("Attempt to change primary resource!");
         }
 
         if (primary != null && resource.getResourceURL() != null && primary.getResourceURL() != null
                 && StringUtils.equals(primary.getResourceURL().getPath(), resource.getResourceURL().getPath())) {
-            throw new WorkFlowExecutionExeception("Attempt to change primary resource!");
+            throw new WorkFlowExecutionException("Attempt to change primary resource!");
         }
 
         CURRENT.get().attachResource(resource);
@@ -264,16 +257,16 @@ public final class WorkFlowContext {
     /**
      * Appoint a primary source to the work-flow, once appointed, the primary resource should never be changed.
      * @param resource The primary resource being attached.
-     * @throws WorkFlowExecutionExeception Exception thrown during execution
+     * @throws WorkFlowExecutionException Exception thrown during execution
      */
-    public static void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionExeception {
+    public static void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionException {
         assertWorkFlowNotClose();
 
         if (CURRENT.get().getPrimary() == null) {
             CURRENT.get().setPrimaryResourceReference(resource.getResourceReference());
             attachResource(resource);
         } else {
-            throw new WorkFlowExecutionExeception("Attempt to change primary resource!");
+            throw new WorkFlowExecutionException("Attempt to change primary resource!");
         }
     }
 
@@ -295,6 +288,14 @@ public final class WorkFlowContext {
         assertWorkFlowNotClose();
 
         EXECUTOR_SERVICE_FOR_ASYNC_TASKS.submit(task);
+    }
+
+    /**
+     * Submit a job.
+     * @param job Job to be run.
+     */
+    public static void submit(final Runnable job) {
+        CompletableFuture.runAsync(job, EXECUTOR_SERVICE_FOR_ASYNC_TASKS);
     }
 
     /**
@@ -355,20 +356,17 @@ public final class WorkFlowContext {
 
     /**
      * Wait until all the async dependencies finish their work.
-     * If their is no dependency works for this node, return directly.
+     * If there is no dependency works for this node, return directly.
      * 
      * @param expireTime Expire time in milliseconds.
      * @param nodeName The node name.
-     * @throws TimeoutException 
-     * @throws ExecutionException 
-     * @throws InterruptedException 
      */
-    public static void waitUnitilAsyncWorksFinished(final long expireTime, final String nodeName) throws InterruptedException, ExecutionException, TimeoutException {
-        var list = provide().getAsyncTaksReferences().get(nodeName);
+    public static void waitUntilAsyncWorksFinished(final long expireTime, final String nodeName) throws InterruptedException, ExecutionException, TimeoutException {
+        var list = provide().getAsyncTaskReferences().get(nodeName);
 
         var begin = System.currentTimeMillis();
         var left = expireTime;
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             for (String reference : list) {
                 var resource = resolve(reference, FutureTask.class);
                 resource.get(left, TimeUnit.MILLISECONDS);
@@ -379,7 +377,7 @@ public final class WorkFlowContext {
 
     private static void assertWorkFlowNotClose() {
         if (CURRENT.get().getStatus() == WorkFlowStatus.CLOSED) {
-            throw new WorkFlowExecutionExeception(Settings.WORK_FLOW_CLOSE_ERROR_MESSAGE);
+            throw new WorkFlowExecutionException(Settings.WORK_FLOW_CLOSE_ERROR_MESSAGE);
         }
     }
 }

@@ -9,7 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.execution.test.MockRedisClient;
 import org.stream.extension.clients.RedisClient;
 import org.stream.extension.lock.providers.RedisClusterBasedLock;
@@ -163,7 +163,7 @@ public class TaskPersisterImplTest {
         Mockito.verify(taskStepStorage).insert(taskStep);
     }
 
-    @Test(expectedExceptions = WorkFlowExecutionExeception.class)
+    @Test(expectedExceptions = WorkFlowExecutionException.class)
     public void testInitiateOrUpdateTask3() {
         RedisClient redisClient = Mockito.mock(RedisClient.class);
         lock.setRedisClient(redisClient);

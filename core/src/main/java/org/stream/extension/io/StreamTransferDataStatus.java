@@ -36,7 +36,7 @@ public final class StreamTransferDataStatus {
     public static final String FAIL = "FAIL";
 
     /**
-     * Result unknown after the node is executed, sometimes extra effort need to be taken to check if everything is okay.
+     * Result unknown after the node is executed, sometimes extra effort needs to be taken to check if everything is okay.
      */
     public static final String UNKNOWN = "UNKNOWN";
 

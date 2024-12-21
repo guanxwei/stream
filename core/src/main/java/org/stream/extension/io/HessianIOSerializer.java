@@ -20,7 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
@@ -29,7 +29,7 @@ import com.caucho.hessian.io.SerializerFactory;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Hessian framework based serialize and de-serialize.
+ * Hessian-framework-based serializes and deserializes.
  * @author guanxiongwei
  */
 @Slf4j
@@ -40,7 +40,7 @@ public final class HessianIOSerializer {
     private HessianIOSerializer() { }
 
     /**
-     * Encode the object to sessian style bytes.
+     * Encode the object to session style bytes.
      * @param obj Target object.
      * @return Hessian framework encoded bytes.
      */
@@ -54,7 +54,7 @@ public final class HessianIOSerializer {
             out.flush();
             return byteArray.toByteArray();
         } catch (Exception e) {
-            throw new WorkFlowExecutionExeception(e);
+            throw new WorkFlowExecutionException(e);
         } finally {
             if (out != null) {
                 try {
@@ -79,7 +79,7 @@ public final class HessianIOSerializer {
             input = new Hessian2Input(new ByteArrayInputStream(dat));
             return type.cast(input.readObject());
         } catch (Exception e) {
-            throw new WorkFlowExecutionExeception(e);
+            throw new WorkFlowExecutionException(e);
         } finally {
             if (input != null) {
                 try {

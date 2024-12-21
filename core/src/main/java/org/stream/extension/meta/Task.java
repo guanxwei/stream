@@ -16,6 +16,7 @@
 
 package org.stream.extension.meta;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,8 +28,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Abstract of an real task for one execution plan. Ths is used to track one scheduled work flow execution.
- * Every time users submit tasks to the atuo schedule engine.
+ * Abstract of a real task for one execution plan.
+ * Ths is used to track one scheduled work flow execution.
+ * Every time users submit tasks to the auto schedule engine.
  * 
  * @author guanxiong wei
  *
@@ -39,6 +41,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Task implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 7308719845192437440L;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -55,19 +58,19 @@ public class Task implements Serializable {
     // Currently executed node.
     private String nodeName;
 
-    // Millisecond represented time of the work-flow was previous executed.
-    private long lastExcutionTime;
+    // Millisecond represented the time of the work-flow was previously executed.
+    private long lastExecutionTime;
 
-    // Jsonfied string represent of primary resource sent by the invoker at the initiate time.
+    // Jsonfied string represents of primary resource sent by the invoker at the initiate time.
     private String jsonfiedPrimaryResource;
 
     // Retry times at the current node.
     private int retryTimes;
 
-    // Application the task belongs to.
+    // The Application task belongs to.
     private String application;
 
-    // Next time when the task should be reran.
+    // Next time when the task should be rerun.
     private long nextExecutionTime;
 
     // In case underlying DAO framework needs.

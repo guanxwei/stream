@@ -21,7 +21,7 @@ import java.util.List;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stream.core.component.Node;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.extension.events.Event;
 import org.stream.extension.events.EventCenter;
 import org.stream.extension.events.EventsHelper;
@@ -54,7 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TaskPersisterImpl implements TaskPersister {
 
-    // Default use a mock client, do nothing.
+    // Default uses a mock client, do nothing.
     @Setter
     private TaskStorage messageQueueBasedTaskStorage = Mockito.mock(TaskStorage.class);
 
@@ -139,7 +139,7 @@ public class TaskPersisterImpl implements TaskPersister {
                 return taskStepStorage.insert(taskStep) && taskStorage.update(task);
             }
         } else {
-            throw new WorkFlowExecutionExeception("Lock has been grabed by other processors, give up execution");
+            throw new WorkFlowExecutionException("Lock has been grabbed by other processors, give up execution");
         }
     }
 
@@ -172,7 +172,7 @@ public class TaskPersisterImpl implements TaskPersister {
         taskStepStorage.insert(taskStep);
         double score = System.currentTimeMillis() + time;
         if (debug) {
-            // To make sure Unit test cases can be run quickly.
+            // To make sure, Unit test cases can be run quickly.
             score = 5;
         }
         delayQueue.enqueue(QueueHelper.getQueueNameFromTaskID(QueueHelper.RETRY_KEY, application, task.getTaskId()), task.getTaskId(), score);

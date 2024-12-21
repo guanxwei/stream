@@ -25,11 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ActivityRepository {
 
-    private Map<String, Activity> activities = new ConcurrentHashMap<>();
+    private final Map<String, Activity> activities = new ConcurrentHashMap<>();
 
     /**
-     * Register a activity into the repository.
-     * @param activity Activity need to be registered in the repository.
+     * Register an activity into the repository.
+     * @param activity Activity needs to be registered in the repository.
      */
     public void register(final Activity activity) {
         if (!activities.containsKey(activity.getActivityName())) {
@@ -65,7 +65,7 @@ public class ActivityRepository {
     }
 
     /**
-     * Query how many activities has been registered.
+     * Query how many activities have been registered.
      * @return activity numbers.
      */
     public int getActivityNum() {

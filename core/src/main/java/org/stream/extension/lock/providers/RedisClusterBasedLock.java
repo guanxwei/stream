@@ -38,8 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RedisClusterBasedLock implements Lock {
 
-    private Map<String, String> processingTasks = new HashMap<>();
-    private Map<String, Long> lockingTimes = new HashMap<>();
+    private final Map<String, String> processingTasks = new HashMap<>();
+    private final Map<String, Long> lockingTimes = new HashMap<>();
 
     @Resource
     @Setter
@@ -51,19 +51,19 @@ public class RedisClusterBasedLock implements Lock {
     @Override
     public boolean tryLock(final String key, final BiFunction<String, Long, Boolean> postAction) {
         long current = System.currentTimeMillis();
-        boolean ownered = Thread.currentThread().getName().equals(processingTasks.get(key));
+        boolean owner = Thread.currentThread().getName().equals(processingTasks.get(key));
 
         // The lock was grabbed by this thread in the previous step, just skip the procedure or refresh the lock time.
-        if (ownered && current - lockingTimes.get(key) < Settings.LOCK_EXPIRE_TIME) {
+        if (owner && current - lockingTimes.get(key) < Settings.LOCK_EXPIRE_TIME) {
             if (current - lockingTimes.get(key) > Settings.LOCK_EXPIRE_TIME / 2) {
-                // refresh locked time if we have hold the lock for a long time
+                // refresh locked time if we have held the lock for a long time
                 String expectedValue = genLockValue(lockingTimes.get(key));
                 boolean refreshed = redisClient.updateKeyExpireTimeIfMatch(genLock(key), expectedValue);
                 if (refreshed) {
                     lockingTimes.put(key, current);
                     log.info("Lock info refreshed");
                 } else {
-                    log.warn("Fail refreshing the lock expire time, the lock could be expired and transfered to ather workers");
+                    log.warn("Fail refreshing the lock expire time, the lock could be expired and transferred to other workers");
                     return false;
                 }
             }
@@ -72,13 +72,13 @@ public class RedisClusterBasedLock implements Lock {
         }
 
         // The locked was grabbed by another thread in the same JVM.
-        if (isProcessing(key) && !ownered) {
+        if (isProcessing(key) && !owner) {
             log.info("Another thread in the jvm is processing the task, skip");
             // Duplicate thread in the same host.
             long lockingTime = lockingTimes.get(key);
             if (current - lockingTime >= Settings.LOCK_EXPIRE_TIME) {
                 // The owner thread must be crashed or stuck, and the lock must be expired or refreshed by other workers.
-                // Try to grab the lock, if succeed, kick off the previous owner.
+                // Try to grab the lock, if succeeded, kick off the previous owner.
                 log.warn("The processing thread must be crashed or blocked by some actions, will try to grab the lock");
                 return requireLock(key, current, postAction);
             }
@@ -95,7 +95,7 @@ public class RedisClusterBasedLock implements Lock {
     public boolean release(final String key) {
         processingTasks.remove(key);
         Long lockTime = lockingTimes.remove(key);
-        // Lock for to long time, let other workers to release the lock.
+        // Lock for a long time, let other workers to release the lock.
         if (lockTime != null && System.currentTimeMillis() - lockTime > Settings.LOCK_EXPIRE_TIME) {
             return true;
         }

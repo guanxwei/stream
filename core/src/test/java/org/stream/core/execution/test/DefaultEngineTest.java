@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.stream.core.component.ActivityRepository;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.ExecutionRecord;
 import org.stream.core.execution.GraphContext;
@@ -193,7 +193,7 @@ public class DefaultEngineTest {
         assertEquals(value, 100000l);
     }
 
-    @Test(dependsOnMethods = "testCheck", expectedExceptions = WorkFlowExecutionExeception.class)
+    @Test(dependsOnMethods = "testCheck", expectedExceptions = WorkFlowExecutionException.class)
     public void testStartFrom() {
         Resource primary = Resource.builder()
                 .resourceReference("testExecuteWithAsyncNode")

@@ -19,7 +19,7 @@ package org.stream.core.execution;
 import java.io.Serializable;
 
 import org.stream.core.exception.DuplicateTaskException;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.helper.Jackson;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
@@ -44,40 +44,38 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Auto scheduled work-flow engine. This engine is mainly designed to support auto retry cases in distributed environments.
- * In distributed world, multiple services will be arranged to complete one task, sometimes auto retry is also needed
+ * In a distributed world, multiple services will be arranged to complete one task; sometimes auto retry is also needed
  * to process temporary unavailable cases. It's tricky for developers themselves to determine what to do based on the
- * predecessor, because there are so many things ahead to be done like invoking
- * next step after something is executed, retry the step if it failed in pre-set times.
- *
- * To help eliminate the effort solving such tricky problems, stream work-flow framework provides this lightly flow engine implementation.
- * With this engine, developers just need to implements their business logic in stand alone activities and managing the procedure through defining human friendly graphs.
- * Every thing else will be done silently by this engine including executing the missions in order and auto retry failed sub-missions, .etc.
- *
+ * predecessor. There are so many things ahead to be done like invoking
+ * the next step after something is executed, retry the step if it failed in pre-set times.
+ * <p>
+ * To help eliminate the effort of solving such tricky problems,
+ * a stream work-flow framework provides this light flow engine implementation.
+ * With this engine,
+ * developers just need to implement their business logic in stand-alone activities
+ * and manage the procedure through defining human friendly graphs.
+ * This engine will do everything else silently,
+ * including executing the missions in order and auto retry failed submissions, .etc.
+ * <p>
  * Please be aware that currently AutoScheduledEngine does not support sub-work-flow situations. If you want to run sub procedures within another
  * work-flow context, you'd probably use other tools.
  */
+@Setter
 @Slf4j
 public class AutoScheduledEngine implements Engine {
 
-    @Setter
     private int maxRetry = 10;
 
-    @Setter
     private ResourceCatalog resourceCatalog;
 
-    @Setter
     private TaskPersister taskPersister;
 
-    @Setter
     private String application;
 
-    @Setter
     private TaskExecutor taskExecutor;
 
-    @Setter
     private TaskIDGenerator taskIDGenerator = new UUIDTaskIDGenerator();
 
-    @Setter
     private EventCenter eventCenter;
 
     /**
@@ -85,7 +83,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank execute(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionException(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -118,7 +116,7 @@ public class AutoScheduledEngine implements Engine {
      */
     @Override
     public ResourceTank executeOnce(final GraphContext graphContext, final String graphName, final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionException(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -127,7 +125,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeFrom(final GraphContext graphContext, final String graphName, final String startNode,
             final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionException(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -161,7 +159,7 @@ public class AutoScheduledEngine implements Engine {
     @Override
     public ResourceTank executeOnceFrom(final GraphContext graphContext, final String graphName, final String startNode,
             final boolean autoRecord) {
-        throw new WorkFlowExecutionExeception(Settings.PRIMARY_MISSING_ERROR);
+        throw new WorkFlowExecutionException(Settings.PRIMARY_MISSING_ERROR);
     }
 
     /**
@@ -185,7 +183,7 @@ public class AutoScheduledEngine implements Engine {
             final String startNode) {
 
         if (!(resource instanceof Serializable)) {
-            throw new WorkFlowExecutionExeception("Primary resource should be serializable when you are using auto schedule engine");
+            throw new WorkFlowExecutionException("Primary resource should be serializable when you are using auto schedule engine");
         }
 
         var primaryResource = Resource.builder()
@@ -193,10 +191,6 @@ public class AutoScheduledEngine implements Engine {
                 .value(resource)
                 .build();
 
-        /**
-         * Give a chance to the application to generate the task id according to the input primary resource
-         * to implement idempotency mechanism and many other things.
-         */
         var taskId = taskIDGenerator.generateTaskID(primaryResource);
 
         log.info("Task id [{}] assigned to the request", taskId);
@@ -215,7 +209,7 @@ public class AutoScheduledEngine implements Engine {
                 .incase(DuplicateTaskException.class)
                 .thenFix(e -> {
                     log.error("Duplicated task");
-                    throw new WorkFlowExecutionExeception(e);
+                    throw new WorkFlowExecutionException(e);
                 });
 
         return taskId;
@@ -225,7 +219,7 @@ public class AutoScheduledEngine implements Engine {
             final StreamTransferData data, final GraphContext graphContext, final String startNode) throws Exception {
         var graph = graphContext.getGraph(graphName);
         if (graph == null) {
-            throw new WorkFlowExecutionExeception("Graph not existes! Please double check！");
+            throw new WorkFlowExecutionException("Graph not existes! Please double check！");
         }
 
         if (taskPersister.get(taskId) != null) {
@@ -235,7 +229,7 @@ public class AutoScheduledEngine implements Engine {
         var firstNode = startNode == null ? graph.getStartNode() : graph.getNode(startNode);
         if (firstNode == null) {
             log.error("Can not find the target node [{}] from the graph [{}]", startNode, graph.getGraphName());
-            throw new WorkFlowExecutionExeception(String.format("Start node [%s] node exists in graph [%s]",
+            throw new WorkFlowExecutionException(String.format("Start node [%s] node exists in graph [%s]",
                     startNode, graphName));
         }
         var task = Task.builder()
@@ -243,7 +237,7 @@ public class AutoScheduledEngine implements Engine {
                 .graphName(graphName)
                 .initiatedTime(System.currentTimeMillis())
                 .jsonfiedPrimaryResource(Jackson.json(primaryResource.getValue()))
-                .lastExcutionTime(System.currentTimeMillis())
+                .lastExecutionTime(System.currentTimeMillis())
                 .nextExecutionTime(System.currentTimeMillis() + 1000)
                 .nodeName(firstNode.getNodeName())
                 .retryTimes(0)

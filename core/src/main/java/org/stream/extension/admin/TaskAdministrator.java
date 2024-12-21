@@ -35,9 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Abstract of stream {@link Task} administrator, providing some useful methods to check the task's status, intercept the
  * execution life cycle of specific tasks, etc.
- *
- * Typically, users will construct their own back-end systems to manage their Stream tasks, for example list all the step details
- * a task was posted through, restart a failed task in the near future. If this class is needed,
+ * <p>
+ * Typically, users will construct their own back-end systems to manage their Stream tasks,
+ * for example, list all the step details
+ * a task was posted through, restart a failed task soon.
+ * If this class is needed,
  * please let the spring location scanner scan this package.
  * @author weiguanxiong.
  *
@@ -78,7 +80,7 @@ public final class TaskAdministrator {
     public boolean reRunTask(final String taskId) throws StreamException {
         Task task = taskStorage.query(taskId);
         if (task == null) {
-            log.info("Trying to re run unexisted task [{}]", taskId);
+            log.info("Trying to re run task [{}] that does not exist", taskId);
             throw new StreamException("Task not existed");
         }
 
@@ -89,7 +91,7 @@ public final class TaskAdministrator {
 
         task.setStatus(TaskStatus.PENDING.code());
         task.setRetryTimes(0);
-        task.setLastExcutionTime(System.currentTimeMillis());
+        task.setLastExecutionTime(System.currentTimeMillis());
         task.setNextExecutionTime(System.currentTimeMillis() + 100);
         taskStorage.update(task);
 

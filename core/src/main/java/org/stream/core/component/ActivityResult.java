@@ -44,7 +44,7 @@ public enum ActivityResult {
     },
 
     /**
-     * Result unknown after the node is executed, sometimes extra effort need to be taken to check if everything is okay.
+     * Result unknown after the node is executed, sometimes extra effort needs to be taken to check if everything is okay.
      */
     UNKNOWN {
         @Override
@@ -97,7 +97,8 @@ public enum ActivityResult {
     /**
      * Thread local storage to hold the latest activity result condition code.
      * Users can return {@link #CONDITION} via method {@link #condition(int)} and
-     * specify the code. Workflow engine will determine the next step by the condition code
+     * specify the code.
+     * The Workflow engine will determine the next step by the condition code
      * and graph definition file and clear the condition code immediately.
      */
     public static final ThreadLocal<Integer> CONDITION_CODE = new ThreadLocal<>();
@@ -105,7 +106,7 @@ public enum ActivityResult {
     /**
      * Thread local storage to hold the child procedure graph name specified by the
      * previous activity. Workflow engine will clear the graph name immediately after it
-     * retrieve the graph instance from the context.
+     * retrieves the graph instance from the context.
      */
     public static final ThreadLocal<String> INVOKE_GRAPH = new ThreadLocal<>();
 
@@ -139,13 +140,13 @@ public enum ActivityResult {
         T onCheck();
 
         /**
-         * Visit the invoke step.
+         * Visit the invoked step.
          * @return Processing result from the invoked child procedure.
          */
         T onInvoke();
 
         /**
-         * Visit the user specific on condition step.
+         * Visit the user specific on a condition step.
          * @return Processing result.
          */
         T onCondition();

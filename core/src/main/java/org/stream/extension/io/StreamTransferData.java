@@ -16,6 +16,7 @@
 
 package org.stream.extension.io;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,18 +29,19 @@ import lombok.Setter;
  * @author guanxiong wei
  *
  */
+@Setter
+@Getter
 public class StreamTransferData implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -3946269022445783584L;
 
-    @Getter @Setter
     private String activityResult;
 
-    @Getter @Setter
     private Map<String, Serializable> objects = new HashMap<>();
 
     /**
-     * Get object via key.
+     * Get an object via a key.
      * @param key Key.
      * @return Object if exists.
      */
@@ -57,7 +59,7 @@ public class StreamTransferData implements Serializable {
     }
 
     /**
-     * Add an object and return this reference so that developers can invoke this method in chain pattern.
+     * Add an object and return this reference so that developers can invoke this method in a chain pattern.
      * @param key Object's key.
      * @param object Object to be saved.
      * @return this reference.

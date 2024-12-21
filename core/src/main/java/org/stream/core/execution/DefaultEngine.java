@@ -24,7 +24,7 @@ import org.springframework.util.CollectionUtils;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.execution.WorkFlow.WorkFlowStatus;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
@@ -168,7 +168,7 @@ public class DefaultEngine implements Engine {
     private Graph deduceGraph(final String graphName, final GraphContext graphContext) {
         var graph = graphContext.getGraph(graphName);
         if (graph == null) {
-            throw new WorkFlowExecutionExeception("Graph is not present! Please double check the graph name you provide.");
+            throw new WorkFlowExecutionException("Graph is not present! Please double check the graph name you provide.");
         }
         return graph;
     }
@@ -225,7 +225,7 @@ public class DefaultEngine implements Engine {
 
     private void refresh(final WorkFlow workFlow, final Graph graph, final boolean autoRecord) {
         if (workFlow.getStatus().equals(WorkFlowStatus.CLOSED)) {
-            throw new WorkFlowExecutionExeception("The workflow has been closed!");
+            throw new WorkFlowExecutionException("The workflow has been closed!");
         }
 
         if (workFlow.getStatus().equals(WorkFlowStatus.WAITING)) {
@@ -247,7 +247,7 @@ public class DefaultEngine implements Engine {
         }
         workFlow.setPrimaryResourceReference(null);
         workFlow.getRecords().clear();
-        workFlow.getAsyncTaksReferences().clear();
+        workFlow.getAsyncTaskReferences().clear();
         workFlow.setResourceTank(new ResourceTank());
     }
 
@@ -284,14 +284,14 @@ public class DefaultEngine implements Engine {
             executionNode = graph.getNode(startNode);
             if (executionNode == null) {
                 log.error("Can not find the target node [{}] from the graph [{}]", startNode, graph.getGraphName());
-                throw new WorkFlowExecutionExeception(String.format("Start node [%s] node exists in graph [%s]",
+                throw new WorkFlowExecutionException(String.format("Start node [%s] node exists in graph [%s]",
                         startNode, graph.getGraphName()));
             }
         }
         while (executionNode != null && !WorkFlowContext.provide().isRebooting()) {
 
             if (isStuckInDeadLoop(executionNode, previous)) {
-                WorkFlowContext.markException(new WorkFlowExecutionExeception("Next execution node should not be the same with the previous one."));
+                WorkFlowContext.markException(new WorkFlowExecutionException("Next execution node should not be the same with the previous one."));
                 break;
             }
 

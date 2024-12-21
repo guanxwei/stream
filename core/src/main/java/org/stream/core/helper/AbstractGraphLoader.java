@@ -32,6 +32,9 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import com.alibaba.csp.sentinel.slots.block.Rule;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
@@ -96,16 +99,6 @@ public abstract class AbstractGraphLoader implements GraphLoader {
 
             throw throwable;
         }
-    }
-
-    /**
-     * Set the spring application context so that the spring framework can manage the life cycle of the graphs and their
-     * underling activities.
-     * 
-     * @param applicationContext Spring application context.
-     */
-    public void setSpringAppplicationContext(final ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
     }
 
     protected abstract InputStream loadInputStream(final String sourcePath) throws GraphLoadException;
@@ -232,10 +225,6 @@ public abstract class AbstractGraphLoader implements GraphLoader {
     }
 
     private TowerActivity processActorCase(final Class<?> clazz) {
-        /**
-         * Load the actor from the spring context, typically the actor is a proxy object that can be used
-         * to communicate with a remote server, for example a RPC client.
-         */
         Tower actor = (Tower) applicationContext.getBean(clazz);
         return new TowerActivity(actor);
     }
@@ -335,10 +324,10 @@ public abstract class AbstractGraphLoader implements GraphLoader {
     private void checkNodeConfiguration(final NodeConfiguration nodeConfiguration) throws GraphLoadException {
         String nodeName = nodeConfiguration.getNodeName();
         String providerClass = nodeConfiguration.getProviderClass();
-        if (nodeName == null || nodeName.length() == 0) {
+        if (nodeName == null || nodeName.isEmpty()) {
             throw new GraphLoadException("Node name is not specified!");
         }
-        if (providerClass == null || providerClass.length() == 0 || !providerClass.contains(".")) {
+        if (providerClass == null || !providerClass.contains(".")) {
             throw new GraphLoadException("Provider class name is not correct or not specified!");
         }
     }
@@ -349,9 +338,9 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         String suspendStep = nodeConfiguration.getSuspendNode();
         String checkStep = nodeConfiguration.getCheckNode();
         List<StepPair> list = new LinkedList<>();
-        String[] nexts = {successStep, failStep, suspendStep, checkStep};
+        String[] next = {successStep, failStep, suspendStep, checkStep};
         int count = 0;
-        for (String nextStep : nexts) {
+        for (String nextStep : next) {
             if (nextStep != null) {
                 StepPair pair = StepPair.builder()
                         .predecessor(predecessorNode)
@@ -369,9 +358,6 @@ public abstract class AbstractGraphLoader implements GraphLoader {
     private List<AsyncPair> setUpAsyncPairs(final NodeConfiguration nodeConfiguration, final String host) {
         List<AsyncPair> list = new LinkedList<>();
 
-        /**
-         * Extract the asynchronous dependency nodes of the current node.
-         */
         AsyncNodeConfiguration[] asyncDependencies = nodeConfiguration.getAsyncDependencies();
         if (ArrayUtils.isEmpty(asyncDependencies)) {
             return list;
@@ -419,5 +405,11 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         nodes.add(child.getNodeName());
         doCheck(child, nodes, graph);
         nodes.remove(child.getNodeName());
+    }
+
+    private void addSentinelHook(final NodeConfiguration nodeConfiguration) {
+        if (nodeConfiguration.getSentinelConfiguration() != null) {
+            // add rules here.
+        }
     }
 }

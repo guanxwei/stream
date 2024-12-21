@@ -25,7 +25,7 @@ import java.util.UUID;
 import java.util.concurrent.FutureTask;
 
 import org.stream.core.component.Graph;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.helper.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
@@ -68,7 +68,7 @@ public class WorkFlow {
     @Getter @Setter
     private String workFlowId;
 
-    private List<ExecutionRecord> records = new LinkedList<>();
+    private final List<ExecutionRecord> records = new LinkedList<>();
 
     @Setter @Getter
     private boolean isRebooting = false;
@@ -131,13 +131,13 @@ public class WorkFlow {
      * Every time clients invoke the {@linkplain Engine} to execute a graph,
      * the graph reference will be added to the work-flow.
      */
-    private Map<String, Graph> graphs;
+    private final Map<String, Graph> graphs;
 
     /**
      * The references to the async tasks submitted by this work-flow instance.
      */
     @Getter(value = AccessLevel.PROTECTED)
-    private Map<String, List<String>> asyncTaksReferences;
+    private Map<String, List<String>> asyncTaskReferences;
 
     /**
      * Default constructor.
@@ -146,7 +146,7 @@ public class WorkFlow {
         this.workFlowId = UUID.randomUUID().toString();
         this.status = WorkFlowStatus.WAITING;
         this.graphs = new HashMap<>();
-        this.asyncTaksReferences = new HashMap<>();
+        this.asyncTaskReferences = new HashMap<>();
         resourceTank = new ResourceTank();
     }
 
@@ -226,10 +226,10 @@ public class WorkFlow {
 
     /**
      * Attach a primary source to the work-flow, once appointed, the primary resource should never be changed.
-     * @param resource resource Resource to be attached.
-     * @throws WorkFlowExecutionExeception WorkFlowExecutionExeception
+     * @param resource resource to be attached.
+     * @throws WorkFlowExecutionException WorkFlowExecutionException
      */
-    protected void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionExeception {
+    protected void attachPrimaryResource(final Resource resource) throws WorkFlowExecutionException {
 
         if (resource == null) {
             return;
@@ -239,7 +239,7 @@ public class WorkFlow {
             primaryResourceReference = resource.getResourceReference();
             attachResource(resource);
         } else {
-            throw new WorkFlowExecutionExeception("Attempt to change primary resource!");
+            throw new WorkFlowExecutionException("Attempt to change primary resource!");
         }
 
     }
@@ -275,7 +275,7 @@ public class WorkFlow {
      * Only used when the system itself can not tune to normal state from the exception.
      * Basically, this method should be used only once for every single execution plan.
      * After the work-flow engine handle over the control to the invoker, the invoker can check if the {@link #e} is
-     * null, if not they can log the exception message to the log by there own strategy.
+     * null, if not they can log the exception message to the log by their own strategy.
      * @param e exception that cause the work-flow ran into crash.
      */
     protected void markException(final Exception e) {
@@ -287,9 +287,9 @@ public class WorkFlow {
      * @param taskReference Reference to the task.
      */
     protected void addAsyncTasks(final String nodeName, final String taskReference) {
-        var list = this.asyncTaksReferences.getOrDefault(nodeName, new LinkedList<>());
+        var list = this.asyncTaskReferences.getOrDefault(nodeName, new LinkedList<>());
         list.add(taskReference);
-        this.asyncTaksReferences.putIfAbsent(nodeName, list);
+        this.asyncTaskReferences.putIfAbsent(nodeName, list);
     }
 
     // CHECKSTYLE:OFF
@@ -297,7 +297,7 @@ public class WorkFlow {
 
         WAITING(1), WORKING(2), CLOSED(3);
 
-        private int status;
+        private final int status;
 
         private WorkFlowStatus(final int status) {
             this.status = status;

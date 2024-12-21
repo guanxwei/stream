@@ -29,9 +29,9 @@ import lombok.Getter;
  */
 public abstract class AsyncActivity extends Activity {
 
-    private ThreadLocal<ResourceTank> resources = new ThreadLocal<>();
+    private final ThreadLocal<ResourceTank> resources = new ThreadLocal<>();
 
-    private ThreadLocal<String> primaryResourceReference = new ThreadLocal<>();
+    private final ThreadLocal<String> primaryResourceReference = new ThreadLocal<>();
 
     @Getter
     private ThreadLocal<Node> node = new ThreadLocal<>();
@@ -41,9 +41,9 @@ public abstract class AsyncActivity extends Activity {
 
     /**
      * Link-up the execution work-flow instance's resource tank with this activity instance.
-     * Since AsyncActivitys will be executed in separated threads,
+     * Since AsyncActivity's will be executed in separated threads,
      * we will be no longer able to achieve the work flow resources by using the methods in {@link WorkFlowContext}.
-     * To make these AsyncActivitys be able to retrieve resources from the work-flow or attach back
+     * To make these AsyncActivity's be able to retrieve resources from the work-flow or attach back
      * resources to the work-flow instance, work-flow engine will help invoke this method to link-up
      * the work flow resource tank with the asynchronous-activity.
      * Basically, this method may potentially delay the GC to collect unneeded objects.
@@ -58,7 +58,7 @@ public abstract class AsyncActivity extends Activity {
 
     /**
      * Attach back resource to the work-flow instance.
-     * @param resource The resource that need to be attached to the work-flow instance.
+     * @param resource The resource that needs to be attached to the work-flow instance.
      */
     public void addResource(final Resource resource) {
         resources.get().addResource(resource);
@@ -87,7 +87,7 @@ public abstract class AsyncActivity extends Activity {
     /**
      * Clean the thread local variables so that the host thread can be reused by other work-flow instances.
      * And make sure that the unneeded {@linkplain ResourceTank} instance initiated in the main thread is collected.
-     * 
+     * <p>
      * From now on, this method will be automatically invoked after execution, implementations of the {@link AsyncActivity}
      * only need to override the {@link Activity#act()} to do their business actions, all the other things will be done by the
      * execution engine.

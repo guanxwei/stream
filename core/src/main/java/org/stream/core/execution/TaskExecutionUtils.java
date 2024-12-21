@@ -61,6 +61,9 @@ public final class TaskExecutionUtils {
         if (node.getAsyncDependencies() != null) {
             TaskHelper.setUpAsyncTasks(WorkFlowContext.provide(), node);
         }
+        if (node.getDaemons() != null) {
+            TaskHelper.runDaemons(WorkFlowContext.provide(), node);
+        }
     }
 
     /**

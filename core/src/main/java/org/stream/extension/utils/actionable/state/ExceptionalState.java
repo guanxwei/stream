@@ -38,7 +38,7 @@ public interface ExceptionalState {
      * @return Enhanced state.
      */
     @SuppressWarnings("unchecked")
-    public default ExceptionalState incase(final Class<? extends Exception>... targets) {
+    default ExceptionalState incase(final Class<? extends Exception>... targets) {
         TARGETS.set(new HashSet<>());
         TARGETS.get().addAll(Arrays.asList(targets));
         return this;
@@ -52,7 +52,7 @@ public interface ExceptionalState {
     ExceptionalState thenFix(final ExceptionOperation operation);
 
     /**
-     * Do something before we leave the tellme especially if there is new exception thrown from the fixes.
+     * Do something before we leave the tellme especially if there is a new exception thrown from the fixes.
      * 
      * @param operation Operation to be executed before we leave the tellme statement.
      */

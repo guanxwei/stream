@@ -34,7 +34,7 @@ public class TaskReader extends AbstractResourceReader<Task> {
     @Setter
     private TaskStorage taskStorage;
 
-    private ResourceAuthority taskResourceAuthority = new ResourceAuthority("TaskReader", Task.class);
+    private final ResourceAuthority taskResourceAuthority = new ResourceAuthority("TaskReader", Task.class);
 
     /**
      * {@inheritDoc}

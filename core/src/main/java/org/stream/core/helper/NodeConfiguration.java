@@ -41,7 +41,7 @@ public class NodeConfiguration {
     private String nodeName;
 
     /**
-     * Activity class, basically it should be a sub-class of {@link Activity}.
+     * Activity class, basically it should be a subclass of {@link Activity}.
      *
      */
     private String activityClass;
@@ -53,7 +53,7 @@ public class NodeConfiguration {
 
     /**
      * The successor node when this node returns {@link ActivityResult#FAIL}.
-     * If the failNode is not specified, the default error node will be invode if it is
+     * If the failed bode is not specified, the default error node will be invoked if it is
      * defined in the graph.
      */
     private String failNode;
@@ -69,10 +69,15 @@ public class NodeConfiguration {
     private String checkNode;
 
     /**
-     * The references to the tasks should be ran asynchronously.
-     * No matter these tasks succeed or fail, the main node should be effected.
+     * The references to the tasks should be run asynchronously.
+     * These async tasks will be canceled if they are not finished before the workflow shutdown.
      */
     private AsyncNodeConfiguration[] asyncDependencies;
+
+    /**
+     * The references to the tasks should be run asynchronously and will not be canceled when the workflow returns.
+     */
+    private DaemonNodeConfiguration[] daemons;
 
     /**
      * Time interval list used to introduce the {@link AutoScheduledEngine} when to
@@ -81,7 +86,7 @@ public class NodeConfiguration {
     private List<Integer> intervals;
 
     /**
-     * Actor provider, basically should be a sub-class of {@link Tower}.
+     * Actor provider, basically should be a subclass of {@link Tower}.
      */
     private String actorClass;
 
@@ -101,16 +106,40 @@ public class NodeConfiguration {
     private List<SubFlow> subflows;
 
     /**
-     * Encapsulation of asynchronous Node configuration, which is used to initiate a asynchronous node.
+     * The flag indicated it the node is degradable,
+     * once the engine found that this node is not available and the flag is set as true,
+     * the engine may skip execute this node until it's available again.
+     */
+    private boolean degradable;
+
+    /**
+     * Sentinel configuration.
+     */
+    private SentinelConfiguration sentinelConfiguration;
+
+    /**
+     * Encapsulation of asynchronous Node configuration, which is used to initiate an asynchronous node.
+     * These async activities will be shutdown once the workflow is finished.
+     * If you want to keep the async works
+     * alive after the workflow finished, use the long daemon node configuration.
      * @author guanxiong wei
      *
      */
+    @Setter
+    @Getter
     public static class AsyncNodeConfiguration {
-        @Setter @Getter
         private String asyncNode;
 
-        @Setter @Getter
         private long timeout;
+    }
+
+    /**
+     * Encapsulation of asynchronous Node configuration, not like the async nodes, the activities will not be canceled until they are completed.
+     */
+    @Setter
+    @Getter
+    public static class DaemonNodeConfiguration {
+        private String daemonNode;
     }
 
     /**

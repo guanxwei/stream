@@ -25,6 +25,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.Tracer;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.mongodb.Block;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.AsyncActivity;
 import org.stream.core.component.Graph;
@@ -94,15 +99,37 @@ public final class TaskHelper {
         try {
             // Invoke interceptors before we execute the actions
             Interceptors.before(node);
-            ActivityResult result = node.perform();
+            ActivityResult result = null;
+            if (node.isDegradable()) {
+                // Run the node in sentinel mode.
+                result = runInSentinelMode(node);
+            } else {
+                // Run the node directly.
+                result = node.perform();
+            }
             Interceptors.after(node, result);
             return result;
         } catch (Exception e) {
-            log.warn("Fail to execute graph [{}] at node [{}] due to exeception",
+            log.warn("Fail to execute graph [{}] at node [{}] due to exception",
                     node.getGraph().getGraphName(), node.getNodeName(), e);
             WorkFlowContext.markException(e);
             Interceptors.onError(node, e);
             return defaultResult;
+        }
+    }
+
+    private static ActivityResult runInSentinelMode(final Node node) {
+        Entry entry = null;
+        try {
+            entry = SphU.entry(node.getGraph().getGraphName() + "::" + node.getNodeName());
+            return node.perform();
+        } catch (Exception e) {
+            if (e instanceof BlockException) {
+                log.error("Node [{}] is degraded", node.getNodeName());
+            } else {
+                Tracer.traceEntry(e, entry);
+            }
+            return ActivityResult.FAIL;
         }
     }
 
@@ -115,7 +142,7 @@ public final class TaskHelper {
     public static void updateTask(final Task task, final Node node, final int status) {
         task.setNodeName(node.getNodeName());
         task.setStatus(status);
-        task.setLastExcutionTime(System.currentTimeMillis());
+        task.setLastExecutionTime(System.currentTimeMillis());
     }
 
     /**
@@ -124,7 +151,7 @@ public final class TaskHelper {
      * @param task Task to be suspended.
      * @param node Current working on node.
      * @param taskPersister Task persister.
-     * @param pattern Retry suspended cases pattern.
+     * @param pattern Retry suspended case pattern.
      *
      * @return Retry interval.
      */
@@ -135,7 +162,7 @@ public final class TaskHelper {
                 StreamTransferData.class);
         TaskHelper.updateTask(task, node, TaskStatus.PENDING.code());
         int interval = getInterval(node, pattern, 0);
-        task.setNextExecutionTime(task.getLastExcutionTime() + interval);
+        task.setNextExecutionTime(task.getLastExecutionTime() + interval);
         TaskStep taskStep = TaskExecutionUtils.constructStep(node.getGraph(), node, StreamTransferDataStatus.SUSPEND, data, task);
         taskPersister.suspend(task, interval, taskStep, node);
 
@@ -143,7 +170,7 @@ public final class TaskHelper {
     }
 
     /**
-     * Get next retry time window to be elapsed.
+     * Get the next retry time window to be elapsed.
      * @param node Current node.
      * @param pattern Retry pattern.
      * @param retryTimes Retry times.
@@ -158,7 +185,7 @@ public final class TaskHelper {
     }
 
     /**
-     * Mark the task as success.
+     * Mark the task as a success.
      * @param task target task.
      * @param taskPersister task persister used to update the task status.
      * @param finalActivityResult Activity execution result of the last node.
@@ -239,9 +266,9 @@ public final class TaskHelper {
     }
 
     /**
-     * Set up asynchronous tasks and submit them to executor, all the work-flow instances share one asynchronous task executor, so it is expectable to
-     * take some time to complete the task, some times when the traffic is busy it may take more time to complete the task than normal.
-     * @param workFlow The asynchronous task belong to.
+     * Set up asynchronous tasks and submit them to executor, all the work-flow instances share one asynchronous task executor, so it is expected to
+     * take some time to complete the task, sometimes when the traffic is busy, it may take more time to complete the task than normal.
+     * @param workFlow The asynchronous task belongs to.
      * @param node The node that need submit asynchronous tasks.
      */
     public static void setUpAsyncTasks(final WorkFlow workFlow, final Node node) {
@@ -274,10 +301,30 @@ public final class TaskHelper {
     }
 
     /**
+     * Run daemon works.
+     * @param workFlow Current running workflow instance.
+     * @param node Node to be executed this round.
+     */
+    public static void runDaemons(final WorkFlow workFlow, final Node node) {
+        node.getDaemons().forEach(async -> {
+            Runnable job = () -> {
+                AsyncActivity asyncActivity = (AsyncActivity) async.getActivity();
+                String primaryResourceReference = workFlow.getPrimary() == null ? null : workFlow.getPrimary().getResourceReference();
+                asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
+                asyncActivity.getNode().set(async);
+                asyncActivity.getHost().set(node);
+                ActivityResult activityResult = ActivityResult.FAIL;
+                asyncActivity.act();
+            };
+            WorkFlowContext.submit(job);
+        });
+    }
+
+    /**
      * Deduce re-try entrance node from the task entity.
-     * @param task Task that needs to be re-ran.
+     * @param task Task that needs to be re-run.
      * @param graphContext Graph context that contains all the work-flow configuration.
-     * @return Enrance node.
+     * @return Entrance node.
      */
     public static Node deduceNode(final Task task, final GraphContext graphContext) {
         String graphName = task.getGraphName();
@@ -321,7 +368,7 @@ public final class TaskHelper {
                 try {
                     retryRunner.run();
                 } catch (Exception e) {
-                    log.info("Error happend", e);
+                    log.info("Error happened", e);
                 }
 
             }, interval, TimeUnit.MILLISECONDS);
@@ -330,12 +377,12 @@ public final class TaskHelper {
 
     /**
      * Deduce the next node to be executed based on the activity result and current node's configuration.
-     * If dead loop is detected, return null so that the engine can terminate the worklflow normally.
+     * If a dead loop is detected, return null so that the engine can terminate the workflow normally.
      * @param previous The node previous step was executed.
      * @param executionStateSwitcher Execution state switcher used to check if it is stuck at dead loop.
-     *      if so change the next node to null.
+     *      if so, change the next node to null.
      * @param activityResult The activity result returned by the previous node.
-     * @param function Function that should be applied before turning back to the caller when previous node returned invoke result.
+     * @param function Function that should be applied before turning back to the caller when the previous node returned an invoke result.
      * @param context Graph context.
      * @param engine Workflow engine.
      * @return Next node to be executed.

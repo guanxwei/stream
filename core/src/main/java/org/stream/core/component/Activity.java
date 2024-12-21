@@ -45,16 +45,13 @@ public abstract class Activity {
     }
 
     /**
-     * Internal method which can be invoked within the acitities.
-     * For the cases that activity requires the async workers finish their work first, then it will
+     * Internal method which can be invoked within the activities.
+     * For the cases that activity requires the async workers to finish their work first, then it will
      * take further actions based on the result of the async workers, the activity can invoke this method first
      * and do their logic code.
      * 
-     * @throws TimeoutException Timeout exception when all the dependency work not finished before the expire time.
-     * @throws ExecutionException 
-     * @throws InterruptedException 
      */
-    private void waitUntilAsyncWorksFinished(final String node, final long expireTime) throws InterruptedException, ExecutionException, TimeoutException {
-        WorkFlowContext.waitUnitilAsyncWorksFinished(expireTime, node);
+    protected void waitUntilAsyncWorksFinished(final String node, final long expireTime) throws InterruptedException, ExecutionException, TimeoutException {
+        WorkFlowContext.waitUntilAsyncWorksFinished(expireTime, node);
     }
 }

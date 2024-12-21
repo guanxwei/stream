@@ -3,7 +3,7 @@ package org.stream.extension.utils;
 import static org.testng.Assert.*;
 
 import org.stream.core.exception.GraphLoadException;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.extension.utils.actionable.Tellme;
 import org.stream.extension.utils.actionable.Value;
 import org.stream.extension.utils.actionable.exception.FixException;
@@ -21,7 +21,7 @@ public class TestTellme {
             throw new RuntimeException();
         }).incase(RuntimeException.class).thenFix(e -> {
             value.change(3);
-        }).incase(WorkFlowExecutionExeception.class).thenFix(e -> {
+        }).incase(WorkFlowExecutionException.class).thenFix(e -> {
             value.change(4);
         });
         assertEquals(value.get(Integer.class), 3);
@@ -38,7 +38,7 @@ public class TestTellme {
             }).incase(RuntimeException.class).thenFix(e -> {
                 value.change(3);
                 throw new RuntimeException("haha");
-            }).incase(WorkFlowExecutionExeception.class).thenFix(e -> {
+            }).incase(WorkFlowExecutionException.class).thenFix(e -> {
                 value.change(4);
             }).incase(GraphLoadException.class).thenFix(e -> {
                 value.change(5);

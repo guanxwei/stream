@@ -21,7 +21,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.execution.WorkFlowContext;
 import org.stream.extension.io.StreamTransferData;
 import org.stream.extension.io.Tower;
@@ -34,14 +34,15 @@ import lombok.extern.slf4j.Slf4j;
  * Special activity containing a {@link Tower} instance to communicate with external service.
  *
  * Users should not use this class themselves, the framework will help construct a instance of this
- * type when the activityClass is implementation of {@link Tower} in graph definition.
+ * type when the activityClass is an implementation of {@link Tower} in graph definition.
  * @author guanxiong wei
  *
  */
+@Setter
+@Getter
 @Slf4j
 public class TowerActivity extends Activity {
 
-    @Setter @Getter
     private Tower tower;
 
     public TowerActivity(final Tower tower) {
@@ -57,7 +58,7 @@ public class TowerActivity extends Activity {
      */
     public ActivityResult act() {
         if (tower == null) {
-            throw new WorkFlowExecutionExeception("Actor must be specified");
+            throw new WorkFlowExecutionException("Actor must be specified");
         }
 
         var resource = WorkFlowContext.resolveResource(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE);

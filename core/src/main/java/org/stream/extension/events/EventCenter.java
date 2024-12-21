@@ -51,14 +51,14 @@ public interface EventCenter {
     void removeListener(final Listener listener);
 
     /**
-     * Register a listener that is interested in multi kinds of events.
+     * Register a listener interested in multi kinds of events.
      * @param events Event class list the listener is interested in.
      * @param listener Listener to be registered.
      */
-    void registerMutilChannelListerner(final List<Class<? extends Event>> events, final Listener listener);
+    void registerMultiChannelListener(final List<Class<? extends Event>> events, final Listener listener);
 
     /**
-     * Get listener list by event type.
+     * Get a listener list by event type.
      * @param type Event type.
      * @return Listener list.
      */

@@ -39,8 +39,7 @@ public final class Value {
      * @return Value instance.
      */
     public static Value of(final Object value) {
-        Value result = new Value(value);
-        return result;
+        return new Value(value);
     }
 
     /**

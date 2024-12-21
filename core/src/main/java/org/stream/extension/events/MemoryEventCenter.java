@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Default implementation of {@link EventCenter}.
- *
+ * <p>
  * All the events will be stored in Memory first, then assign back-end worker to push all the events to Kafka Queue.
  * @author guanxiong wei
  *
@@ -43,21 +43,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MemoryEventCenter implements EventCenter {
 
-    private BlockingQueue<Event> pendingEvents = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Event> pendingEvents = new LinkedBlockingQueue<>();
 
     @Setter
     private MessageClient kafkaClient;
 
-    private Map<Class<? extends Event>, List<Listener>> listeners = new ConcurrentHashMap<>();
+    private final Map<Class<? extends Event>, List<Listener>> listeners = new ConcurrentHashMap<>();
 
-    private Object monitor = new Object();
+    private final Object monitor = new Object();
 
     private ExecutorService service;
 
     @Setter
     private String topic;
 
-    private volatile boolean shutingDown = false;
+    private volatile boolean shuttingDown = false;
 
     @Setter
     private volatile boolean sendOnly = false;
@@ -67,8 +67,8 @@ public class MemoryEventCenter implements EventCenter {
      */
     @Override
     public void fireEvent(final Event event) {
-        if (shutingDown) {
-            throw new RuntimeException("JVM has been shuted down");
+        if (shuttingDown) {
+            throw new RuntimeException("JVM has been shut down");
         }
         if ("Anony".equals(event.type())) {
             log.warn("Unsupported event type");
@@ -102,7 +102,7 @@ public class MemoryEventCenter implements EventCenter {
      * {@inheritDoc}
      */
     @Override
-    public void registerMutilChannelListerner(final List<Class<? extends Event>> events, final Listener listener) {
+    public void registerMultiChannelListener(final List<Class<? extends Event>> events, final Listener listener) {
         for (Class<? extends Event> clazz : events) {
             if (Event.class.isAssignableFrom(clazz)) {
                 registerListener(clazz, listener);
@@ -127,12 +127,12 @@ public class MemoryEventCenter implements EventCenter {
      */
     @Override
     public void fireSyncEvent(final Event event) {
-        if (shutingDown) {
+        if (shuttingDown) {
             throw new RuntimeException("JVM has been shuted down");
         }
         try {
             String eventEntity = Jackson.json(event);
-            log.trace("Receive request to deliver event synchronouly, will push it to the Kafka queue service immediately",
+            log.trace("Receive request [{}] to deliver event [{}] synchronously, will push it to the Kafka queue service immediately",
                     eventEntity, event.getClass().getSimpleName());
             kafkaClient.sendMessage(topic, event.getClass().getSimpleName(),
                     HessianIOSerializer.encode(event));
@@ -226,7 +226,7 @@ public class MemoryEventCenter implements EventCenter {
 
     private void registerStopHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            shutingDown = true;
+            shuttingDown = true;
             while (!pendingEvents.isEmpty()) {
                 retrieveAndProcess(true);
             }

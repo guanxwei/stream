@@ -37,7 +37,7 @@ import org.stream.extension.utils.actionable.Tellme;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Thread pool based implement of {@link TaskExecutor}.
+ * Thread-pool-based implement of {@link TaskExecutor}.
  * @author weiguanxiong.
  *
  */
@@ -61,13 +61,13 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
             });
     }
 
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
 
-    private TaskPersister taskPersister;
+    private final TaskPersister taskPersister;
 
-    private RetryPattern retryPattern;
+    private final RetryPattern retryPattern;
 
-    private GraphContext graphContext;
+    private final GraphContext graphContext;
 
     public ThreadPoolTaskExecutor(final TaskPersister taskPersister,
             final RetryPattern retryPattern, final GraphContext graphContext) {

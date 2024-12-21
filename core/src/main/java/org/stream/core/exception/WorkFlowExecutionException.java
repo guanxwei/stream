@@ -13,28 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.stream.core.exception;
 
+import java.io.Serial;
+
 /**
- * Resource reading exception.
+ * Work-flow execution exception, may be thrown during work-flow execution process.
  * @author guanxiong wei
  *
  */
-public class ResourceReadingExecption extends Exception {
+public class WorkFlowExecutionException extends RuntimeException {
 
-    private static final long serialVersionUID = -2560301499253809003L;
+    @Serial
+    private static final long serialVersionUID = -9138588163767012469L;
 
     // CHECKSTYLE:OFF
-    public ResourceReadingExecption(final String message) {
+    public WorkFlowExecutionException(final String message) {
         super(message);
     }
 
-    public ResourceReadingExecption(final String message, final Throwable t) {
+    public WorkFlowExecutionException(final String message, final Throwable t) {
         super(message, t);
     }
 
-    public ResourceReadingExecption(final Throwable t) {
+    public WorkFlowExecutionException(final Throwable t) {
         super(t);
     }
     // CHECKSTYLE:ON

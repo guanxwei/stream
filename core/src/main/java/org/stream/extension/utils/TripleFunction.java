@@ -17,7 +17,7 @@
 package org.stream.extension.utils;
 
 /**
- * Function having three input argument.
+ * Function having three input arguments.
  * @author guanxiongwei
  *
  * @param <T> The first function argument type.

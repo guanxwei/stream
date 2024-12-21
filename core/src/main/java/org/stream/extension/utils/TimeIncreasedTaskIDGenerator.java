@@ -26,7 +26,8 @@ import org.stream.core.resource.Resource;
 
 /**
  * Snowflake version task id generator.
- * Constructed by time in milliseconds + counts + random key. length will be kept at 26.
+ * Constructed by time in milliseconds + counts + random key.
+ * The length will be kept at 26.
  * 
  * @author weiguanxiong
  * @since 2024/09/01
@@ -43,11 +44,9 @@ public class TimeIncreasedTaskIDGenerator implements TaskIDGenerator {
     @Override
     public String generateTaskID(final Resource primary) {
         long now = System.currentTimeMillis();
-        StringBuilder sb = new StringBuilder(26);
         DateFormat format = new SimpleDateFormat("yyyyMMddhhmmssSSS");
-        return sb.append(format.format(new Date(now)))
-                    .append(RANDOM)
-                    .append(COUNTER.addAndGet(1) % 1000)
-                    .toString();
+        return format.format(new Date(now)) +
+                RANDOM +
+                COUNTER.addAndGet(1) % 1000;
     }
 }

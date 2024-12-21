@@ -14,26 +14,31 @@
  * limitations under the License.
  */
 
-package org.stream.extension.meta;
+package org.stream.core.helper;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 
 /**
- * Abstract of a real task for one execution plan.
- * @author guanxiong wei
- *
+ * Sentinel configuration at node level.
  */
 @Data
-@AllArgsConstructor
-@Builder
-public class TaskLock {
+public class SentinelConfiguration {
 
-    private long id;
+    // Throttle type, by exceptional rate or rt.
+    private String type;
 
-    private String taskId;
+    // Ratio threshold
+    private float ratioThreshold;
 
-    private int version;
+    // Time window.
+    private long timeWindow;
 
+    // Minimal requests;
+    private int minimalRequests;
+
+    // Degraded duration.
+    private int duration;
+
+    // Value threshold.
+    private int valueThreshold;
 }

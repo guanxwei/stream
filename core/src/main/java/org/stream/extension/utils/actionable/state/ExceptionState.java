@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExceptionState implements ExceptionalState {
 
-    private Exception cause;
+    private final Exception cause;
 
     /**
      * Constructor.
@@ -47,11 +47,11 @@ public class ExceptionState implements ExceptionalState {
     @Override
     public ExceptionalState thenFix(ExceptionOperation operation) {
         if (Tellme.CACHED_EXCEPTION.get() != null) {
-            // Another worker has done it's job, we should pass the work to the regardless method.
+            // Another worker has done its job, we should pass the work to the regardless method.
             return this;
         }
-        if (Tellme.HAVING_FINALLY.get() == true) {
-            // we should run in safe mode, cache the exception here so that regardless method has chance to do it's work.
+        if (Tellme.HAVING_FINALLY.get()) {
+            // we should run in safe mode, cache the exception here so that regardless method has a chance to do it's work.
             try {
                 return fix(operation);
             } catch(Throwable t) {
@@ -93,12 +93,12 @@ public class ExceptionState implements ExceptionalState {
         // The cause is in the interested list, then do something.
         if (contains(cause)) {
             operation.fix(this.cause);
-            // Clear the context, so that later fixes have chance to fix the exception
+            // Clear the context, so that later fixes have a chance to fix the exception
             TARGETS.remove();
             return new ExceptionState(cause);
         }
 
-        // If we can not fix the exception, just let it go.
+        // If we cannot fix the exception, just let it go.
         return this;
     }
 }

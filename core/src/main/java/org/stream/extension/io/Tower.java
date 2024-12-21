@@ -24,7 +24,7 @@ import org.stream.extension.persist.TaskStorage;
 /**
  * Abstract of "towers" which are used to communicate with the remote services by {@link AutoScheduledEngine}.
  * Every tower will be wrapped in a {@link TowerActivity} instance by the work-flow engine when loading the graph.
- *
+ * <p>
  * Users should only use tower when below scenarios fulfill:
  * (1) Plenty of distributed services will be arranged cooperating doing one thing in the single procedure
  *     Normally one RPC framework or something like that will be used, clients use the predefine
@@ -40,7 +40,7 @@ import org.stream.extension.persist.TaskStorage;
 public interface Tower {
 
     /**
-     * Call the remote service to complete the sub-task. The Stream framework will use the response to decide what to do in the next step, and help
+     * Call the remote service to complete the subtask. The Stream framework will use the response to decide what to do in the next step, and help
      * merge the return value in to the work-flow branch.
      * @param request Request to be sent to the remote service.
      * @return Stream framework defined transfer data.

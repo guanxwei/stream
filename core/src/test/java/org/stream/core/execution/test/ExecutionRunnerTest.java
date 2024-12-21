@@ -47,14 +47,12 @@ public class ExecutionRunnerTest {
     @Mock
     private RetryPattern pattern;
 
-    private LocalGraphLoader graphLoader;
     private GraphContext graphContext;
-    private List<String> paths;
 
     @org.testng.annotations.BeforeMethod
     public void BeforeMethod() throws Exception {
         MockitoAnnotations.initMocks(this);
-        this.paths = new LinkedList<String>();
+        List<String> paths = new LinkedList<>();
         paths.add("AutoScheduleNormal.graph");
         paths.add("AutoScheduleFull.graph");
         paths.add("AutoScheduleSuspend.graph");
@@ -62,11 +60,11 @@ public class ExecutionRunnerTest {
         paths.add("AutoScheduleSuspend3.graph");
 
         this.graphContext = new GraphContext();
-        this.graphLoader = new LocalGraphLoader();
+        LocalGraphLoader graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);
-        this.graphLoader.init();
+        graphLoader.init();
     }
 
     @Test
@@ -88,7 +86,7 @@ public class ExecutionRunnerTest {
                 .graphName("autoSchedule1")
                 .id(0)
                 .jsonfiedPrimaryResource(primaryResource.toString())
-                .lastExcutionTime(System.currentTimeMillis())
+                .lastExecutionTime(System.currentTimeMillis())
                 .retryTimes(0)
                 .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
@@ -105,7 +103,7 @@ public class ExecutionRunnerTest {
         Mockito.verify(taskPersister).initiateOrUpdateTask(captor2.capture(), captor3.capture(),
                 captor4.capture());
 
-        Assert.assertEquals(captor3.getValue().booleanValue(), false);
+        assertFalse(captor3.getValue());
 
         Task content = captor2.getValue();
         Assert.assertEquals(content.getNodeName(), "node4");
@@ -139,7 +137,7 @@ public class ExecutionRunnerTest {
                 .graphName("autoSchedule2")
                 .id(0)
                 .jsonfiedPrimaryResource(primaryResource.toString())
-                .lastExcutionTime(System.currentTimeMillis())
+                .lastExecutionTime(System.currentTimeMillis())
                 .retryTimes(0)
                 .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())
@@ -186,7 +184,7 @@ public class ExecutionRunnerTest {
                 .graphName("autoSchedule3")
                 .id(0)
                 .jsonfiedPrimaryResource(primaryResource.toString())
-                .lastExcutionTime(System.currentTimeMillis())
+                .lastExecutionTime(System.currentTimeMillis())
                 .retryTimes(0)
                 .status(TaskStatus.INITIATED.code())
                 .taskId(UUID.randomUUID().toString())

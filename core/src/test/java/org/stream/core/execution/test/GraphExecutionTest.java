@@ -7,7 +7,7 @@ import java.util.concurrent.FutureTask;
 
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.component.ActivityResult;
-import org.stream.core.exception.WorkFlowExecutionExeception;
+import org.stream.core.exception.WorkFlowExecutionException;
 import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.ExecutionRecord;
@@ -43,7 +43,7 @@ public class GraphExecutionTest {
         this.engine = new DefaultEngine();
     }
 
-    @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "Graph is not present! Please double check the graph name you provide.")
+    @Test(expectedExceptions = {WorkFlowExecutionException.class}, expectedExceptionsMessageRegExp = "Graph is not present! Please double check the graph name you provide.")
     public void testWrongGraphName() throws Exception {
         String path = "ComprehensiveCase.graph";
         paths.add(path);
@@ -130,7 +130,7 @@ public class GraphExecutionTest {
         Assert.assertEquals(resource.getValue(), "asyncvalue");
     }
 
-    @Test(expectedExceptions = {WorkFlowExecutionExeception.class},
+    @Test(expectedExceptions = {WorkFlowExecutionException.class},
             expectedExceptionsMessageRegExp = "The resourceType does not match the the specified one in the definition file",
             enabled = false)
     public void testResourceTypeMissMatch() throws Exception {
@@ -140,7 +140,7 @@ public class GraphExecutionTest {
         engine.execute(graphContext, "ComprehensiveWithAsyncNodeCase", null, false);
     }
 
-    @Test(expectedExceptions = {WorkFlowExecutionExeception.class}, expectedExceptionsMessageRegExp = "The work-flow instance has been closed!")
+    @Test(expectedExceptions = {WorkFlowExecutionException.class}, expectedExceptionsMessageRegExp = "The work-flow instance has been closed!")
     public void testExceptionThrownAfterWorkflowClosed() throws Exception {
         String asyncPath = "ComprehensiveWithAsyncNodeCase.graph";
         paths.add(asyncPath);

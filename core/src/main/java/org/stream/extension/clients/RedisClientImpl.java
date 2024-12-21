@@ -212,7 +212,7 @@ public class RedisClientImpl implements RedisClient {
     public boolean updateKeyExpireTimeIfMatch(final String key, final String expectedValue) {
         if (Settings.LUA_SUPPORTED) {
             Long response = (Long) jedisCluster.eval(buildLuaScript(key, expectedValue), List.of(key, expectedValue), List.of());
-            return response == 1l;
+            return response == 1L;
         } else {
             String value = jedisCluster.get(key);
             if (expectedValue.equals(value)) {

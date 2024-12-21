@@ -24,8 +24,8 @@ import org.stream.core.helper.GraphConfiguration;
 import lombok.Data;
 
 /**
- * Encapsulation of work-flow execution procedure definition. Each graph represents single one procedure, which should be defined in a stand-alone file
- * with suffix ".graph". Work-flow run time context will load these files and assemble them into {@linkplain Graph}
+ * Encapsulation of work-flow execution procedure definition. Each graph represents a single one procedure, which should be defined in a stand-alone file
+ *  with the suffix ".graph". Work-flow run time context will load these files and assemble them into {@linkplain Graph}
  * instances so the {@linkplain Engine} can use them to complete the designed work.
  *
  */
@@ -33,7 +33,7 @@ import lombok.Data;
 public class Graph {
 
     /**
-     * The name of the graph. Every graph should have a unique name or it may cause unexpected errors.
+     * The name of the graph. Every graph should have a unique name, or it may cause unexpected errors.
      */
     private String graphName;
 
@@ -75,7 +75,7 @@ public class Graph {
 
     /**
      * Retrieve a node from the graph by node name.
-     * @param nodeName Target node's configured name in graph file.
+     * @param nodeName Target node's configured name in a graph file.
      * @return Target node.
      */
     public Node getNode(final String nodeName) {
