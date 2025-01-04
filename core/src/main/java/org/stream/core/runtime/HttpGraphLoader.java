@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.stream.core.helper;
+package org.stream.core.runtime;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +47,7 @@ public class HttpGraphLoader extends AbstractGraphLoader {
             }
             return httpURLConnection.getInputStream();
         } catch (URISyntaxException e) {
-            throw new GraphLoadException("Unavaliable uri", e);
+            throw new GraphLoadException("Unavailable uri", e);
         } catch (IOException e) {
             throw new GraphLoadException("Fail to connection to remote server", e);
         }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.stream.core.helper;
+package org.stream.core.runtime;
 
 import org.stream.core.component.Graph;
 import org.stream.core.exception.GraphLoadException;

@@ -29,12 +29,11 @@ import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
-import com.mongodb.Block;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.AsyncActivity;
 import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
-import org.stream.core.helper.ResourceHelper;
+import org.stream.core.runtime.ResourceHelper;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceTank;
 import org.stream.extension.intercept.Interceptors;
@@ -158,7 +157,7 @@ public final class TaskHelper {
     public static int suspend(final Task task, final Node node, final TaskPersister taskPersister,
             final RetryPattern pattern) {
         // Persist work-flow status to persistent layer.
-        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE,
+        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE,
                 StreamTransferData.class);
         TaskHelper.updateTask(task, node, TaskStatus.PENDING.code());
         int interval = getInterval(node, pattern, 0);
@@ -313,8 +312,13 @@ public final class TaskHelper {
                 asyncActivity.linkUp(workFlow.getResourceTank(), primaryResourceReference);
                 asyncActivity.getNode().set(async);
                 asyncActivity.getHost().set(node);
-                ActivityResult activityResult = ActivityResult.FAIL;
-                asyncActivity.act();
+                try {
+                    asyncActivity.act();
+                } catch (Throwable throwable) {
+                    log.warn("Attention, daemon activity is throwing exception", throwable);
+                } finally {
+                    asyncActivity.cleanUp();
+                }
             };
             WorkFlowContext.submit(job);
         });

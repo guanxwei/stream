@@ -34,14 +34,8 @@ import org.stream.core.component.SubFlow;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.AbstractGraphLoader;
-import org.stream.core.helper.GraphConfiguration;
-import org.stream.core.helper.Jackson;
-import org.stream.core.helper.NodeConfiguration;
-import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
-import org.stream.core.helper.PlainTextGraphLoader;
-
 import lombok.extern.slf4j.Slf4j;
+import org.stream.core.runtime.*;
 
 /**
  * Encapsulation of procedure compiler.
@@ -63,9 +57,9 @@ public class ProcedureCompiler {
     private String graphName;
     private boolean startNodeSpecified = false;
     private String currentAction;
-    private List<ProcedureStub> stubs = new LinkedList<>();
-    private Map<String, Activity> activities = new HashMap<>();
-    private Map<Activity, String> mapping = new HashMap<>();
+    private final List<ProcedureStub> stubs = new LinkedList<>();
+    private final Map<String, Activity> activities = new HashMap<>();
+    private final Map<Activity, String> mapping = new HashMap<>();
     private ApplicationContext applicationContext;
     private String startNode;
 
@@ -165,11 +159,12 @@ public class ProcedureCompiler {
             nodeConfiguration.setNodeName(retrieveNodeName(stub));
             nodeConfiguration.setSuccessNode(stub.getNextSteps()[ProcedureStub.SUCCEED]);
             nodeConfiguration.setFailNode(stub.getNextSteps()[ProcedureStub.FAILED]);
-            nodeConfiguration.setSuspendNode(stub.getNextSteps()[ProcedureStub.SUSPENED]);
+            nodeConfiguration.setSuspendNode(stub.getNextSteps()[ProcedureStub.SUSPENDED]);
             nodeConfiguration.setCheckNode(stub.getNextSteps()[ProcedureStub.CHECKED]);
             nodeConfiguration.setConditions(builderConditions(stub.getConditions()));
             nodeConfiguration.setSubflows(buildSubflows(stub.getSubflows()));
             addAsyncDependency(nodeConfiguration, stub);
+            addDaemonDependency(nodeConfiguration, stub);
             nodeConfigurations.add(nodeConfiguration);
         });
         NodeConfiguration[] configurations = new NodeConfiguration[nodeConfigurations.size()];
@@ -181,14 +176,28 @@ public class ProcedureCompiler {
         if (CollectionUtils.isEmpty(stub.getDependencies())) {
             return;
         }
-        AsyncNodeConfiguration[] asyncDependencies = new AsyncNodeConfiguration[stub.getDependencies().size()];
+        NodeConfiguration.AsyncNodeConfiguration[] asyncDependencies = new NodeConfiguration.AsyncNodeConfiguration[stub.getDependencies().size()];
         AtomicInteger counter = new AtomicInteger(0);
         stub.getDependencies().forEach(dependency -> {
-            AsyncNodeConfiguration asyncNodeConfiguration = new AsyncNodeConfiguration();
+            NodeConfiguration.AsyncNodeConfiguration asyncNodeConfiguration = new NodeConfiguration.AsyncNodeConfiguration();
             asyncNodeConfiguration.setAsyncNode(dependency);
             asyncDependencies[counter.getAndIncrement()] = asyncNodeConfiguration;
         });
         nodeConfiguration.setAsyncDependencies(asyncDependencies);
+    }
+
+    private void addDaemonDependency(final NodeConfiguration nodeConfiguration, final ProcedureStub stub) {
+        if (CollectionUtils.isEmpty(stub.getDaemons())) {
+            return;
+        }
+        NodeConfiguration.DaemonNodeConfiguration[] daemons = new NodeConfiguration.DaemonNodeConfiguration[stub.getDependencies().size()];
+        AtomicInteger counter = new AtomicInteger(0);
+        stub.getDaemons().forEach(daemon -> {
+            NodeConfiguration.DaemonNodeConfiguration asyncNodeConfiguration = new NodeConfiguration.DaemonNodeConfiguration();
+            asyncNodeConfiguration.setDaemonNode(daemon);
+            daemons[counter.getAndIncrement()] = asyncNodeConfiguration;
+        });
+        nodeConfiguration.setDaemons(daemons);
     }
 
     private String retrieveNodeName(final ProcedureStub procedureStub) {

@@ -21,7 +21,7 @@ import java.util.List;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.LocalGraphLoader;
+import org.stream.core.runtime.LocalGraphLoader;
 
 public final class GraphContextBuilder {
 

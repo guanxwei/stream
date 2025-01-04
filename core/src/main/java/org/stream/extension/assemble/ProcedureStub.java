@@ -21,7 +21,7 @@ import java.util.Map;
 
 import org.stream.core.component.Activity;
 import org.stream.core.exception.StreamException;
-import org.stream.core.helper.NodeConfiguration;
+import org.stream.core.runtime.NodeConfiguration;
 import org.stream.extension.io.Tower;
 
 import lombok.Getter;
@@ -39,12 +39,12 @@ public class ProcedureStub {
 
     public static final int SUCCEED = 0;
     public static final int FAILED = 1;
-    public static final int SUSPENED = 2;
+    public static final int SUSPENDED = 2;
     public static final int CHECKED = 3;
     public static final int CONDITION = 4;
     public static final int SUBFLOW = 5;
 
-    private ProcedureCompiler procedureCompiler;
+    private final ProcedureCompiler procedureCompiler;
     private int index = -100;
     @Getter
     private String[] nextSteps = new String[16];
@@ -55,6 +55,8 @@ public class ProcedureStub {
     private Tower tower;
     @Getter
     private List<String> dependencies;
+    @Getter
+    private List<String> daemons;
     @Getter
     private Map<Integer, String> conditions;
     @Getter
@@ -92,7 +94,7 @@ public class ProcedureStub {
 
     protected ProcedureStub whenSuspended() throws StreamException {
         check();
-        index = SUSPENED;
+        index = SUSPENDED;
         return this;
     }
 
@@ -143,6 +145,11 @@ public class ProcedureStub {
 
     public ProcedureStub dependsOn(final List<String> activities) throws StreamException {
         this.dependencies = activities;
+        return this;
+    }
+
+    public ProcedureStub hasDaemon(final List<String> activities) throws StreamException {
+        this.daemons = activities;
         return this;
     }
 

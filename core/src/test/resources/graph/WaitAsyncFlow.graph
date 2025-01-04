@@ -1,0 +1,25 @@
+{
+  "graphName":"waitAsyncFlow",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.SuccessTestActivity",
+      "successNode":"waitNode"
+    },
+    {
+      "nodeName":"waitNode",
+      "activityClass":"org.stream.core.test.base.WaitActivity",
+      "asyncDependencies": [
+        {
+          "asyncNode":"node4"
+        }
+      ]
+    },
+    {
+      "nodeName":"node4",
+      "activityClass":"org.stream.core.test.base.BlockAsyncActivity"
+    }
+  ]
+}

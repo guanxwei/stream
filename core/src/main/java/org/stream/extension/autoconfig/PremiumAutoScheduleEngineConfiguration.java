@@ -31,8 +31,8 @@ import org.stream.core.component.ActivityRepository;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.Sentinel;
-import org.stream.core.helper.GraphLoader;
-import org.stream.core.helper.HttpGraphLoader;
+import org.stream.core.runtime.GraphLoader;
+import org.stream.core.runtime.HttpGraphLoader;
 import org.stream.core.resource.Cache;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.sample.RedisCache;
@@ -125,13 +125,11 @@ public class PremiumAutoScheduleEngineConfiguration {
 
     @Bean
     public RedisClient redisClient() {
-        String redisNodes = environment.getProperty("fast.stream.redisclustuer.nodes");
-        int timeout = environment.getProperty("fast.stream.redisclustuer.timetout", Integer.class);
-        int maxRetryTimes = environment.getProperty("fast.stream.redisclustuer.maxRetryTimes", Integer.class);
+        String redisNodes = environment.getProperty("fast.stream.redis.cluster.nodes");
+        int timeout = environment.getProperty("fast.stream.redis.cluster.timeout", Integer.class, 3000);
+        int maxRetryTimes = environment.getProperty("fast.stream.redis.cluster.maxRetryTimes", Integer.class, 3);
 
-        RedisService redisService = new RedisService(redisNodes, timeout, maxRetryTimes);
-
-        return redisService;
+        return new RedisService(redisNodes, timeout, maxRetryTimes);
     }
 
     @Bean
@@ -186,6 +184,7 @@ public class PremiumAutoScheduleEngineConfiguration {
     public MongoClient mongoClient() throws Exception {
         MongoClientImpl mongoClientImpl = new MongoClientImpl();
         String servers = environment.getProperty("fast.stream.mongo.servers");
+        assert servers != null;
         String[] pairs = servers.split(";");
         Map<String, Integer> mongoServers = new HashMap<String, Integer>();
         for (String pair : pairs) {

@@ -101,7 +101,7 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
             final StreamTransferData data,
             final Engine engine) {
         var dataResource = Resource.builder()
-                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE)
                 .value(data)
                 .build();
         var runner = new ExecutionRunner(
@@ -157,7 +157,8 @@ public class ThreadPoolTaskExecutor implements TaskExecutor {
     public void shutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                executorService.awaitTermination(60, TimeUnit.SECONDS);
+                boolean shutdown = executorService.awaitTermination(60, TimeUnit.SECONDS);
+                log.info("All tasks are finished [{}]", shutdown);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();  // set interrupt flag
                 log.error("Shut down hook thread [{}] is interrupted", Thread.currentThread().getName(), e);

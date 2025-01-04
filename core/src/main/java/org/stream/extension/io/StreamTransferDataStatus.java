@@ -45,5 +45,9 @@ public final class StreamTransferDataStatus {
      */
     public static final String SUSPEND = "SUSPEND";
 
-    
+    /**
+     * Condition result, multi-branch could be defined in the graph, the engine should go to the next node
+     * by the condition code.
+     */
+    public static final String CONDITION = "CONDITION";
 }

@@ -61,7 +61,7 @@ public class SyncTaskExecutor implements TaskExecutor {
     public Future<?> submit(final Resource primaryResource,
             final Task task, final StreamTransferData data, final Engine engine) {
         Resource dataResource = Resource.builder()
-                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE)
                 .value(data)
                 .build();
         ExecutionRunner runner = new ExecutionRunner(retryPattern, graphContext,

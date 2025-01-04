@@ -19,7 +19,7 @@ package org.stream.core.component;
 import java.util.List;
 
 import org.stream.core.execution.Engine;
-import org.stream.core.helper.GraphConfiguration;
+import org.stream.core.runtime.GraphConfiguration;
 
 import lombok.Data;
 
@@ -51,8 +51,8 @@ public class Graph {
      * The default error handler node of the graph. It will be invoked in scenarios when a node throws exception or
      * a node returns {@link ActivityResult.FAIL} while it does not specify its own error handling node.
      * When a node returns fail result, before the work-flow engine exits, the error handling node should help do some clean work.
-     *
-     * Default error node should never throw any exception and can only return {@link ActivityResult#SUCCESS}, otherwise the programe
+     * <p>
+     * Default error node should never throw any exception and can only return {@link ActivityResult#SUCCESS}, otherwise the program
      * will run into dead circle causing crash.
      */
     private Node defaultErrorNode;

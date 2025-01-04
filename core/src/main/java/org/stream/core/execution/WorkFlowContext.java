@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Graph;
@@ -44,6 +45,7 @@ import com.mongodb.annotations.ThreadSafe;
  * Each thread has its own context attached to one work-flow with its
  * child sub work-flows, so the methods in this class are thread safe.
  */
+@Slf4j
 @ThreadSafe
 public final class WorkFlowContext {
 
@@ -85,7 +87,7 @@ public final class WorkFlowContext {
      * A pre-defined work-flow resource reference to the transfer data.
      * The type of the value of referenced resource is {@link StreamTransferData}.
      */
-    public static final String WORK_FLOW_TRANSTER_DATA_REFERENCE = "Stream::Workflow::Transfer::Data::Reference";
+    public static final String WORK_FLOW_TRANSFER_DATA_REFERENCE = "Stream::Workflow::Transfer::Data::Reference";
 
     /**
      * The reference to the async dependencies, the resource is a list, a list of async dependency tasks' references.
@@ -338,7 +340,7 @@ public final class WorkFlowContext {
      * @return Transfer data resource.
      */
     public static Resource resolveTransferDataResource() {
-        return resolveResource(WORK_FLOW_TRANSTER_DATA_REFERENCE);
+        return resolveResource(WORK_FLOW_TRANSFER_DATA_REFERENCE);
     }
 
     /**
@@ -369,6 +371,11 @@ public final class WorkFlowContext {
         if (list != null && !list.isEmpty()) {
             for (String reference : list) {
                 var resource = resolve(reference, FutureTask.class);
+                if (resource.isDone()) {
+                    log.info("Async task has been done before the method");
+                    System.out.println("Async task has been done before the method");
+                    continue;
+                }
                 resource.get(left, TimeUnit.MILLISECONDS);
                 left -= System.currentTimeMillis() - begin;
             }

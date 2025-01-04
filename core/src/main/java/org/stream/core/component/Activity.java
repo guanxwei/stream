@@ -23,7 +23,7 @@ import org.stream.core.execution.WorkFlowContext;
 
 /**
  * Encapsulation of customer specific activity, which will be performed in a specific {@link Node}.
- *
+ * <p>
  * Users should extend this interface to customize their own logics and configure them in graph definition files.
  * The work-flow engine will automatically pick up these activities and execute them per graph definition files.
  * @author guanxiong wei

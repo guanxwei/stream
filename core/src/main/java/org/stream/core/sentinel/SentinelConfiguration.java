@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.stream.core.helper;
+package org.stream.core.sentinel;
 
 import lombok.Data;
 
@@ -31,14 +31,26 @@ public class SentinelConfiguration {
     private float ratioThreshold;
 
     // Time window.
-    private long timeWindow;
+    private int timeWindow;
 
     // Minimal requests;
     private int minimalRequests;
 
-    // Degraded duration.
+    // Degraded duration in milliseconds.
     private int duration;
 
     // Value threshold.
     private int valueThreshold;
+
+    // The engine will rewrite this value even if the user give a name here, the loader will use the "{graphName}::{nodeName}" as the resource name.
+    private String resourceName;
+
+    /**
+     *  Sentinel rule grade, for example for degrade strategy, 0 by rt, 1 by exceptional ratio, 2 by exception counts.
+     *  For detail, please refer to the alibaba sentinel framework.
+     */
+    private int grade;
+
+    // Default result, when the node is blocked by the sentinel framework, which activity result to be used by the engine, if it is not specified fail result will be used.
+    private String defaultResult;
 }

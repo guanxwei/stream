@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.stream.core.helper;
+package org.stream.core.runtime;
 
 import java.util.List;
 
@@ -23,6 +23,7 @@ import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Condition;
 import org.stream.core.component.SubFlow;
 import org.stream.core.execution.AutoScheduledEngine;
+import org.stream.core.sentinel.SentinelConfiguration;
 import org.stream.extension.io.Tower;
 
 import lombok.Data;
@@ -115,7 +116,7 @@ public class NodeConfiguration {
     /**
      * Sentinel configuration.
      */
-    private SentinelConfiguration sentinelConfiguration;
+    private SentinelConfiguration[] sentinelConfiguration;
 
     /**
      * Encapsulation of asynchronous Node configuration, which is used to initiate an asynchronous node.

@@ -1,0 +1,24 @@
+{
+  "graphName":"flowqpstest",
+  "resourceType":"OBJECT",
+  "startNode":"node1",
+  "defaultErrorNode":"node2",
+  "nodes":[
+    {
+      "nodeName":"node1",
+      "activityClass":"org.stream.core.test.base.TestActivity",
+      "degradable": true,
+      "sentinelConfiguration": [
+        {
+          "type": "Flow",
+          "grade": 1,
+          "count": 0
+        }
+      ]
+    },
+    {
+      "nodeName":"node2",
+      "activityClass":"org.stream.core.test.base.TestActivity"
+    }
+  ]
+}

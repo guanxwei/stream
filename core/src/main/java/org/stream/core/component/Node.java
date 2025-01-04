@@ -145,7 +145,7 @@ public class Node {
         }
 
         if (intervals.size() <= times) {
-            return intervals.get(intervals.size() - 1);
+            return intervals.getLast();
         }
 
         return intervals.get(times);
@@ -166,7 +166,7 @@ public class Node {
                 return graph.getNode(condition.getNextStep());
             }
         }
-        log.error("Condition configuration info is not surficient, can not find the next node according to the"
+        log.error("Condition configuration info is not sufficient, can not find the next node according to the"
                 + " condition code [{}] and node name [{}]", conditionCode, conditionCode);
         return null;
     }

@@ -16,9 +16,7 @@
 
 package org.stream.extension.autoconfig;
 
-import java.io.IOException;
-import java.util.List;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationContextEvent;
@@ -26,10 +24,11 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.stream.core.exception.GraphLoadException;
-import org.stream.core.helper.AbstractGraphLoader;
-import org.stream.core.helper.GraphLoader;
+import org.stream.core.runtime.AbstractGraphLoader;
+import org.stream.core.runtime.GraphLoader;
 
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 public class AutoGraphLoader implements ApplicationListener<ApplicationContextEvent> {

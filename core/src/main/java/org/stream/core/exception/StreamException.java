@@ -16,6 +16,8 @@
 
 package org.stream.core.exception;
 
+import java.io.Serial;
+
 /**
  * Stream work-flow framework exception, may be thrown in any place of the work-flow context.
  * @author guanxiong wei
@@ -23,6 +25,7 @@ package org.stream.core.exception;
  */
 public class StreamException extends Exception {
 
+    @Serial
     private static final long serialVersionUID = 990113735174849552L;
 
     // CHECKSTYLE:OFF

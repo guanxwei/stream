@@ -18,7 +18,7 @@ import org.stream.core.execution.ExecutionRunner;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.TaskHelper;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.LocalGraphLoader;
+import org.stream.core.runtime.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.extension.io.HessianIOSerializer;
 import org.stream.extension.io.StreamTransferData;
@@ -77,7 +77,7 @@ public class ExecutionRunnerTest {
 
         StreamTransferData streamTransferData = new StreamTransferData();
         Resource dataResource = Resource.builder()
-                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE)
                 .value(streamTransferData)
                 .build();
         WorkFlowContext.attachResource(dataResource);
@@ -128,7 +128,7 @@ public class ExecutionRunnerTest {
 
         StreamTransferData streamTransferData = new StreamTransferData();
         Resource dataResource = Resource.builder()
-                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE)
                 .value(streamTransferData)
                 .build();
         WorkFlowContext.attachResource(dataResource);
@@ -175,7 +175,7 @@ public class ExecutionRunnerTest {
 
         StreamTransferData streamTransferData = new StreamTransferData();
         Resource dataResource = Resource.builder()
-                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE)
                 .value(streamTransferData)
                 .build();
         WorkFlowContext.attachResource(dataResource);

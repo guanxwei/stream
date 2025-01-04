@@ -6,7 +6,7 @@ package org.stream.core.exception;
 public class JasonException extends RuntimeException {
     
     /**
-     * Exposed constructure.
+     * Exposed constructor.
      * @param message Error message.
      * @param t The cause the throwable is raised.
      */

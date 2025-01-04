@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.stream.core.helper;
+package org.stream.core.runtime;
 
 import java.io.IOException;
 import java.util.StringTokenizer;

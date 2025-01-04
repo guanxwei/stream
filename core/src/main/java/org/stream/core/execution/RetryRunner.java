@@ -19,8 +19,8 @@ package org.stream.core.execution;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.component.Node;
 import org.stream.core.exception.WorkFlowExecutionException;
-import org.stream.core.helper.Jackson;
-import org.stream.core.helper.NodeConfiguration;
+import org.stream.core.runtime.Jackson;
+import org.stream.core.runtime.NodeConfiguration;
 import org.stream.core.resource.Resource;
 import org.stream.extension.executors.ThreadPoolTaskExecutor;
 import org.stream.extension.io.StreamTransferData;
@@ -111,7 +111,7 @@ public class RetryRunner implements Runnable {
 
         TaskHelper.prepare(task.getGraphName(), primaryResource, graphContext);
         WorkFlowContext.attachResource(Resource.builder()
-                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE)
                 .value(data)
                 .build());
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.stream.core.helper;
+package org.stream.core.runtime;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,9 +32,6 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
-import com.alibaba.csp.sentinel.slots.block.Rule;
-import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
-import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.context.ApplicationContext;
 import org.stream.core.component.Activity;
@@ -49,7 +46,10 @@ import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.NextSteps;
 import org.stream.core.execution.NextSteps.NextStepType;
 import org.stream.core.execution.StepPair;
-import org.stream.core.helper.NodeConfiguration.AsyncNodeConfiguration;
+import org.stream.core.runtime.NodeConfiguration.AsyncNodeConfiguration;
+import org.stream.core.runtime.NodeConfiguration.DaemonNodeConfiguration;
+import org.stream.core.sentinel.SentinelConfiguration;
+import org.stream.core.sentinel.SentinelRuleType;
 import org.stream.extension.io.Tower;
 
 import com.google.gson.Gson;
@@ -85,34 +85,51 @@ public abstract class AbstractGraphLoader implements GraphLoader {
      */
     @Override
     public Graph loadGraphFromSource(final String sourcePath) throws GraphLoadException {
-        try (InputStream inputStream = loadInputStream(sourcePath);) {
-            Graph graph = loadGraph(inputStream);
+        log.info("Trying to load graph from [{}] now", sourcePath);
+        try (InputStream inputStream = loadInputStream(sourcePath)) {
+            Graph graph = loadGraph(inputStream, sourcePath);
             graph.setOriginalDefinition(sourcePath);
             return graph;
         } catch (Exception e) {
-            GraphLoadException throwable = null;
-            if (e instanceof GraphLoadException) {
-                throwable = (GraphLoadException) e;
-            } else {
-                throwable = new GraphLoadException(e);
-            }
-
-            throw throwable;
+            throw wrap(e);
         }
     }
 
+    private GraphLoadException wrap(final Exception e) {
+        GraphLoadException throwable;
+        if (e instanceof GraphLoadException) {
+            throwable = (GraphLoadException) e;
+        } else {
+            throwable = new GraphLoadException(e);
+        }
+        return throwable;
+    }
+
+    /**
+     * Load input stream from the source path.
+     * A source path could be file path in local storage, or an url to a remote file.
+     * @param sourcePath Path to the graph definition file.
+     * @return Input stream of the graph file.
+     * @throws GraphLoadException Graph load exception.
+     */
     protected abstract InputStream loadInputStream(final String sourcePath) throws GraphLoadException;
 
-    private Graph loadGraph(final InputStream inputStream) throws GraphLoadException {
+    private Graph loadGraph(final InputStream inputStream, final String sourcePath) throws GraphLoadException {
         Graph graph = new Graph();
+        // error cause
         StringBuilder cause = new StringBuilder(100);
+        // Node and it's successor node pairs.
         List<StepPair> stepPairs = new LinkedList<>();
+        // Node and it's async dependency pairs.
         List<AsyncPair> asyncPairs = new LinkedList<>();
+        // Node and it's daemon task pairs.
+        List<AsyncPair> daemonPairs = new LinkedList<>();
+        // Tracked nodes in the graph.
         Map<String, Node> knowNodes = new HashMap<>();
         try {
-            parse(graph, inputStream, stepPairs, asyncPairs, knowNodes, cause);
+            parse(graph, inputStream, stepPairs, asyncPairs, daemonPairs, knowNodes, cause);
         } catch (IOException e) {
-            throw new GraphLoadException("Failed to load graph configuration information from the definition file", e);
+            throw new GraphLoadException("Failed to load graph configuration information from the definition file " + sourcePath, e);
         } catch (ClassNotFoundException e) {
             throw new GraphLoadException(String.format("Class is not found, name is [%s]", cause), e);
         } catch (InstantiationException e) {
@@ -127,29 +144,27 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         return graph;
     }
 
-    private void parse(final Graph graph, final InputStream input, final List<StepPair> stepPairs, final List<AsyncPair> asyncPairs,
+    private void parse(final Graph graph, final InputStream input, final List<StepPair> stepPairs, final List<AsyncPair> asyncPairs, final List<AsyncPair> daemonPairs,
             final Map<String, Node> knowNodes, final StringBuilder cause) throws GraphLoadException, ClassNotFoundException,
                     InstantiationException, IllegalAccessException, IOException {
-        String json = buildStringfyInput(input);
+        String json = buildStringInput(input);
         log.info("Graph definition [{}] parsed from the input source", json);
         GraphConfiguration graphConfiguration = parseGraphConfiguration(json, graph);
         graph.setPrimaryResourceType(graphConfiguration.getPrimaryResourceType());
         NodeConfiguration[] nodes = graphConfiguration.getNodes();
         List<Node> staticNodes = new ArrayList<>();
         for (NodeConfiguration nodeConfiguration : nodes) {
-            parseNodeConfiguration(nodeConfiguration, graph, stepPairs, asyncPairs, knowNodes, cause, staticNodes);
+            parseNodeConfiguration(nodeConfiguration, graph, stepPairs, asyncPairs, daemonPairs, knowNodes, cause, staticNodes);
         }
 
         setDefaultHandlers(graph, staticNodes, knowNodes, graphConfiguration);
 
-        /**
-         * Set up node relationship net.
-         */
         for (StepPair pair : stepPairs) {
             trackNodes(knowNodes, pair);
         }
 
         resolveAsyncDependencies(asyncPairs, knowNodes);
+        resolveDaemonDependencies(daemonPairs, knowNodes);
     }
 
     private GraphConfiguration parseGraphConfiguration(final String compressedInputString, final Graph graph) throws GraphLoadException {
@@ -167,15 +182,38 @@ public abstract class AbstractGraphLoader implements GraphLoader {
     }
 
     private void parseNodeConfiguration(final NodeConfiguration nodeConfiguration, final Graph graph, final List<StepPair> stepPairs,
-            final List<AsyncPair> asyncPairs, final Map<String, Node> knowNodes, final StringBuilder cause, final List<Node> staticNodes)
+            final List<AsyncPair> asyncPairs, final List<AsyncPair> daemonPairs, final Map<String, Node> knowNodes, final StringBuilder cause, final List<Node> staticNodes)
                     throws GraphLoadException, ClassNotFoundException {
         checkNodeConfiguration(nodeConfiguration);
-        String currentNodeName = nodeConfiguration.getNodeName();
-        String providerClass = nodeConfiguration.getProviderClass();
-        Activity activity = null;
+        var currentNodeName = nodeConfiguration.getNodeName();
+        Activity activity = initiateActivity(nodeConfiguration.getProviderClass(), cause);
+
+        stepPairs.addAll(setUpNextSteps(nodeConfiguration, currentNodeName));
+        asyncPairs.addAll(setUpAsyncPairs(nodeConfiguration, currentNodeName));
+        daemonPairs.addAll(setUpDaemonPairs(nodeConfiguration, currentNodeName));
+
+        Node node = Node.builder()
+                .activity(activity)
+                .conditions(nodeConfiguration.getConditions())
+                .degradable(nodeConfiguration.isDegradable())
+                .graph(graph)
+                .nodeName(currentNodeName)
+                .next(new NextSteps())
+                .subflows(nodeConfiguration.getSubflows())
+                .build();
+
+        staticNodes.add(node);
+        node.setIntervals(nodeConfiguration.getIntervals());
+        knowNodes.put(node.getNodeName(), node);
+
+        addSentinelHook(graph, nodeConfiguration);
+    }
+
+    private Activity initiateActivity(final String providerClass, final StringBuilder cause) throws ClassNotFoundException, GraphLoadException {
         if (!graphContext.isActivityRegistered(providerClass)) {
             cause.append(providerClass);
             Class<?> clazz = Class.forName(providerClass);
+            Activity activity = null;
             if (Tower.class.isAssignableFrom(clazz)) {
                 // Actor case works in spring context only.
                 activity = processActorCase(clazz);
@@ -183,25 +221,10 @@ public abstract class AbstractGraphLoader implements GraphLoader {
                 activity = processLocalCase(clazz);
             }
             graphContext.registerActivity(activity);
+            return activity;
         } else {
-            activity = graphContext.getActivity(providerClass);
+            return graphContext.getActivity(providerClass);
         }
-
-        stepPairs.addAll(setUpNextSteps(nodeConfiguration, currentNodeName));
-        asyncPairs.addAll(setUpAsyncPairs(nodeConfiguration, currentNodeName));
-
-        Node node = Node.builder()
-                .activity(activity)
-                .conditions(nodeConfiguration.getConditions())
-                .nodeName(currentNodeName)
-                .next(new NextSteps())
-                .graph(graph)
-                .subflows(nodeConfiguration.getSubflows())
-                .build();
-
-        staticNodes.add(node);
-        node.setIntervals(nodeConfiguration.getIntervals());
-        knowNodes.put(node.getNodeName(), node);
     }
 
     private Activity processLocalCase(final Class<?> clazz) throws GraphLoadException {
@@ -279,7 +302,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
                 @Override
                 public Void onInvoke() {
                     // Do nothing when we get on invoke result, let the workflow engines determine in run-time which
-                    // which child procedure to be executed.
+                    // child procedure to be executed.
                     return null;
                 }
             });
@@ -291,14 +314,24 @@ public abstract class AbstractGraphLoader implements GraphLoader {
             String host = asyncPair.getHost();
             Node hostNode = knowNodes.get(host);
             List<Node> asyncNodes = hostNode.getAsyncDependencies() == null ? new LinkedList<>() : hostNode.getAsyncDependencies();
-            asyncNodes.add(knowNodes.get(asyncPair.getAysncNode()));
+            asyncNodes.add(knowNodes.get(asyncPair.getAsyncNode()));
             hostNode.setAsyncDependencies(asyncNodes);
         });
     }
 
-    private String buildStringfyInput(final InputStream input) throws IOException {
+    private void resolveDaemonDependencies(final List<AsyncPair> daemonPairs, final Map<String, Node> knowNodes) {
+        daemonPairs.forEach(asyncPair -> {
+            String host = asyncPair.getHost();
+            Node hostNode = knowNodes.get(host);
+            List<Node> asyncNodes = hostNode.getDaemons() == null ? new LinkedList<>() : hostNode.getDaemons();
+            asyncNodes.add(knowNodes.get(asyncPair.getAsyncNode()));
+            hostNode.setDaemons(asyncNodes);
+        });
+    }
+
+    private String buildStringInput(final InputStream input) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
-        String singleLine = null;
+        String singleLine;
         StringBuilder buffer = new StringBuilder();
         while ((singleLine = reader.readLine()) != null) {
             buffer.append(singleLine.trim());
@@ -314,7 +347,7 @@ public abstract class AbstractGraphLoader implements GraphLoader {
             throw new GraphLoadException("There is something wrong in the graph definition file, graph name should not be empty or missing!");
         }
         if (startNode == null) {
-            throw new GraphLoadException("Start node is not specified!");
+            throw new GraphLoadException("Start node is not specified for graph " + graphName);
         }
         if (nodes == null || nodes.length == 0) {
             throw new GraphLoadException("No node definition information found in the graph definition file!");
@@ -366,7 +399,26 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         for (AsyncNodeConfiguration asyncConfiguration : asyncDependencies) {
             AsyncPair asyncPair = AsyncPair.builder()
                     .host(host)
-                    .aysncNode(asyncConfiguration.getAsyncNode())
+                    .asyncNode(asyncConfiguration.getAsyncNode())
+                    .build();
+            list.add(asyncPair);
+        }
+
+        return list;
+    }
+
+    private List<AsyncPair> setUpDaemonPairs(final NodeConfiguration nodeConfiguration, final String host) {
+        List<AsyncPair> list = new LinkedList<>();
+
+        DaemonNodeConfiguration[] daemons = nodeConfiguration.getDaemons();
+        if (ArrayUtils.isEmpty(daemons)) {
+            return list;
+        }
+
+        for (DaemonNodeConfiguration daemonNodeConfiguration : daemons) {
+            AsyncPair asyncPair = AsyncPair.builder()
+                    .host(host)
+                    .asyncNode(daemonNodeConfiguration.getDaemonNode())
                     .build();
             list.add(asyncPair);
         }
@@ -407,9 +459,13 @@ public abstract class AbstractGraphLoader implements GraphLoader {
         nodes.remove(child.getNodeName());
     }
 
-    private void addSentinelHook(final NodeConfiguration nodeConfiguration) {
+    private void addSentinelHook(final Graph graph, final NodeConfiguration nodeConfiguration) {
         if (nodeConfiguration.getSentinelConfiguration() != null) {
-            // add rules here.
+            for (SentinelConfiguration sentinelConfiguration : nodeConfiguration.getSentinelConfiguration()) {
+                SentinelRuleType sentinelRuleType = SentinelRuleType.fromType(sentinelConfiguration.getType());
+                sentinelConfiguration.setResourceName(graph.getGraphName() + "::" + nodeConfiguration.getNodeName());
+                sentinelRuleType.addRule(sentinelConfiguration);
+            }
         }
     }
 }

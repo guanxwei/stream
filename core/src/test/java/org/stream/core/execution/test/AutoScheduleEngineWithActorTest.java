@@ -8,7 +8,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.test.GraphLoaderWithSpringActorTestConfiguration;
+import org.stream.core.runtime.test.GraphLoaderWithSpringActorTestConfiguration;
 import org.stream.core.resource.ResourceTank;
 import org.stream.extension.persist.TaskPersister;
 import org.testng.Assert;

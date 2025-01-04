@@ -1,4 +1,4 @@
-package org.stream.core.helper.test;
+package org.stream.core.runtime.test;
 
 import javax.annotation.Resource;
 

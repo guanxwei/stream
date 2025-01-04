@@ -13,7 +13,7 @@ import org.stream.core.component.ActivityRepository;
 import org.stream.core.component.Node;
 import org.stream.core.execution.AutoScheduledEngine;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.LocalGraphLoader;
+import org.stream.core.runtime.LocalGraphLoader;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;

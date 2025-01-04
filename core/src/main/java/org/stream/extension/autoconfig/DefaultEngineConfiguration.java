@@ -22,8 +22,8 @@ import org.stream.core.component.ActivityRepository;
 import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.Engine;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.GraphLoader;
-import org.stream.core.helper.SmartLocalGraphLoader;
+import org.stream.core.runtime.GraphLoader;
+import org.stream.core.runtime.SmartLocalGraphLoader;
 
 import java.io.IOException;
 

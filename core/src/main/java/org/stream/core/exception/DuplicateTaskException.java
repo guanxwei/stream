@@ -16,6 +16,8 @@
 
 package org.stream.core.exception;
 
+import java.io.Serial;
+
 /**
  * Duplicated task exception. Thrown when the task is re-submitted to the auto scheduled workflow engine.
  * @author guanxiongwei
@@ -26,6 +28,7 @@ public class DuplicateTaskException extends RuntimeException {
     /**
      * Serial version id.
      */
+    @Serial
     private static final long serialVersionUID = 1744179138612021587L;
 
 }

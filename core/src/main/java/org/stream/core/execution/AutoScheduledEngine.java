@@ -20,7 +20,7 @@ import java.io.Serializable;
 
 import org.stream.core.exception.DuplicateTaskException;
 import org.stream.core.exception.WorkFlowExecutionException;
-import org.stream.core.helper.Jackson;
+import org.stream.core.runtime.Jackson;
 import org.stream.core.resource.Resource;
 import org.stream.core.resource.ResourceCatalog;
 import org.stream.core.resource.ResourceTank;
@@ -204,7 +204,7 @@ public class AutoScheduledEngine implements Engine {
                             graph.getStartNode()), false);
                     log.info("New task [{}] initiated", task.getTaskId());
                     taskExecutor.submit(primaryResource, task, data, this);
-                    log.info("Task [{}] submited", taskId);
+                    log.info("Task [{}] submitted", taskId);
                 })
                 .incase(DuplicateTaskException.class)
                 .thenFix(e -> {

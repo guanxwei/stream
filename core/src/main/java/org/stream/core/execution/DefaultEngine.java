@@ -39,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
  * All the work will be executed in single host and if any exception is thrown, retry procedure will not be applied.
  *
  */
+@Setter
 @Slf4j
 public class DefaultEngine implements Engine {
 
@@ -48,7 +49,6 @@ public class DefaultEngine implements Engine {
         ENTRANCE_TAG.set(0);
     }
 
-    @Setter
     private ExecutionStateSwitcher executionStateSwitcher = new DefaultExecutionStateSwitcher();
 
     /**
@@ -190,11 +190,6 @@ public class DefaultEngine implements Engine {
             workFlow = initiate(graph, autoRecord, graphName);
             log.info("New work flow instance [{}] initiated", workFlow.getWorkFlowId());
         } else {
-            /**
-             * Current there is work-flow instance attached to the thread, just reuse it.
-             * Before use the work-flow instance we'd check the status first, if it is in Working status,
-             * we should create a new sub instance and mark the current work-flow instance as father work-flow.
-             */
             workFlow = WorkFlowContext.provide();
             log.info("Pre-created workflow instance [{}] will be reused for graph [{}] with resource [{}]",
                     workFlow.getWorkFlowId(), graphName, resource == null ? StringUtils.EMPTY : resource.toString());
@@ -253,11 +248,6 @@ public class DefaultEngine implements Engine {
 
     private void useCurrentWorkflowAsParentWorkflow(final WorkFlow workFlow, final Graph graph) {
 
-        /**
-         * Currently the work-flow is running for another task, we are triggered within the running work-flow context.
-         * So we should be treated as sub-workflow.
-         * 
-         */
         var child = WorkFlowContext.setUpWorkFlow();
         child.start();
         child.setParent(workFlow);
@@ -269,17 +259,8 @@ public class DefaultEngine implements Engine {
             final boolean autoRecord, final String startNode,
             final GraphContext graphContext) {
 
-        /**
-         * Extract the start node of the graph, and invoke the perform() method.
-         */
         Node previous = null;
         Node executionNode = graph.getStartNode();
-        /**
-         * Update 2020/06/03, to make it possible to start the procedure at specific start node,
-         * add four methods with suffix from, which means start from the specific node.
-         * Adding a new flag startNode, when the value is not null, the engines should retrieve the
-         * specific node and start from that node.
-         */
         if (startNode != null) {
             executionNode = graph.getNode(startNode);
             if (executionNode == null) {
@@ -328,13 +309,9 @@ public class DefaultEngine implements Engine {
 
     private ActivityResult processSuspendCase(final Node node) {
 
-        /**
-         * Since the previous node return Suspend result, work-flow should suspend and wait for some time to invoke the next node.
-         * Waiting time is specified by the activity himself, stored in the resource tank with a standard resource reference WAITING_TIME.
-         */
         if (!CollectionUtils.isEmpty(node.getIntervals())) {
             try {
-                Thread.sleep(node.getIntervals().get(0));
+                Thread.sleep(node.getIntervals().getFirst());
             } catch (Exception e) {
                 log.warn("Thread interrupted", e);
             }
@@ -360,17 +337,6 @@ public class DefaultEngine implements Engine {
         }
         clearRelationship(context);
         if (autoClean && isWorkflowEntryGraph) {
-            /**
-             * Clean up the work-flow.
-             * This method will be invoked when the customers want the work-flow engine to
-             * help them clean up the work-flow automatically after the
-             * work-flow is executed.
-             *
-             * Release the connection between the resourceTank and the work-flow instance.
-             * Since the invoker still hold the reference to the returned resourceTank, they can
-             * retrieve resources directly from the resourceTank anyway, so it's okay rebooting here.
-             * After execution, the GC will have opportunity to recycle the memory.
-             */
             WorkFlowContext.reboot();
         }
     }

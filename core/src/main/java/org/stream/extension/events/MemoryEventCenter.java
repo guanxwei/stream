@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.stream.core.helper.Jackson;
+import org.stream.core.runtime.Jackson;
 import org.stream.extension.clients.MessageClient;
 import org.stream.extension.io.HessianIOSerializer;
 

@@ -27,13 +27,12 @@ import lombok.extern.slf4j.Slf4j;
  * Default worker to back-up completed tasks.
  *
  */
+@Setter
 @Slf4j
 public class MangoDBBasedTaskCompleteListener implements Listener {
 
-    @Setter
     private MongoClient mongoClient;
 
-    @Setter
     private String collectionName;
 
     /**

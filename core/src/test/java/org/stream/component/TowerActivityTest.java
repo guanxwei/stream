@@ -26,7 +26,7 @@ public class TowerActivityTest {
         this.towerActivity = new TowerActivity(mock);
         Debuger.setUpWorkFlow();
         Resource data = Resource.builder()
-                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE)
+                .resourceReference(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE)
                 .value(StreamTransferData.succeed()
                         .add("primaryClass", String.class.getName())
                         .add("errorStack", "fdasfadf")
@@ -44,7 +44,7 @@ public class TowerActivityTest {
     public void testNormalCase() {
         Mockito.when(mock.call(Mockito.any())).thenReturn(StreamTransferData.failed());
         towerActivity.act();
-        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class);
+        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE, StreamTransferData.class);
         assertEquals(data.getActivityResult(), StreamTransferData.failed().getActivityResult());
 
         assertNull(data.get("errorStack"));
@@ -55,7 +55,7 @@ public class TowerActivityTest {
     public void testExceptionCase() {
         Mockito.when(mock.call(Mockito.any())).thenThrow(new RuntimeException("fadf"));
         towerActivity.act();
-        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSTER_DATA_REFERENCE, StreamTransferData.class);
+        StreamTransferData data = WorkFlowContext.resolve(WorkFlowContext.WORK_FLOW_TRANSFER_DATA_REFERENCE, StreamTransferData.class);
         assertEquals(data.getActivityResult(), StreamTransferData.failed().getActivityResult());
 
         assertNotNull(data.get("errorStack"));

@@ -16,12 +16,15 @@
 
 package org.stream.core.exception;
 
+import java.io.Serial;
+
 /**
  * Graph load exception.
  *
  */
 public class GraphLoadException extends StreamException {
 
+    @Serial
     private static final long serialVersionUID = 6245569938672328171L;
 
     // CHECKSTYLE:OFF

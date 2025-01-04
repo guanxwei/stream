@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.stream.core.helper;
+package org.stream.core.runtime;
 
 /**
  * Resource utility class.
@@ -27,6 +27,6 @@ public final class ResourceHelper {
     /**
      * Asynchronous task reference suffix.
      */
-    public static final String ASYNC_TASK_SUFFIX = "::stream::aysnc::task";
+    public static final String ASYNC_TASK_SUFFIX = "::stream::async::task";
 
 }

@@ -53,11 +53,11 @@ public abstract class Event {
     }
 
     /**
-     * Construct a new instance of event. Concret class type is specified by the input parameter clazz.
-     * @param clazz Concret event sub class type.
+     * Construct a new instance of event. Concrete class type is specified by the input parameter clazz.
+     * @param clazz Concrete event subclass type.
      * @param trigger Object that triggers this event.
      * @param node Current node.
-     * @return New instance of the target event sub-class.
+     * @return New instance of the target event subclass.
      */
     @SuppressWarnings("unchecked")
     public static Event of(final Class<? extends Event> clazz, final Object trigger, final Node node) {
@@ -81,6 +81,7 @@ public abstract class Event {
                     event.setTime(System.currentTimeMillis());
                     event.setTrigger(trigger);
                     Tellme.when(node != null).then(() -> {
+                        assert node != null;
                         event.setGraph(node.getGraph().getGraphName());
                         event.setNode(node.getNodeName());
                     });

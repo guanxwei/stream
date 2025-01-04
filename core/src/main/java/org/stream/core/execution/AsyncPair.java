@@ -32,6 +32,6 @@ public class AsyncPair {
     private String host;
 
     // Asynchronous node's name.
-    private String aysncNode;
+    private String asyncNode;
 
 }

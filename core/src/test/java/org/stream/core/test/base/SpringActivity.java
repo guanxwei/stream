@@ -5,7 +5,7 @@ import javax.annotation.Resource;
 import org.stream.core.component.Activity;
 import org.stream.core.component.ActivityResult;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.test.SpringModule;
+import org.stream.core.runtime.test.SpringModule;
 
 public class SpringActivity extends Activity {
 

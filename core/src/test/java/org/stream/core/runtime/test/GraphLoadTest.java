@@ -1,4 +1,4 @@
-package org.stream.core.helper.test;
+package org.stream.core.runtime.test;
 
 import static org.testng.Assert.assertTrue;
 
@@ -10,8 +10,8 @@ import org.stream.core.component.Graph;
 import org.stream.core.component.Node;
 import org.stream.core.exception.GraphLoadException;
 import org.stream.core.execution.GraphContext;
-import org.stream.core.helper.LocalGraphLoader;
-import org.stream.core.helper.SmartLocalGraphLoader;
+import org.stream.core.runtime.LocalGraphLoader;
+import org.stream.core.runtime.SmartLocalGraphLoader;
 import org.stream.core.test.base.TestActivity;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;

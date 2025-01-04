@@ -24,7 +24,7 @@ import lombok.Getter;
 
 /**
  * Encapsulation of asynchronous stream work flow activities.
- *
+ * <p>
  * All the asynchronous activities will be executed asynchronously alone with the main procedure.
  */
 public abstract class AsyncActivity extends Activity {

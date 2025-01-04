@@ -16,12 +16,15 @@
 
 package org.stream.core.exception;
 
+import java.io.Serial;
+
 /**
  * Exception thrown during operate Redis clients.
  *
  */
 public class RedisException extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = -423801385627332575L;
 
     // CHECKSTYLE:OFF

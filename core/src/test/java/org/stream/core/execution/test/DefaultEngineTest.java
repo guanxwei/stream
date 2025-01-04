@@ -1,12 +1,5 @@
 package org.stream.core.execution.test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.stream.core.component.ActivityRepository;
 import org.stream.core.exception.WorkFlowExecutionException;
@@ -14,13 +7,20 @@ import org.stream.core.execution.DefaultEngine;
 import org.stream.core.execution.ExecutionRecord;
 import org.stream.core.execution.GraphContext;
 import org.stream.core.execution.WorkFlowContext;
-import org.stream.core.helper.LocalGraphLoader;
 import org.stream.core.resource.Resource;
+import org.stream.core.runtime.LocalGraphLoader;
+import org.stream.core.test.base.DaemonActivity;
+import org.stream.core.test.base.SentinelFlowCaseActivity;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.testng.Assert.*;
 
 @Test(singleThreaded = true)
 public class DefaultEngineTest {
@@ -29,14 +29,10 @@ public class DefaultEngineTest {
 
     private GraphContext graphContext;
 
-    private List<String> paths;
-
-    private LocalGraphLoader graphLoader;
-
     @BeforeClass
     public void BeforeClass() throws Exception {
         this.defaultEngine = new DefaultEngine();
-        this.paths = new LinkedList<String>();
+        List<String> paths = new LinkedList<String>();
         paths.add("ComprehensiveCase.graph");
         paths.add("ComprehensiveCase2.graph");
         paths.add("ComprehensiveCase4.graph");
@@ -49,13 +45,16 @@ public class DefaultEngineTest {
         paths.add("InvokeAnotherProcedure");
 
         paths.add("ComprehensiveWithAsyncNodeCase.graph");
+        paths.add("WaitAsyncFlow.graph");
+        paths.add("DaemonCase.graph");
+        paths.add("SimpleCaseWithSentinelFlowSetting.graph");
 
         this.graphContext = new GraphContext();
-        this.graphLoader = new LocalGraphLoader();
+        LocalGraphLoader graphLoader = new LocalGraphLoader();
         graphLoader.setGraphContext(graphContext);
         this.graphContext.setActivityRepository(new ActivityRepository());
         graphLoader.setGraphFilePaths(paths);
-        this.graphLoader.init();
+        graphLoader.init();
     }
 
     @BeforeMethod
@@ -108,7 +107,7 @@ public class DefaultEngineTest {
         Assert.assertTrue(CollectionUtils.isNotEmpty(WorkFlowContext.getRecords()));
         primary = WorkFlowContext.getPrimary();
 
-        Assert.assertEquals(100000L, primary.getValue());
+        Assert.assertEquals(primary.getValue(), 100000L);
     }
 
     @Test(dependsOnMethods = "testExecuteWithPrimary")
@@ -126,7 +125,7 @@ public class DefaultEngineTest {
         Assert.assertEquals(executionRecords.size(), 6);
         primary = WorkFlowContext.getPrimary();
 
-        Assert.assertEquals(100000l, primary.getValue());
+        Assert.assertEquals(primary.getValue(), 100000L);
     }
 
     @Test(dependsOnMethods = "testExecuteWithAutoRecordWithPrimay")
@@ -140,7 +139,7 @@ public class DefaultEngineTest {
 
         primary = WorkFlowContext.getPrimary();
 
-        Assert.assertEquals(100000l, primary.getValue());
+        assertEquals(primary.getValue(), 100000L);
     }
 
     @Test(dependsOnMethods = "testExecuteWithException")
@@ -152,7 +151,7 @@ public class DefaultEngineTest {
         Resource resource = WorkFlowContext.resolveResource("PrintRecordActivity");
         @SuppressWarnings("unchecked")
         List<ExecutionRecord> executionRecords = (List<ExecutionRecord>) resource.getValue();
-        Assert.assertEquals(executionRecords.size(), 8);
+        assertEquals(executionRecords.size(), 8);
     }
 
     @Test(dependsOnMethods = "testSuspend")
@@ -166,7 +165,7 @@ public class DefaultEngineTest {
 
         primary = WorkFlowContext.getPrimary();
 
-        Assert.assertEquals(100000l, primary.getValue());
+        Assert.assertEquals(primary.getValue(), 100000L);
 
         int counter = 3;
         Resource resource = WorkFlowContext.resolveResource("asyncreference");
@@ -175,7 +174,7 @@ public class DefaultEngineTest {
             Thread.sleep(100);
         }
 
-        Assert.assertEquals("asyncvalue", resource.getValue());
+        Assert.assertEquals(resource.getValue(), "asyncvalue");
     }
 
     @Test(dependsOnMethods = "testExecuteWithAsyncNode")
@@ -190,7 +189,7 @@ public class DefaultEngineTest {
 
         primary = WorkFlowContext.getPrimary();
         long value = (long) primary.getValue();
-        assertEquals(value, 100000l);
+        assertEquals(value, 100000L);
     }
 
     @Test(dependsOnMethods = "testCheck", expectedExceptions = WorkFlowExecutionException.class)
@@ -226,4 +225,25 @@ public class DefaultEngineTest {
         assertNull(WorkFlowContext.getPrimary());
         assertNotNull(WorkFlowContext.resolveResource("PrintRecordActivity"));
     }
+
+    @Test
+    public void testAsyncWaitUntilCase() {
+        defaultEngine.execute(graphContext, "waitAsyncFlow", true);
+        List<ExecutionRecord> records = WorkFlowContext.getRecords();
+        assertTrue(records.stream().anyMatch(r -> r.getDescription().equals("WaitExpiredSuccess")));
+    }
+
+    @Test
+    public void testDaemonCase() throws InterruptedException {
+        defaultEngine.execute(graphContext, "daemonFlow", true);
+        Thread.sleep(300L);
+        assertEquals(DaemonActivity.TAG.get(), 1);
+    }
+
+    @Test
+    public void testSentinelFlowSetting() {
+        defaultEngine.execute(graphContext, "flowqpstest", false);
+        assertEquals(SentinelFlowCaseActivity.COUNT.get(), 0);
+    }
+
 }

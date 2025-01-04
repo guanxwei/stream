@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 
 import org.springframework.util.CollectionUtils;
-import org.stream.core.helper.Jackson;
+import org.stream.core.runtime.Jackson;
 import org.stream.extension.executors.TaskExecutor;
 import org.stream.extension.meta.Task;
 import org.stream.extension.persist.DelayQueue;
